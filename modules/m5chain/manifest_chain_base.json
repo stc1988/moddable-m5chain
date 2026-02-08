@@ -1,0 +1,44 @@
+{
+	"platforms": {
+		"esp32/m5atom_matrix": {
+			"config": {
+				"m5chain": {
+					"transmit": 22,
+					"receive": 19
+				}
+			}
+		},
+		"esp32/m5atom_lite": {
+			"config": {
+				"m5chain": {
+					"transmit": 22,
+					"receive": 19
+				}
+			}
+		},
+		"esp32/m5atom_s3_lite": {
+			"config": {
+				"m5chain": {
+					"transmit": 5,
+					"receive": 6
+				}
+			}
+		},
+		"esp32/m5atom_s3": {
+			"config": {
+				"m5chain": {
+					"transmit": 5,
+					"receive": 6
+				}
+			}
+		},
+		"esp32/m5atom_s3r": {
+			"config": {
+				"m5chain": {
+					"transmit": 5,
+					"receive": 6
+				}
+			}
+		}
+	}
+}
