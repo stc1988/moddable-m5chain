@@ -1,11 +1,13 @@
 const HasKey = (Base) =>
 	class extends Base {
 		static CMD = {
-			GET_STATUS: 0xe1 /**< Get key status. */,
-			SET_TRIGGER_TIMEOUT: 0xe2 /**< Set trigger timeout. */,
-			GET_TRIGGER_TIMEOUT: 0xe3 /**< Get trigger timeout. */,
-			SET_MODE: 0xe4 /**< Set key mode. */,
-			GET_MODE: 0xe5 /**< Get key mode. */,
+			KEY: {
+				GET_STATUS: 0xe1 /**< Get key status. */,
+				SET_TRIGGER_TIMEOUT: 0xe2 /**< Set trigger timeout. */,
+				GET_TRIGGER_TIMEOUT: 0xe3 /**< Get trigger timeout. */,
+				SET_MODE: 0xe4 /**< Set key mode. */,
+				GET_MODE: 0xe5 /**< Get key mode. */,
+			},
 		};
 		#onKeyPressed = null;
 		set onKeyPressed(fn) {
@@ -30,7 +32,7 @@ const HasKey = (Base) =>
 		// 1: Presse
 		async getKeyStatus() {
 			const bus = this.bus;
-			const returnPacket = await bus.sendAndWait(this.id, HasKey.CMD.GET_STATUS, m5chain.cmdBuffer, 0);
+			const returnPacket = await bus.sendAndWait(this.id, this.constructor.CMD.KEY.GET_STATUS, m5chain.cmdBuffer, 0);
 			const keyStatus = returnPacket[6];
 			return keyStatus;
 		}
@@ -44,7 +46,7 @@ const HasKey = (Base) =>
 			const cmdBuffer = bus.cmdBuffer;
 			cmdBuffer[0] = doubleClick;
 			cmdBuffer[1] = longPress;
-			const packet = await bus.sendAndWait(this.id, HasKey.CMD.SET_TRIGGER_TIMEOUT, cmdBuffer, 2);
+			const packet = await bus.sendAndWait(this.id, this.constructor.CMD.KEY.SET_TRIGGER_TIMEOUT, cmdBuffer, 2);
 			const result = packet[6];
 			if (result !== 1) {
 				throw new Error(`setKeyTriggerInterval failed.\n`);
@@ -52,7 +54,7 @@ const HasKey = (Base) =>
 		}
 		async getKeyTriggerInterval() {
 			const bus = this.bus;
-			const packet = await bus.sendAndWait(this.id, HasKey.CMD.GET_TRIGGER_TIMEOUT, bus.cmdBuffer, 0);
+			const packet = await bus.sendAndWait(this.id, this.constructor.CMD.KEY.GET_TRIGGER_TIMEOUT, bus.cmdBuffer, 0);
 			return {
 				doubleClick: packet[6],
 				longPress: packet[7],
@@ -64,7 +66,7 @@ const HasKey = (Base) =>
 		async setKeyMode(mode) {
 			const bus = this.bus;
 			bus.cmdBuffer[0] = mode;
-			const packet = await bus.sendAndWait(this.id, HasKey.CMD.SET_MODE, bus.cmdBuffer, 1);
+			const packet = await bus.sendAndWait(this.id, this.constructor.CMD.KEY.SET_MODE, bus.cmdBuffer, 1);
 			const result = packet[6];
 			if (result !== 1) {
 				throw new Error(`setKeyMode failed.\n`);
@@ -73,7 +75,7 @@ const HasKey = (Base) =>
 
 		async getKeyMode() {
 			const bus = this.bus;
-			const packet = bus.sendAndWait(this.id, HasKey.CMD.GET_MODE, bus.cmdBuffer, 0);
+			const packet = bus.sendAndWait(this.id, this.constructor.CMD.KEY.GET_MODE, bus.cmdBuffer, 0);
 			const mode = packet[6];
 			return mode;
 		}

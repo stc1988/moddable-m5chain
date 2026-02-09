@@ -12,7 +12,7 @@
 		"m5chainKey",
 		"m5chainTof",
 		"canPoll",
-		"hasRGB",
+		"hasLed",
 		"hasKey"
 	]
 }

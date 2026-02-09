@@ -1,12 +1,13 @@
 import deepEqual from "deepEqual";
 import CanPoll from "canPoll";
 import HasKey from "hasKey";
-import HasRGB from "hasRGB";
+import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 
-class M5ChainJoyStick extends withDeviceFeatures(HasRGB, HasKey, CanPoll) {
+class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 	static DEVICE_TYPE = 0x0004;
 	static CMD = {
+		...super.CMD,
 		GET_16ADC: 0x30 /**< Command to get 16-bit ADC values */,
 		GET_8ADC: 0x31 /**< Command to get 8-bit ADC values */,
 		GET_ADC_XY_MAPPED_RANGE: 0x32 /**< Command to get mapped range for X and Y axes */,
@@ -15,11 +16,11 @@ class M5ChainJoyStick extends withDeviceFeatures(HasRGB, HasKey, CanPoll) {
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	};
 	#lastValue;
-	async setRGBValue(r, g, b) {
-		return await super.setRGBValue(this.id, 0, 1, [{ r, g, b }]);
+	async setLedColor(r, g, b) {
+		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
-	async getRGBValue() {
-		const colors = await super.getRGBValue(this.id, 0, 1);
+	async getLedColor() {
+		const colors = await super.getLedColor(0, 1);
 		return colors[0];
 	}
 

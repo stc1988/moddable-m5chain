@@ -1,11 +1,12 @@
 import CanPoll from "canPoll";
 import HasKey from "hasKey";
-import HasRGB from "hasRGB";
+import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 
-class M5ChainEncoder extends withDeviceFeatures(HasRGB, HasKey, CanPoll) {
+class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 	static DEVICE_TYPE = 0x0001;
 	static CMD = {
+		...super.CMD,
 		GET_VALUE: 0x10 /**< Get encoder value. */,
 		GET_INC_VALUE: 0x11 /**< Get encoder increment value. */,
 		RESET_VALUE: 0x13 /**< Reset encoder value. */,
@@ -14,11 +15,11 @@ class M5ChainEncoder extends withDeviceFeatures(HasRGB, HasKey, CanPoll) {
 		GET_AB_STATUS: 0x16 /**< Get AB status, 0->AB, 1->BA. */,
 	};
 	#lastValue;
-	async setRGBValue(r, g, b) {
-		return await super.setRGBValue(this.id, 0, 1, [{ r, g, b }]);
+	async setLedColor(r, g, b) {
+		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
-	async getRGBValue() {
-		const colors = await super.getRGBValue(this.id, 0, 1);
+	async getLedColor() {
+		const colors = await super.getLedColor(0, 1);
 		return colors[0];
 	}
 

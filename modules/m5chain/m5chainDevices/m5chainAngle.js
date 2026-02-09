@@ -1,21 +1,22 @@
 import CanPoll from "canPoll";
-import HasRGB from "hasRGB";
+import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 
-class M5ChainAngle extends withDeviceFeatures(HasRGB, CanPoll) {
+class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll) {
 	static DEVICE_TYPE = 0x0002;
 	static CMD = {
+		...super.CMD,
 		GET_12ADC: 0x30 /**< Command to get the latest 12-bit ADC value */,
 		GET_8ADC: 0x31 /**< Command to get the latest 8-bit mapped ADC value */,
 		SET_CLOCKWISE_STATUS: 0x32 /**< Command to set the clockwise direction status */,
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	};
 	#lastValue;
-	async setRGBValue(r, g, b) {
-		return await super.setRGBValue(this.id, 0, 1, [{ r, g, b }]);
+	async setLedColor(r, g, b) {
+		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
-	async getRGBValue() {
-		const colors = await super.getRGBValue(this.id, 0, 1);
+	async getLedColor() {
+		const colors = await super.getLedColor(0, 1);
 		return colors[0];
 	}
 

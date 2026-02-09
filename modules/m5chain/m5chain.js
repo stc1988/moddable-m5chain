@@ -22,7 +22,7 @@ export default class M5Chain {
 	constructor(options) {
 		const self = this;
 		this.debug = !!options?.debug;
-		this.pollingInterval = options.pollingInterval ?? 30
+		this.pollingInterval = options.pollingInterval ?? 30;
 		this.#serial = new Serial({
 			transmit: options?.transmit ?? device.I2C.default.data,
 			receive: options?.receive ?? device.I2C.default.clock,
@@ -32,7 +32,7 @@ export default class M5Chain {
 			onReadable: function (bytesReadable) {
 				if (bytesReadable >= 9 && bytesReadable < 256) {
 					const buffer = new Uint8Array(this.read());
-					if (this.debug) {
+					if (self.debug) {
 						trace("RX Packet => ");
 						self.#dumpPacket(buffer, bytesReadable);
 					}

@@ -72,6 +72,13 @@ class M5ChainDevice {
 	}
 }
 
-const withDeviceFeatures = (...features) => features.reduce((cls, f) => f(cls), M5ChainDevice);
-
+const withDeviceFeatures = (...features) =>
+	features.reduce((Base, feature) => {
+		const Derived = feature(Base);
+		Derived.CMD = {
+			...(Base.CMD ?? {}),
+			...(Derived.CMD ?? {}),
+		};
+		return Derived;
+	}, M5ChainDevice);
 export { M5ChainDevice, withDeviceFeatures };
