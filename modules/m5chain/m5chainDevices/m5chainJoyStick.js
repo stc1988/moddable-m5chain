@@ -57,6 +57,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 		};
 	}
 	async getJoystickMappedRange() {
+		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_RANGE, bus.cmdBuffer, 0);
 		return {
 			xMin: packet[6],

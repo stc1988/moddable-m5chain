@@ -83,12 +83,12 @@ export async function main() {
 	if (encoderDevice) {
 		let phase = 0;
 		const STEP = 1 / 36;
-		encoderDevice.onPoll = (value) => {
+		encoderDevice.onPoll = async(value) => {
 			trace(`Encoder Device ID\t ${encoderDevice.id}, encode value\t: ${value}\n`);
 			phase += value * STEP;
 			phase = ((phase % 1) + 1) % 1;
 			const { r, g, b } = hsvToRGB(phase, 1.0, 0.8);
-			encoderDevice.setLedColor(r, g, b);
+			await encoderDevice.setLedColor(r, g, b);
 		};
 	}
 
@@ -125,13 +125,13 @@ export async function main() {
 	}
 	const joystickDevice = deviceList.find((device) => device.type === M5ChainJoyStick.DEVICE_TYPE);
 	if (joystickDevice) {
-		joystickDevice.onPoll = (position) => {
+		joystickDevice.onPoll = async (position) => {
 			trace(`JoyStick Device ID\t: ${joystickDevice.id}, value\t: x:${position.x}\ty:${position.y}\n`);
 			const hue = norm(position.x);
 			const brightness = norm(-position.y);
 			const saturation = 1.0;
 			const { r, g, b } = hsvToRGB(hue, saturation, brightness);
-			joystickDevice.setLedColor(r, g, b);
+			await joystickDevice.setLedColor(r, g, b);
 		};
 	}
 }
