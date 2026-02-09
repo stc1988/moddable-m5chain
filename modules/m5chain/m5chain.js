@@ -22,6 +22,7 @@ export default class M5Chain {
 	constructor(options) {
 		const self = this;
 		this.debug = !!options?.debug;
+		this.pollingInterval = options.pollingInterval ?? 30
 		this.#serial = new Serial({
 			transmit: options?.transmit ?? device.I2C.default.data,
 			receive: options?.receive ?? device.I2C.default.clock,
@@ -161,7 +162,7 @@ export default class M5Chain {
 		this.running = true;
 		while (this.running) {
 			await this.pollDevices();
-			Timer.delay(1000);
+			Timer.delay(this.pollingInterval);
 		}
 	}
 
