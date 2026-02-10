@@ -6,6 +6,7 @@ class M5ChainDevice {
 	};
 	#bus;
 	#id;
+	#uuid;
 	constructor(bus, options) {
 		this.#bus = bus;
 		this.#id = options.id;
@@ -18,6 +19,12 @@ class M5ChainDevice {
 	}
 	get type() {
 		return this.constructor.DEVICE_TYPE;
+	}
+	get uuid() {
+		return this.#uuid;
+	}
+	async init() {
+		this.#uuid = await this.getUID();
 	}
 	//  UID_Type UID type
 	//  0: 4-byte UID

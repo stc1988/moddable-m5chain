@@ -73,65 +73,84 @@ export async function main() {
 		receive: config.m5chain.receive,
 		debug: false,
 	});
-	const deviceList = await m5chain.scan();
-	trace(`Connected ${deviceList.length} devices:\n`);
-	for (const device of deviceList) {
-		trace(`Device ID: ${device.id}, Type: ${device.type.toString(16)}\n`);
+
+	m5chain.onDeviceListChanged = async (devices) => {
+		trace("device list changed\n");
+
+		for (const device of devices) {
+			attachDevice(device);
+		}
+	};
+
+	m5chain.start();
+}
+
+function attachDevice(device) {
+	switch (device.type) {
+		case M5ChainEncoder.DEVICE_TYPE:
+			attachEncoder(device);
+			break;
+		case M5ChainAngle.DEVICE_TYPE:
+			attachAngle(device);
+			break;
+		case M5ChainKey.DEVICE_TYPE:
+			attachKey(device);
+			break;
+		case M5ChainJoyStick.DEVICE_TYPE:
+			attachJoyStick(device);
+			break;
 	}
+}
 
-	const encoderDevice = deviceList.find((device) => device.type === M5ChainEncoder.DEVICE_TYPE);
-	if (encoderDevice) {
-		let phase = 0;
-		const STEP = 1 / 36;
-		encoderDevice.onPoll = async(value) => {
-			trace(`Encoder Device ID\t ${encoderDevice.id}, encode value\t: ${value}\n`);
-			phase += value * STEP;
-			phase = ((phase % 1) + 1) % 1;
-			const { r, g, b } = hsvToRGB(phase, 1.0, 0.8);
-			await encoderDevice.setLedColor(r, g, b);
-		};
-	}
+function attachEncoder(device) {
+	let phase = 0;
+	const STEP = 1 / 36;
+	device.onPoll = async (value) => {
+		trace(`Encoder Device ID\t ${device.id}, encode value\t: ${value}\n`);
+		phase += value * STEP;
+		phase = ((phase % 1) + 1) % 1;
+		const { r, g, b } = hsvToRGB(phase, 1.0, 0.8);
+		await device.setLedColor(r, g, b);
+	};
+}
 
-	const angleDevice = deviceList.find((device) => device.type === M5ChainAngle.DEVICE_TYPE);
-	if (angleDevice) {
-		angleDevice.onPoll = async (value) => {
-			trace(`Angle Device ID\t: ${angleDevice.id}, angle value\t: ${value}\n`);
-			const { r, g, b } = hsvToRGB(value, 1.0, value);
-			await angleDevice.setLedColor(r, g, b);
-		};
-	}
+function attachAngle(device) {
+	device.onPoll = async (value) => {
+		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${value}\n`);
+		const { r, g, b } = hsvToRGB(value, 1.0, value);
+		await device.setLedColor(r, g, b);
+	};
+}
 
-	const keyDevice = deviceList.find((device) => device.type === M5ChainKey.DEVICE_TYPE);
-	if (keyDevice) {
-		let step = 0;
-		keyDevice.onKeyPressed = async (keyStatus) => {
-			trace(`Key Device ID\t: ${keyDevice.id}, Key Status\t: ${keyStatus}\n`);
-			if (keyStatus === 0) {
-				step = (step + 1) % 9;
-				const levels = [0.1, 0.5, 1];
-				const brightness = levels[step % 3];
-				const color = Math.floor(step / 3);
+function attachKey(device) {
+	let step = 0;
+	device.onKeyPressed = async (keyStatus) => {
+		trace(`Key Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
+		if (keyStatus === 0) {
+			step = (step + 1) % 9;
+			const levels = [0.1, 0.5, 1];
+			const brightness = levels[step % 3];
+			const color = Math.floor(step / 3);
 
-				if (color === 0) {
-					await keyDevice.setLedColor(255, 0, 0);
-				} else if (color === 1) {
-					await keyDevice.setLedColor(0, 255, 0);
-				} else {
-					await keyDevice.setLedColor(0, 0, 255);
-				}
-				await keyDevice.setLedBrightness(brightness);
+			if (color === 0) {
+				await device.setLedColor(255, 0, 0);
+			} else if (color === 1) {
+				await device.setLedColor(0, 255, 0);
+			} else {
+				await device.setLedColor(0, 0, 255);
 			}
-		};
-	}
-	const joystickDevice = deviceList.find((device) => device.type === M5ChainJoyStick.DEVICE_TYPE);
-	if (joystickDevice) {
-		joystickDevice.onPoll = async (position) => {
-			trace(`JoyStick Device ID\t: ${joystickDevice.id}, value\t: x:${position.x}\ty:${position.y}\n`);
-			const hue = norm(position.x);
-			const brightness = norm(-position.y);
-			const saturation = 1.0;
-			const { r, g, b } = hsvToRGB(hue, saturation, brightness);
-			await joystickDevice.setLedColor(r, g, b);
-		};
-	}
+			await device.setLedBrightness(brightness);
+		}
+	};
+}
+
+function attachJoyStick(device) {
+	device.onPoll = async (position) => {
+		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${position.x}\ty:${position.y}\n`);
+		const hue = norm(position.x);
+		const brightness = norm(-position.y);
+		const saturation = 1.0;
+		const { r, g, b } = hsvToRGB(hue, saturation, brightness);
+		await device.setLedColor(r, g, b);
+	};
 }

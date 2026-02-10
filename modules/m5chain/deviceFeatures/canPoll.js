@@ -1,11 +1,11 @@
-const canPoll = (Base) =>
+const CanPoll = (Base) =>
 	class extends Base {
 		#onPoll = null;
 		#lastPollValue;
 
 		set onPoll(fn) {
 			this.#onPoll = fn;
-			this.bus.updatePollingState();
+			this.bus._notifyPollingStateChanged();
 		}
 
 		get onPoll() {
@@ -24,4 +24,4 @@ const canPoll = (Base) =>
 		}
 	};
 
-export default canPoll;
+export default CanPoll;

@@ -11,13 +11,16 @@ export default class M5Chain {
 		RESET: 0xff /**< Reset command. */,
 	};
 
+	onDeviceListChanged;
+
 	#serial;
 	#mutex = Promise.resolve();
 	cmdBuffer = new Uint8Array(256);
 	#sendBuffer = new Uint8Array(256);
 	#receiveResolve;
 	#sendCmd;
-	deviceList = [];
+	#deviceList = [];
+	#started = false;
 
 	constructor(options) {
 		const self = this;
@@ -65,14 +68,15 @@ export default class M5Chain {
 						}
 					} else if (packetCmd === 0xe0) {
 						// M5ChainDeviceCmd
-						const device = self.deviceList[packetId - 1];
+						const device = self.#deviceList[packetId - 1];
 						if (device) {
 							device.onDispatchEvent?.(buffer);
 						} else {
 							trace(`Unknown device ID: ${packetId}\n`);
 						}
-					} else if (packetCmd === M5Chain.CMD.CHAIN_ENUM_PLEASE) {
-						trace("change device\n");
+					} else if (packetCmd === M5Chain.CMD.ENUM_PLEASE) {
+						trace("CHAIN_ENUM_PLEASE received\n");
+						self.#handleEnumPlease();
 					} else {
 						trace(`Unknown command: 0x${packetCmd.toString(16).toUpperCase().padStart(2, "0")}\n`);
 					}
@@ -157,17 +161,25 @@ export default class M5Chain {
 		});
 	}
 
-	// Polling connected device that has onPoll
 	async start() {
+		if (this.#started) return;
+		this.#started = true;
+
+		await this.#scan();
+		this.#notifyDeviceListChanged();
+		this.#updatePollingState();
+	}
+
+	async #pollLoop() {
 		this.running = true;
 		while (this.running) {
-			await this.pollDevices();
+			await this.#pollDevices();
 			Timer.delay(this.pollingInterval);
 		}
 	}
 
-	async pollDevices() {
-		for (const device of this.deviceList) {
+	async #pollDevices() {
+		for (const device of this.#deviceList) {
 			// device must support polling feature and have active listener
 			if (!device?.hasOnPoll || typeof device.hasOnPoll !== "function") {
 				continue;
@@ -187,15 +199,21 @@ export default class M5Chain {
 		}
 	}
 
-	updatePollingState() {
-		const active = this.deviceList.some((d) => typeof d?.hasOnPoll === "function" && d.hasOnPoll());
-		if (active && !this.running) {
-			this.start();
-		}
-		if (!active && this.running) this.running = false;
+	// internal (not for app)
+	_notifyPollingStateChanged() {
+		this.#updatePollingState();
 	}
+	#updatePollingState() {
+		const active = this.#deviceList.some((d) => typeof d?.hasOnPoll === "function" && d.hasOnPoll());
 
-	// getEnumPleaseNum
+		if (active && !this.running) {
+			this.#pollLoop();
+		}
+
+		if (!active && this.running) {
+			this.running = false;
+		}
+	}
 
 	async getDeviceType(id) {
 		const packet = await this.sendAndWait(id, M5Chain.CMD.GET_DEVICE_TYPE, this.cmdBuffer, 0);
@@ -215,6 +233,23 @@ export default class M5Chain {
 		return true;
 	}
 
+	async #scan() {
+		this.#deviceList = [];
+		if (await this.isDeviceConnected()) {
+			const deviceNum = await this.getDeviceNum();
+			const deviceList = await this.getDeviceList(deviceNum);
+			for (let i = 0; i < deviceList.length; i++) {
+				const device = createM5ChainDevice(this, {
+					id: i + 1,
+					type: deviceList[i],
+				});
+				await device.init();
+				this.#deviceList.push(device);
+			}
+		}
+		return this.#deviceList;
+	}
+
 	async getDeviceList(deviceNum) {
 		const deviceList = [];
 		for (let i = 0; i < deviceNum; i++) {
@@ -224,19 +259,25 @@ export default class M5Chain {
 		return deviceList;
 	}
 
-	async scan() {
-		this.deviceList = [];
-		if (await this.isDeviceConnected()) {
-			const deviceNum = await this.getDeviceNum();
-			const deviceList = await this.getDeviceList(deviceNum);
-			for (let i = 0; i < deviceList.length; i++) {
-				const device = createM5ChainDevice(this, {
-					id: i + 1,
-					type: deviceList[i],
-				});
-				this.deviceList.push(device);
+	async #handleEnumPlease() {
+		await this.withLock(async () => {
+			this.running = false;
+
+			for (const d of this.#deviceList) {
+				d.onDisconnected?.();
 			}
-		}
-		return this.deviceList;
+
+			await this.#scan();
+			this.#notifyDeviceListChanged();
+			this.#updatePollingState();
+		});
+	}
+
+	#notifyDeviceListChanged() {
+		this.onDeviceListChanged?.(this.#deviceList);
+	}
+
+	get devices() {
+		return this.#deviceList;
 	}
 }
