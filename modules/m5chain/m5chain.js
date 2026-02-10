@@ -22,6 +22,9 @@ export default class M5Chain {
 	#receiveTimeoutId;
 	#receiveMatch;
 	#sendCmd;
+	#sendId;
+	#rxBuffer = new Uint8Array(512);
+	#rxLength = 0;
 	#deviceList = [];
 	#started = false;
 
@@ -36,53 +39,94 @@ export default class M5Chain {
 			format: "buffer",
 			port: 1,
 			onReadable: function (bytesReadable) {
-				if (bytesReadable >= 9 && bytesReadable < 256) {
-					const buffer = new Uint8Array(this.read());
-					if (self.debug) {
-						trace("RX Packet => ");
-						self.#dumpPacket(buffer, bytesReadable);
+				const chunk = new Uint8Array(this.read(bytesReadable));
+				if (chunk.length === 0) return;
+
+				// Append to rx buffer (grow if needed)
+				if (self.#rxLength + chunk.length > self.#rxBuffer.length) {
+					const next = new Uint8Array(Math.max(self.#rxBuffer.length * 2, self.#rxLength + chunk.length));
+					next.set(self.#rxBuffer.subarray(0, self.#rxLength));
+					self.#rxBuffer = next;
+				}
+				self.#rxBuffer.set(chunk, self.#rxLength);
+				self.#rxLength += chunk.length;
+
+				// Parse as many complete frames as possible
+				while (self.#rxLength >= 9) {
+					// Seek header 0xAA 0x55
+					if (self.#rxBuffer[0] !== 0xaa || self.#rxBuffer[1] !== 0x55) {
+						let idx = 1;
+						for (; idx + 1 < self.#rxLength; idx++) {
+							if (self.#rxBuffer[idx] === 0xaa && self.#rxBuffer[idx + 1] === 0x55) break;
+						}
+						// Drop bytes before the next possible header
+						self.#rxBuffer.copyWithin(0, idx, self.#rxLength);
+						self.#rxLength -= idx;
+						if (self.#rxLength < 9) break;
 					}
 
-					if (
-						buffer[0] !== 0xaa ||
-						buffer[1] !== 0x55 ||
-						buffer[bytesReadable - 2] !== 0x55 ||
-						buffer[bytesReadable - 1] !== 0xaa
-					) {
-						trace("Invalid packet header/footer.\n");
-						return;
-					}
-					const length = (buffer[2] & 0xff) | ((buffer[3] & 0xff) << 8);
+					const length = (self.#rxBuffer[2] & 0xff) | ((self.#rxBuffer[3] & 0xff) << 8);
 					const packetSize = 4 + length + 2;
-					const crc8 = self.#calculateCRC(buffer, packetSize);
-					if (crc8 !== buffer[packetSize - 3]) {
-						Error("crc8 error\n");
-						return;
+
+					// Sanity check: header(2)+len(2)+payload+footer(2). Length includes id/cmd/data/crc.
+					if (packetSize < 9 || packetSize > 300) {
+						// Corrupted length; drop one byte and retry
+						self.#rxBuffer.copyWithin(0, 1, self.#rxLength);
+						self.#rxLength -= 1;
+						continue;
 					}
-					const packetId = buffer[4];
-					const packetCmd = buffer[5];
+
+					if (self.#rxLength < packetSize) {
+						// Wait for more bytes
+						break;
+					}
+
+					// Footer check
+					if (self.#rxBuffer[packetSize - 2] !== 0x55 || self.#rxBuffer[packetSize - 1] !== 0xaa) {
+						// Not a valid frame; drop one byte and retry
+						self.#rxBuffer.copyWithin(0, 1, self.#rxLength);
+						self.#rxLength -= 1;
+						continue;
+					}
+
+					const frame = self.#rxBuffer.slice(0, packetSize);
+					// Consume this frame
+					self.#rxBuffer.copyWithin(0, packetSize, self.#rxLength);
+					self.#rxLength -= packetSize;
+
+					if (self.debug) {
+						trace("RX Packet => ");
+						self.#dumpPacket(frame, packetSize);
+					}
+
+					const crc8 = self.#calculateCRC(frame, packetSize);
+					if (crc8 !== frame[packetSize - 3]) {
+						trace("crc8 error\n");
+						continue;
+					}
+
+					const packetId = frame[4];
+					const packetCmd = frame[5];
 
 					const shouldResolve =
 						!!self.#receiveResolve &&
-						(self.#receiveMatch ? self.#receiveMatch(buffer, bytesReadable) : packetCmd === self.#sendCmd);
+						(self.#receiveMatch ? self.#receiveMatch(frame, packetSize) : packetCmd === self.#sendCmd);
 
 					if (shouldResolve) {
-						// Resolve the in-flight request and clear pending state.
-						self.#receiveResolve(buffer);
+						self.#receiveResolve(frame);
 						self.#clearPendingWait();
-						return;
-					} else if (packetCmd === 0xe0) {
-						// M5ChainDeviceCmd
+						continue;
+					}
+
+					if (packetCmd === 0xe0) {
 						const device = self.#deviceList[packetId - 1];
 						if (device) {
-							device.onDispatchEvent?.(buffer);
+							device.onDispatchEvent?.(frame);
 						} else {
 							trace(`Unknown device ID: ${packetId}\n`);
 						}
 					} else if (packetCmd === M5Chain.CMD.ENUM_PLEASE) {
 						trace("CHAIN_ENUM_PLEASE received\n");
-						// ENUM_PLEASE can arrive while we're waiting for a different response.
-						// Abort the in-flight request so the mutex is released and we can rescan.
 						self.#abortPendingWait("aborted by ENUM_PLEASE");
 						void self.#handleEnumPlease();
 					} else {
@@ -164,13 +208,15 @@ export default class M5Chain {
 		this.#receiveReject = null;
 		this.#receiveMatch = null;
 		this.#sendCmd = null;
+		this.#sendId = null;
 	}
 
 	#abortPendingWait(reason) {
-		// Reject any in-flight request so the lock can be released.
-		if (this.#receiveReject) {
+		// Resolve the in-flight request with an abort marker so the lock can be released
+		// without producing an unhandled rejection.
+		if (this.#receiveResolve) {
 			try {
-				this.#receiveReject(new Error(reason));
+				this.#receiveResolve({ __m5chain: "abort", reason });
 			} catch {
 				// ignore
 			}
@@ -195,10 +241,11 @@ export default class M5Chain {
 
 			if (timeoutMs > 0) {
 				this.#receiveTimeoutId = Timer.set(() => {
-					// Timeout must release the lock (via rejection) and clear pending state.
-					if (this.#receiveReject) {
+					// Timeout must release the lock and clear pending state.
+					// Resolve with a timeout marker to avoid an unhandled rejection break in the debugger.
+					if (this.#receiveResolve) {
 						try {
-							this.#receiveReject(new Error(`waitForPacket timeout (cmd=0x${cmd.toString(16)})`));
+							this.#receiveResolve({ __m5chain: "timeout", id: this.#sendId ?? "?", cmd });
 						} catch {
 							// ignore
 						}
@@ -210,9 +257,30 @@ export default class M5Chain {
 	}
 
 	async sendAndWait(id, cmd, data, size, options = undefined) {
+		const baseMatch = options?.match;
+		const match = (buffer, bytesReadable) => {
+			// Always match both id and cmd to avoid resolving the wrong in-flight request.
+			if (buffer[4] !== id) return false;
+			if (buffer[5] !== cmd) return false;
+			return typeof baseMatch === "function" ? baseMatch(buffer, bytesReadable) : true;
+		};
+
 		return this.withLock(async () => {
+			this.#sendId = id;
 			this.sendPacket(id, cmd, data, size);
-			return await this.waitForPacket(cmd, options ?? {});
+			const result = await this.waitForPacket(cmd, { ...(options ?? {}), match });
+			if (result && result.__m5chain === "timeout") {
+				throw new Error(
+					`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd
+						.toString(16)
+						.toUpperCase()
+						.padStart(2, "0")})`,
+				);
+			}
+			if (result && result.__m5chain === "abort") {
+				throw new Error(`waitForPacket aborted (${result.reason})`);
+			}
+			return result;
 		});
 	}
 
