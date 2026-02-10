@@ -18,6 +18,9 @@ export default class M5Chain {
 	cmdBuffer = new Uint8Array(256);
 	#sendBuffer = new Uint8Array(256);
 	#receiveResolve;
+	#receiveReject;
+	#receiveTimeoutId;
+	#receiveMatch;
 	#sendCmd;
 	#deviceList = [];
 	#started = false;
@@ -59,13 +62,15 @@ export default class M5Chain {
 					const packetId = buffer[4];
 					const packetCmd = buffer[5];
 
-					if (packetCmd === self.#sendCmd) {
-						// M5ChainCmd
-						if (self.#receiveResolve) {
-							self.#receiveResolve(buffer);
-							self.#receiveResolve = null;
-							self.#sendCmd = null;
-						}
+					const shouldResolve =
+						!!self.#receiveResolve &&
+						(self.#receiveMatch ? self.#receiveMatch(buffer, bytesReadable) : packetCmd === self.#sendCmd);
+
+					if (shouldResolve) {
+						// Resolve the in-flight request and clear pending state.
+						self.#receiveResolve(buffer);
+						self.#clearPendingWait();
+						return;
 					} else if (packetCmd === 0xe0) {
 						// M5ChainDeviceCmd
 						const device = self.#deviceList[packetId - 1];
@@ -76,7 +81,10 @@ export default class M5Chain {
 						}
 					} else if (packetCmd === M5Chain.CMD.ENUM_PLEASE) {
 						trace("CHAIN_ENUM_PLEASE received\n");
-						self.#handleEnumPlease();
+						// ENUM_PLEASE can arrive while we're waiting for a different response.
+						// Abort the in-flight request so the mutex is released and we can rescan.
+						self.#abortPendingWait("aborted by ENUM_PLEASE");
+						void self.#handleEnumPlease();
 					} else {
 						trace(`Unknown command: 0x${packetCmd.toString(16).toUpperCase().padStart(2, "0")}\n`);
 					}
@@ -147,17 +155,64 @@ export default class M5Chain {
 		this.#serial.write(sendBuffer.subarray(0, sendBufferSize));
 	}
 
-	async waitForPacket(cmd) {
-		return new Promise((resolve) => {
+	#clearPendingWait() {
+		if (this.#receiveTimeoutId) {
+			Timer.clear(this.#receiveTimeoutId);
+			this.#receiveTimeoutId = null;
+		}
+		this.#receiveResolve = null;
+		this.#receiveReject = null;
+		this.#receiveMatch = null;
+		this.#sendCmd = null;
+	}
+
+	#abortPendingWait(reason) {
+		// Reject any in-flight request so the lock can be released.
+		if (this.#receiveReject) {
+			try {
+				this.#receiveReject(new Error(reason));
+			} catch {
+				// ignore
+			}
+		}
+		this.#clearPendingWait();
+	}
+
+	async waitForPacket(cmd, options = {}) {
+		const timeoutMs = options.timeoutMs ?? 800;
+		const match = options.match;
+
+		// Defensive: if a previous wait is still pending, abort it to avoid wedging the mutex.
+		if (this.#receiveResolve || this.#receiveReject) {
+			this.#abortPendingWait("waitForPacket overlapped");
+		}
+
+		return new Promise((resolve, reject) => {
 			this.#sendCmd = cmd;
 			this.#receiveResolve = resolve;
+			this.#receiveReject = reject;
+			this.#receiveMatch = typeof match === "function" ? match : null;
+
+			if (timeoutMs > 0) {
+				this.#receiveTimeoutId = Timer.set(() => {
+					// Timeout must release the lock (via rejection) and clear pending state.
+					if (this.#receiveReject) {
+						try {
+							this.#receiveReject(new Error(`waitForPacket timeout (cmd=0x${cmd.toString(16)})`));
+						} catch {
+							// ignore
+						}
+					}
+					this.#clearPendingWait();
+				}, timeoutMs);
+			}
 		});
 	}
 
-	async sendAndWait(id, cmd, data, size) {
+	async sendAndWait(id, cmd, data, size, options = undefined) {
 		return this.withLock(async () => {
 			this.sendPacket(id, cmd, data, size);
-			return await this.waitForPacket(cmd);
+			return await this.waitForPacket(cmd, options ?? {});
 		});
 	}
 
@@ -192,9 +247,13 @@ export default class M5Chain {
 				continue;
 			}
 
-			const value = await device.polling();
-			if (value !== undefined) {
-				device.dispatchOnPoll?.(value);
+			try {
+				const value = await device.polling();
+				if (value !== undefined) {
+					device.dispatchOnPoll?.(value);
+				}
+			} catch (e) {
+				trace(`polling failed (id=${device?.id ?? "?"}): ${e?.message ?? e}\n`);
 			}
 		}
 	}
@@ -229,23 +288,32 @@ export default class M5Chain {
 	}
 
 	async isDeviceConnected() {
-		await this.sendAndWait(0xff, M5Chain.CMD.HEARTBEAT, this.cmdBuffer, 0);
-		return true;
+		try {
+			await this.sendAndWait(0xff, M5Chain.CMD.HEARTBEAT, this.cmdBuffer, 0, { timeoutMs: 300 });
+			return true;
+		} catch {
+			return false;
+		}
 	}
 
 	async #scan() {
 		this.#deviceList = [];
-		if (await this.isDeviceConnected()) {
-			const deviceNum = await this.getDeviceNum();
-			const deviceList = await this.getDeviceList(deviceNum);
-			for (let i = 0; i < deviceList.length; i++) {
-				const device = createM5ChainDevice(this, {
-					id: i + 1,
-					type: deviceList[i],
-				});
-				await device.init();
-				this.#deviceList.push(device);
+		try {
+			if (await this.isDeviceConnected()) {
+				const deviceNum = await this.getDeviceNum();
+				const deviceList = await this.getDeviceList(deviceNum);
+				for (let i = 0; i < deviceList.length; i++) {
+					const device = createM5ChainDevice(this, {
+						id: i + 1,
+						type: deviceList[i],
+					});
+					await device.init();
+					this.#deviceList.push(device);
+				}
 			}
+		} catch (e) {
+			trace(`scan failed: ${e?.message ?? e}\n`);
+			this.#deviceList = [];
 		}
 		return this.#deviceList;
 	}
@@ -260,13 +328,14 @@ export default class M5Chain {
 	}
 
 	async #handleEnumPlease() {
+		// Notify outside the mutex to avoid re-entrancy deadlocks.
+		const oldDevices = [...this.#deviceList];
+		for (const d of oldDevices) {
+			d.onDisconnected?.();
+		}
+
 		await this.withLock(async () => {
 			this.running = false;
-
-			for (const d of this.#deviceList) {
-				d.onDisconnected?.();
-			}
-
 			await this.#scan();
 			this.#notifyDeviceListChanged();
 			this.#updatePollingState();
