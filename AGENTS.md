@@ -164,3 +164,4 @@ When asking for changes, the following expectations apply:
 - Please commit and report in clean, sensible units.
 - Breaking API changes are acceptable.
 - If code changes, update documentation accordingly.
+- For implementation changes, run `npm run format` and `npm run lint`, then address reported lint findings.
