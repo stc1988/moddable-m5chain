@@ -18,31 +18,31 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 
 ### Core
 
-- `modules/m5chain/m5chain.js` (bus communication, scan/re-scan, poll loop, dispatch)
-- `modules/m5chain/createM5ChainDevice.js` (device type -> class mapping)
-- `modules/m5chain/m5chainDevices/m5chainDevice.js` (base class + feature composition)
-- `modules/m5chain/m5chainDevices/m5chainBus.js` (bus-typed device placeholder)
+- `src/m5chain/m5chain.js` (bus communication, scan/re-scan, poll loop, dispatch)
+- `src/m5chain/createM5ChainDevice.js` (device type -> class mapping)
+- `src/m5chain/m5chainDevices/m5chainDevice.js` (base class + feature composition)
+- `src/m5chain/m5chainDevices/m5chainBus.js` (bus-typed device placeholder)
 
 ### Device Types
 
-- `modules/m5chain/m5chainDevices/m5chainEncoder.js`
-- `modules/m5chain/m5chainDevices/m5chainAngle.js`
-- `modules/m5chain/m5chainDevices/m5chainKey.js`
-- `modules/m5chain/m5chainDevices/m5chainJoyStick.js`
-- `modules/m5chain/m5chainDevices/m5chainToF.js`
+- `src/m5chain/m5chainDevices/m5chainEncoder.js`
+- `src/m5chain/m5chainDevices/m5chainAngle.js`
+- `src/m5chain/m5chainDevices/m5chainKey.js`
+- `src/m5chain/m5chainDevices/m5chainJoyStick.js`
+- `src/m5chain/m5chainDevices/m5chainToF.js`
 
 ### Feature Mixins
 
-- `modules/m5chain/deviceFeatures/hasLed.js`
-- `modules/m5chain/deviceFeatures/hasKey.js`
-- `modules/m5chain/deviceFeatures/canPoll.js`
+- `src/m5chain/deviceFeatures/hasLed.js`
+- `src/m5chain/deviceFeatures/hasKey.js`
+- `src/m5chain/deviceFeatures/canPoll.js`
 
 ### Manifests / Config
 
-- `modules/m5chain/manifest.json`
-- `modules/m5chain/manifest_module.json`
-- `modules/m5chain/manifest_include.json`
-- `modules/m5chain/manifest_chain_base.json`
+- `src/m5chain/manifest.json`
+- `src/m5chain/manifest_module.json`
+- `src/m5chain/manifest_include.json`
+- `src/m5chain/manifest_chain_base.json`
 - `examples/manifest.json`
 - `examples/main.js`
 

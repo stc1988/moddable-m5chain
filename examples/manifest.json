@@ -2,7 +2,7 @@
 	"include": [
 		"$(MODDABLE)/examples/manifest_base.json",
 		"$(MODULES)/base/modules/manifest.json",
-		"../modules/m5chain/manifest_include.json"
+		"../src/m5chain/manifest_include.json"
 	],
 	"defines": {
 		"XS_MODS": 1,
