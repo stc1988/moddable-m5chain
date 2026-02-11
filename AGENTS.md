@@ -146,3 +146,12 @@ m5chain.onDeviceListChanged = (devices) => {
 
 m5chain.start();
 ```
+
+## Implementation Requests
+
+When asking for changes, the following expectations apply:
+
+- Refactors are welcome.
+- Please commit and report in clean, sensible units.
+- Breaking API changes are acceptable.
+- If code changes, update documentation accordingly.
