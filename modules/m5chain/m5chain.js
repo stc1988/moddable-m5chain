@@ -20,6 +20,9 @@ export default class M5Chain {
 	#receiveResolve;
 	#receiveReject;
 	#receiveTimeoutId;
+	#enumPending;
+	#enumTimer;
+	#enumRunning;
 	#receiveMatch;
 	#sendCmd;
 	#sendId;
@@ -95,13 +98,13 @@ export default class M5Chain {
 					self.#rxLength -= packetSize;
 
 					if (self.debug) {
-						trace("RX Packet => ");
+						self.#log("RX Packet =>");
 						self.#dumpPacket(frame, packetSize);
 					}
 
 					const crc8 = self.#calculateCRC(frame, packetSize);
 					if (crc8 !== frame[packetSize - 3]) {
-						trace("crc8 error\n");
+						self.#log("crc8 error");
 						continue;
 					}
 
@@ -123,18 +126,28 @@ export default class M5Chain {
 						if (device) {
 							device.onDispatchEvent?.(frame);
 						} else {
-							trace(`Unknown device ID: ${packetId}\n`);
+							self.#log(`Unknown device ID: ${packetId}`);
 						}
 					} else if (packetCmd === M5Chain.CMD.ENUM_PLEASE) {
-						trace("CHAIN_ENUM_PLEASE received\n");
-						self.#abortPendingWait("aborted by ENUM_PLEASE");
-						void self.#handleEnumPlease();
+						self.#scheduleEnum();
 					} else {
-						trace(`Unknown command: 0x${packetCmd.toString(16).toUpperCase().padStart(2, "0")}\n`);
+						// Late or unmatched response (e.g., response arrived after wait cleared).
+						// Silently ignore unless debug is enabled.
+						if (self.debug) {
+							self.#log(
+								`Late or unmatched response: id=${packetId}, cmd=0x${packetCmd
+									.toString(16)
+									.toUpperCase()
+									.padStart(2, "0")}`,
+							);
+						}
 					}
 				}
 			},
 		});
+	}
+	#log(message, level = "INFO") {
+		trace(`[m5chain][${level}] ${message}\n`);
 	}
 	async lock() {
 		let unlock;
@@ -157,12 +170,11 @@ export default class M5Chain {
 	}
 
 	#dumpPacket(buffer, size) {
-		trace(`Packet dump(${size} bytes):\n\t-- `);
+		let line = `Packet dump(${size} bytes):`;
 		for (let i = 0; i < size; i++) {
-			trace(`0x${buffer[i].toString(16).toUpperCase().padStart(2, "0")} `);
-			if ((i + 1) % 16 === 0) trace("\n\t-- ");
+			line += ` 0x${buffer[i].toString(16).toUpperCase().padStart(2, "0")}`;
 		}
-		trace("\n");
+		trace(`[m5chain] ${line}\n`);
 	}
 
 	#calculateCRC(buffer, size) {
@@ -192,7 +204,7 @@ export default class M5Chain {
 		sendBuffer[sendBufferSize - 1] = 0xaa;
 
 		if (this.debug) {
-			trace("TX Packet => ");
+			this.#log("TX Packet =>");
 			this.#dumpPacket(sendBuffer, sendBufferSize);
 		}
 
@@ -222,6 +234,22 @@ export default class M5Chain {
 			}
 		}
 		this.#clearPendingWait();
+	}
+
+	#scheduleEnum() {
+		if (this.#enumPending) return;
+
+		this.#enumPending = true;
+
+		if (this.#enumTimer) {
+			Timer.clear(this.#enumTimer);
+		}
+
+		this.#enumTimer = Timer.set(() => {
+			this.#enumPending = false;
+			this.#enumTimer = null;
+			void this.#handleEnumPlease();
+		}, 500);
 	}
 
 	async waitForPacket(cmd, options = {}) {
@@ -271,10 +299,7 @@ export default class M5Chain {
 			const result = await this.waitForPacket(cmd, { ...(options ?? {}), match });
 			if (result && result.__m5chain === "timeout") {
 				throw new Error(
-					`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd
-						.toString(16)
-						.toUpperCase()
-						.padStart(2, "0")})`,
+					`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd.toString(16).toUpperCase().padStart(2, "0")})`,
 				);
 			}
 			if (result && result.__m5chain === "abort") {
@@ -321,7 +346,7 @@ export default class M5Chain {
 					device.dispatchOnPoll?.(value);
 				}
 			} catch (e) {
-				trace(`polling failed (id=${device?.id ?? "?"}): ${e?.message ?? e}\n`);
+				this.#log(`polling failed (id=${device?.id ?? "?"}): ${e?.message ?? e}`);
 			}
 		}
 	}
@@ -365,6 +390,7 @@ export default class M5Chain {
 	}
 
 	async #scan() {
+		this.#log("scan start");
 		this.#deviceList = [];
 		try {
 			if (await this.isDeviceConnected()) {
@@ -377,10 +403,13 @@ export default class M5Chain {
 					});
 					await device.init();
 					this.#deviceList.push(device);
+					this.#log(
+						`found device id=${device.id ?? "?"}, type=0x${(device.type ?? 0).toString(16).toUpperCase()} uuid=${device.uuid}`,
+					);
 				}
 			}
 		} catch (e) {
-			trace(`scan failed: ${e?.message ?? e}\n`);
+			this.#log(`scan failed: ${e?.message ?? e}`);
 			this.#deviceList = [];
 		}
 		return this.#deviceList;
@@ -396,18 +425,23 @@ export default class M5Chain {
 	}
 
 	async #handleEnumPlease() {
-		// Notify outside the mutex to avoid re-entrancy deadlocks.
+		if (this.#enumRunning) return;
+		this.#enumRunning = true;
+		this.#log(`handleEnumPlease`)
+
 		const oldDevices = [...this.#deviceList];
 		for (const d of oldDevices) {
 			d.onDisconnected?.();
 		}
 
-		await this.withLock(async () => {
-			this.running = false;
-			await this.#scan();
-			this.#notifyDeviceListChanged();
-			this.#updatePollingState();
-		});
+		this.running = false;
+
+		await this.#scan();
+
+		this.#notifyDeviceListChanged();
+		this.#updatePollingState();
+
+		this.#enumRunning = false;
 	}
 
 	#notifyDeviceListChanged() {
