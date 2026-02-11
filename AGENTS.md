@@ -56,6 +56,7 @@ This document is developer‑ and AI‑oriented overview of the repository. It s
 
 - `examples/basic/mod.js`
 - `examples/led/mod.js`
+- `examples/device-list-watch/mod.js`
 
 ## Architecture Summary
 

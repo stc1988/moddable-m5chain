@@ -1,0 +1,10 @@
+{
+	"include": [
+		"$(MODDABLE)/examples/manifest_mod.json",
+		"../../modules/m5chain/manifest_module.json",
+		"../../modules/m5chain/manifest_chain_base.json"
+	],
+	"modules": {
+		"*": ["./mod"]
+	}
+}
