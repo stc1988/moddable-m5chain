@@ -24,6 +24,7 @@ export default class M5Chain {
 	#enumTimer;
 	#enumRunning;
 	#receiveMatch;
+	#pollFailureCount = 0;
 	#sendCmd;
 	#sendId;
 	#rxBuffer = new Uint8Array(512);
@@ -328,25 +329,29 @@ export default class M5Chain {
 
 	async #pollDevices() {
 		for (const device of this.#deviceList) {
-			// device must support polling feature and have active listener
-			if (!device?.hasOnPoll || typeof device.hasOnPoll !== "function") {
-				continue;
-			}
-			if (!device.hasOnPoll()) {
-				continue;
-			}
-
-			if (typeof device.polling !== "function") {
+			if (!device?.hasOnPoll?.() || typeof device.polling !== "function") {
 				continue;
 			}
 
 			try {
 				const value = await device.polling();
+				this.#pollFailureCount = 0; // 成功でリセット
+
 				if (value !== undefined) {
 					device.dispatchOnPoll?.(value);
 				}
-			} catch (e) {
-				this.#log(`polling failed (id=${device?.id ?? "?"}): ${e?.message ?? e}`);
+			} catch (_e) {
+				this.#pollFailureCount++;
+				this.#log(`polling failed (count=${this.#pollFailureCount})`);
+
+				if (this.#pollFailureCount >= 3) {
+					this.#log("All devices considered disconnected", "WARN");
+
+					this.running = false;
+					this.#deviceList = [];
+					this.#notifyDeviceListChanged();
+					return;
+				}
 			}
 		}
 	}
@@ -427,7 +432,7 @@ export default class M5Chain {
 	async #handleEnumPlease() {
 		if (this.#enumRunning) return;
 		this.#enumRunning = true;
-		this.#log(`handleEnumPlease`)
+		this.#log(`handleEnumPlease`);
 
 		const oldDevices = [...this.#deviceList];
 		for (const d of oldDevices) {
