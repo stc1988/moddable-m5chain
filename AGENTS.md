@@ -1,26 +1,27 @@
 # moddable-m5chain (Developer/AI Guide)
 
-This document is developer‑ and AI‑oriented overview of the repository. It summarizes the purpose, structure, and core runtime sequences. Mermaid diagrams are included where they add clarity.
+This document is a developer- and AI-oriented overview of the repository. It summarizes current structure and runtime behavior based on the implementation in this repo.
 
 ## Overview
 
-`moddable-m5chain` is a Moddable SDK module for controlling M5Chain devices over a serial bus. It handles device enumeration, initialization, polling, and event dispatch, then exposes device‑specific APIs via feature mixins.
+`moddable-m5chain` is a Moddable SDK module for controlling M5Chain devices over a UART bus. It handles scanning, initialization, polling, and event dispatch, then exposes device-specific APIs via feature mixins.
 
 ## Key Features
 
-- Unified packet framing via `sendPacket` / `waitForPacket`
-- Automatic enumeration and re‑enumeration (`ENUM_PLEASE`)
-- Device instantiation by type (`createM5ChainDevice`)
-- Feature mixins: `HasLed`, `HasKey`, `CanPoll`
-- Polling loop only runs while at least one device has an active `onPoll` listener
+- Packet framing + parsing via `sendPacket` / `waitForPacket`
+- Type-based device instantiation via `createM5ChainDevice`
+- Automatic re-scan when `ENUM_PLEASE (0xFC)` arrives (debounced)
+- Feature composition via `withDeviceFeatures(...)`
+- Poll loop runs only while at least one device has `onPoll` set
 
 ## Repository Structure
 
 ### Core
 
-- `modules/m5chain/m5chain.js`
-- `modules/m5chain/createM5ChainDevice.js`
-- `modules/m5chain/m5chainDevices/m5chainDevice.js`
+- `modules/m5chain/m5chain.js` (bus communication, scan/re-scan, poll loop, dispatch)
+- `modules/m5chain/createM5ChainDevice.js` (device type -> class mapping)
+- `modules/m5chain/m5chainDevices/m5chainDevice.js` (base class + feature composition)
+- `modules/m5chain/m5chainDevices/m5chainBus.js` (bus-typed device placeholder)
 
 ### Device Types
 
@@ -30,16 +31,6 @@ This document is developer‑ and AI‑oriented overview of the repository. It s
 - `modules/m5chain/m5chainDevices/m5chainJoyStick.js`
 - `modules/m5chain/m5chainDevices/m5chainToF.js`
 
-### Device Protocol PDFs
-
-| Device | One‑line Summary | Protocol PDF |
-| --- | --- | --- |
-| Encoder | Rotary encoder with RGB LED + key + polling support | [M5Stack-Chain-Encoder-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1200/M5Stack-Chain-Encoder-Protocol-EN.pdf) |
-| Angle | Angle sensor with RGB LED + polling support | [M5Stack-Chain-Angle-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1197/M5Stack-Chain-Angle-Protocol-EN.pdf) |
-| Key | Single key with RGB LED | [M5Stack-Chain-Key-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1192/M5Stack-Chain-Key-Protocol-EN.pdf) |
-| JoyStick | 2‑axis joystick with RGB LED + key + polling support | [M5Stack-Chain-Joystick-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1191/M5Stack-Chain-Joystick-Protocol-EN.pdf) |
-| ToF | Time‑of‑Flight distance sensor | [M5Stack-Chain-ToF-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1199/M5Stack-Chain-ToF-Protocol-EN.pdf) |
-
 ### Feature Mixins
 
 - `modules/m5chain/deviceFeatures/hasLed.js`
@@ -48,87 +39,104 @@ This document is developer‑ and AI‑oriented overview of the repository. It s
 
 ### Manifests / Config
 
+- `modules/m5chain/manifest.json`
 - `modules/m5chain/manifest_module.json`
 - `modules/m5chain/manifest_include.json`
 - `modules/m5chain/manifest_chain_base.json`
+- `examples/manifest.json`
+- `examples/main.js`
 
-### Examples
+### Examples (current)
 
 - `examples/basic/mod.js`
 - `examples/led/mod.js`
-- `examples/device-list-watch/mod.js`
+
+### Device Protocol PDFs
+
+| Device | One-line Summary | Protocol PDF |
+| --- | --- | --- |
+| Encoder | Rotary encoder with RGB LED + key + polling support | [M5Stack-Chain-Encoder-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1200/M5Stack-Chain-Encoder-Protocol-EN.pdf) |
+| Angle | Angle sensor with RGB LED + polling support | [M5Stack-Chain-Angle-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1197/M5Stack-Chain-Angle-Protocol-EN.pdf) |
+| Key | Single key with RGB LED | [M5Stack-Chain-Key-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1192/M5Stack-Chain-Key-Protocol-EN.pdf) |
+| JoyStick | 2-axis joystick with RGB LED + key + polling support | [M5Stack-Chain-Joystick-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1191/M5Stack-Chain-Joystick-Protocol-EN.pdf) |
+| ToF | Time-of-Flight distance sensor | [M5Stack-Chain-ToF-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1199/M5Stack-Chain-ToF-Protocol-EN.pdf) |
 
 ## Architecture Summary
 
 ### Device Creation
 
-`createM5ChainDevice` maps device types to concrete classes and returns a device instance. Each class composes features via `withDeviceFeatures(...)`.
+`createM5ChainDevice` selects a device class by `DEVICE_TYPE` and returns an instance.  
+Each concrete class composes feature mixins via `withDeviceFeatures(...)`.
 
 ### Mixins
 
-- `HasLed`: RGB LED control
-- `HasKey`: key status and key event dispatch
-- `CanPoll`: polling hook, activates the polling loop when `onPoll` is set
+- `HasLed`: RGB LED API
+- `HasKey`: key polling/config API + key event callback
+- `CanPoll`: `onPoll` hook + polling integration with bus state
 
 ### Packet Frame
 
-Packets follow a fixed frame format:
+Packets use this frame:
 
 - Header: `0xAA 0x55`
-- Length: 2 bytes (`id/cmd/data/crc` length)
+- Length: 2 bytes, little-endian (`id/cmd/data/crc` byte count)
 - Payload: `id`, `cmd`, `data...`, `crc8`
 - Footer: `0x55 0xAA`
 
+### Request Matching
+
+`sendAndWait(id, cmd, ...)` resolves only when both `id` and `cmd` match the response frame.  
+This prevents misrouting when delayed packets arrive.
+
 ## Sequences
 
-### Startup and Enumeration
+### Startup and Scan
 
 ```mermaid
 sequenceDiagram
   participant App
   participant M5Chain
-  participant Bus
+  participant UART
   App->>M5Chain: new M5Chain({ transmit, receive })
   App->>M5Chain: start()
-  M5Chain->>Bus: HEARTBEAT
-  Bus-->>M5Chain: ok
-  M5Chain->>Bus: ENUM (device count)
-  Bus-->>M5Chain: count
-  loop device count
-    M5Chain->>Bus: GET_DEVICE_TYPE(id)
-    Bus-->>M5Chain: type
+  M5Chain->>UART: HEARTBEAT
+  UART-->>M5Chain: ok
+  M5Chain->>UART: ENUM (device count)
+  UART-->>M5Chain: count
+  loop each device id
+    M5Chain->>UART: GET_DEVICE_TYPE(id)
+    UART-->>M5Chain: type
     M5Chain->>M5Chain: createM5ChainDevice(type)
-    M5Chain->>Bus: GET_UID (init)
-    Bus-->>M5Chain: uid
+    M5Chain->>UART: GET_UID (device.init)
+    UART-->>M5Chain: uid
   end
   M5Chain-->>App: onDeviceListChanged(devices)
 ```
 
-### Request/Response Flow
+### Re-scan on `ENUM_PLEASE`
 
 ```mermaid
 sequenceDiagram
   participant Device
   participant M5Chain
-  participant Serial
-  Device->>M5Chain: sendAndWait(id, cmd, data)
-  M5Chain->>M5Chain: lock()
-  M5Chain->>Serial: sendPacket()
-  Serial-->>M5Chain: onReadable(frame)
-  M5Chain-->>Device: resolve(frame)
-  M5Chain->>M5Chain: unlock()
+  Device-->>M5Chain: ENUM_PLEASE (0xFC)
+  M5Chain->>M5Chain: debounce (500ms)
+  M5Chain->>M5Chain: stop poll loop
+  M5Chain->>M5Chain: call onDisconnected() for old devices
+  M5Chain->>M5Chain: scan again
+  M5Chain-->>App: onDeviceListChanged(devices)
 ```
 
-### Polling Loop
+### Poll Loop
 
 ```mermaid
 sequenceDiagram
   participant M5Chain
   participant Device
-  loop while active
+  loop while at least one device.hasOnPoll()
     M5Chain->>Device: polling()
     Device-->>M5Chain: value or undefined
-    M5Chain-->>Device: onPoll(value)
+    M5Chain-->>Device: dispatchOnPoll(value)
   end
 ```
 
@@ -140,9 +148,9 @@ import M5Chain from "m5chain";
 const m5chain = new M5Chain({ transmit, receive });
 
 m5chain.onDeviceListChanged = (devices) => {
-  for (const device of devices) {
-    // register device-specific handlers by device.type
-  }
+	for (const device of devices) {
+		// attach device-specific callbacks by device.type
+	}
 };
 
 m5chain.start();
