@@ -5,7 +5,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ## Device Capability Matrix
 
-| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Key Event (`onKeyPressed`) | Poll Event (`onPoll`) | Device-specific API |
+| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Key Event (`onPush`) | Poll Event (`onPoll`) | Device-specific API |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Yes | Yes (delta value) | See [Encoder](#encoder-m5chainencoder) |
 | [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | No | Yes (normalized `0.00`-`1.00`) | See [Angle](#angle-m5chainangle) |
@@ -78,7 +78,7 @@ await m5chain.start();
 - Called again after re-scan when the chain sends `ENUM_PLEASE`
 - `devices` is the current connected device list
 
-### `device.onKeyPressed = (status) => {}`
+### `device.onPush = (status) => {}`
 
 Available on devices with `HasKey` (Encoder / Key / JoyStick).
 
@@ -126,7 +126,7 @@ Available on: Encoder / Key / JoyStick
 - `await device.getKeyTriggerInterval() -> { doubleClick, longPress }`
 - `await device.setKeyMode(mode)` (`0`: non-active, `1`: active report)
 - `await device.getKeyMode()`
-- `device.onKeyPressed = (status) => {}`
+- `device.onPush = (status) => {}`
 
 ### Poll Features (`CanPoll`)
 

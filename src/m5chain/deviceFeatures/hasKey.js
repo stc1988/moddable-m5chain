@@ -9,22 +9,22 @@ const HasKey = (Base) =>
 				GET_MODE: 0xe5 /**< Get key mode. */,
 			},
 		};
-		#onKeyPressed = null;
-		set onKeyPressed(fn) {
+		#onPush = null;
+		set onPush(fn) {
 			if (fn !== null && typeof fn !== "function") {
-				throw new Error("onKeyPressed must be a function or null");
+				throw new Error("onPush must be a function or null");
 			}
-			this.#onKeyPressed = fn;
+			this.#onPush = fn;
 		}
-		get onKeyPressed() {
-			return this.#onKeyPressed;
+		get onPush() {
+			return this.#onPush;
 		}
 		onDispatchEvent(buffer) {
 			// 0: Single Click
 			// 1: Double Click
 			// 2: Long Press
 			const keyStatus = buffer[6];
-			this.onKeyPressed?.(keyStatus);
+			this.onPush?.(keyStatus);
 		}
 
 		// Key Status
