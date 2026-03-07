@@ -124,7 +124,7 @@ function attachAngle(device) {
 
 function attachKey(device) {
 	let step = 0;
-	device.onKeyPressed = async (keyStatus) => {
+	device.onPush = async (keyStatus) => {
 		trace(`Key Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
 		if (keyStatus === 0) {
 			step = (step + 1) % 9;

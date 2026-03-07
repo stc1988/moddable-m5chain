@@ -52,7 +52,7 @@ function attachDevice(device) {
 }
 
 function attachEncoder(device) {
-	device.onKeyPressed = (keyStatus) => {
+	device.onPush = (keyStatus) => {
 		trace(`Encoder Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
 	};
 
@@ -68,13 +68,13 @@ function attachAngle(device) {
 }
 
 function attachKey(device) {
-	device.onKeyPressed = (keyStatus) => {
+	device.onPush = (keyStatus) => {
 		trace(`Key Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
 	};
 }
 
 function attachJoyStick(device) {
-	device.onKeyPressed = (keyStatus) => {
+	device.onPush = (keyStatus) => {
 		trace(`JoyStick Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
 	};
 
