@@ -8,6 +8,6 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.14",
-		"@moddable/typings": "7.0.0"
+		"@moddable/typings": "^7.2.1"
 	}
 }
