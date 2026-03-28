@@ -1,6 +1,21 @@
 import createM5ChainDevice from "createM5ChainDevice";
 import Serial from "embedded:io/serial";
 import Timer from "timer";
+import type {
+	DeviceListChangeHandler,
+	M5ChainDeviceLike,
+	PacketBuffer,
+	PacketMatch,
+	WaitForPacketOptions,
+	WaitForPacketResult,
+} from "types";
+
+type M5ChainOptions = {
+	transmit?: unknown;
+	receive?: unknown;
+	debug?: boolean;
+	pollingInterval?: number;
+};
 
 export default class M5Chain {
 	static CMD = {
@@ -9,30 +24,33 @@ export default class M5Chain {
 		HEARTBEAT: 0xfd /**< Heartbeat packet. */,
 		ENUM: 0xfe /**< Enumeration response. */,
 		RESET: 0xff /**< Reset command. */,
-	};
+	} as const;
 
-	onDeviceListChanged;
+	onDeviceListChanged?: DeviceListChangeHandler;
+	debug: boolean;
+	pollingInterval: number;
+	running = false;
 
 	#serial;
-	#mutex = Promise.resolve();
+	#mutex: Promise<unknown> = Promise.resolve();
 	cmdBuffer = new Uint8Array(256);
 	#sendBuffer = new Uint8Array(256);
-	#receiveResolve;
-	#receiveReject;
-	#receiveTimeoutId;
-	#enumPending;
-	#enumTimer;
-	#enumRunning;
-	#receiveMatch;
+	#receiveResolve: ((result: WaitForPacketResult) => void) | null = null;
+	#receiveReject: ((reason?: unknown) => void) | null = null;
+	#receiveTimeoutId: number | null = null;
+	#enumPending = false;
+	#enumTimer: number | null = null;
+	#enumRunning = false;
+	#receiveMatch: PacketMatch | null = null;
 	#pollFailureCount = 0;
-	#sendCmd;
-	#sendId;
+	#sendCmd: number | null = null;
+	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
 	#rxLength = 0;
-	#deviceList = [];
+	#deviceList: M5ChainDeviceLike[] = [];
 	#started = false;
 
-	constructor(options) {
+	constructor(options: M5ChainOptions = {}) {
 		const self = this;
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
@@ -147,7 +165,7 @@ export default class M5Chain {
 			},
 		});
 	}
-	#log(message, level = "INFO") {
+	#log(message: string, level = "INFO") {
 		trace(`[m5chain][${level}] ${message}\n`);
 	}
 	async lock() {
@@ -166,7 +184,7 @@ export default class M5Chain {
 		return unlock;
 	}
 
-	async withLock(fn) {
+	async withLock<T>(fn: () => Promise<T>): Promise<T> {
 		const unlock = await this.lock();
 		try {
 			return await fn();
@@ -175,7 +193,7 @@ export default class M5Chain {
 		}
 	}
 
-	#dumpPacket(buffer, size) {
+	#dumpPacket(buffer: Uint8Array, size: number) {
 		let line = `Packet dump(${size} bytes):`;
 		for (let i = 0; i < size; i++) {
 			line += ` 0x${buffer[i].toString(16).toUpperCase().padStart(2, "0")}`;
@@ -183,7 +201,7 @@ export default class M5Chain {
 		trace(`[m5chain] ${line}\n`);
 	}
 
-	#calculateCRC(buffer, size) {
+	#calculateCRC(buffer: Uint8Array, size: number) {
 		let crc8 = 0;
 		for (let i = 4; i < size - 3; i++) {
 			crc8 = (crc8 + buffer[i]) & 0xff;
@@ -191,7 +209,7 @@ export default class M5Chain {
 		return crc8;
 	}
 
-	sendPacket(id, cmd, data, size) {
+	sendPacket(id: number, cmd: number, data: Uint8Array, size: number) {
 		const cmdSize = size + 3;
 		const sendBufferSize = size + 9;
 
@@ -229,7 +247,7 @@ export default class M5Chain {
 		this.#sendId = null;
 	}
 
-	#abortPendingWait(reason) {
+	#abortPendingWait(reason: string) {
 		// Resolve the in-flight request with an abort marker so the lock can be released
 		// without producing an unhandled rejection.
 		if (this.#receiveResolve) {
@@ -258,7 +276,7 @@ export default class M5Chain {
 		}, 500);
 	}
 
-	async waitForPacket(cmd, options = {}) {
+	async waitForPacket(cmd: number, options: WaitForPacketOptions = {}): Promise<WaitForPacketResult> {
 		const timeoutMs = options.timeoutMs ?? 800;
 		const match = options.match;
 
@@ -290,9 +308,15 @@ export default class M5Chain {
 		});
 	}
 
-	async sendAndWait(id, cmd, data, size, options = undefined) {
+	async sendAndWait(
+		id: number,
+		cmd: number,
+		data: Uint8Array,
+		size: number,
+		options: WaitForPacketOptions | undefined = undefined,
+	): Promise<PacketBuffer> {
 		const baseMatch = options?.match;
-		const match = (buffer, bytesReadable) => {
+		const match = (buffer: PacketBuffer, bytesReadable: number) => {
 			// Always match both id and cmd to avoid resolving the wrong in-flight request.
 			if (buffer[4] !== id) return false;
 			if (buffer[5] !== cmd) return false;
@@ -303,12 +327,12 @@ export default class M5Chain {
 			this.#sendId = id;
 			this.sendPacket(id, cmd, data, size);
 			const result = await this.waitForPacket(cmd, { ...(options ?? {}), match });
-			if (result && result.__m5chain === "timeout") {
+			if (!(result instanceof Uint8Array) && result.__m5chain === "timeout") {
 				throw new Error(
 					`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd.toString(16).toUpperCase().padStart(2, "0")})`,
 				);
 			}
-			if (result && result.__m5chain === "abort") {
+			if (!(result instanceof Uint8Array) && result.__m5chain === "abort") {
 				throw new Error(`waitForPacket aborted (${result.reason})`);
 			}
 			return result;
@@ -377,20 +401,20 @@ export default class M5Chain {
 		}
 	}
 
-	async getDeviceType(id) {
+	async getDeviceType(id: number): Promise<number> {
 		const packet = await this.sendAndWait(id, M5Chain.CMD.GET_DEVICE_TYPE, this.cmdBuffer, 0);
 		const deviceType = (packet[7] << 8) | packet[6];
 		return deviceType;
 	}
 
-	async getDeviceNum() {
+	async getDeviceNum(): Promise<number> {
 		this.cmdBuffer[0] = 0x00;
 		const packet = await this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.cmdBuffer, 1);
 		const deviceNum = packet[6];
 		return deviceNum;
 	}
 
-	async isDeviceConnected() {
+	async isDeviceConnected(): Promise<boolean> {
 		try {
 			await this.sendAndWait(0xff, M5Chain.CMD.HEARTBEAT, this.cmdBuffer, 0, { timeoutMs: 300 });
 			return true;
@@ -425,8 +449,8 @@ export default class M5Chain {
 		return this.#deviceList;
 	}
 
-	async getDeviceList(deviceNum) {
-		const deviceList = [];
+	async getDeviceList(deviceNum: number): Promise<number[]> {
+		const deviceList: number[] = [];
 		for (let i = 0; i < deviceNum; i++) {
 			const deviceType = await this.getDeviceType(i + 1);
 			deviceList.push(deviceType);
@@ -458,7 +482,7 @@ export default class M5Chain {
 		this.onDeviceListChanged?.(this.#deviceList);
 	}
 
-	get devices() {
+	get devices(): M5ChainDeviceLike[] {
 		return this.#deviceList;
 	}
 }
