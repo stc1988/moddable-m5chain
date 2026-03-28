@@ -11,8 +11,8 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll) {
 		SET_CLOCKWISE_STATUS: 0x32 /**< Command to set the clockwise direction status */,
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const;
-	#lastValue;
-	async setLedColor(r, g, b) {
+	#lastValue: number | undefined;
+	async setLedColor(r: number, g: number, b: number) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
 	async getLedColor() {
@@ -58,7 +58,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll) {
 
 	// 0: Clockwise
 	// 1: Counterclockwise
-	async setAngleRotationDirection(direction) {
+	async setAngleRotationDirection(direction: number) {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = direction;

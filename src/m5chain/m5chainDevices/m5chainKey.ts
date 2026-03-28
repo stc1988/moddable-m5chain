@@ -4,7 +4,7 @@ import { withDeviceFeatures } from "m5chainDevice";
 
 class M5ChainKey extends withDeviceFeatures(HasLed, HasKey) {
 	static DEVICE_TYPE = 0x0003;
-	async setLedColor(r, g, b) {
+	async setLedColor(r: number, g: number, b: number) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
 	async getLedColor() {

@@ -14,8 +14,8 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 		SET_AB_STATUS: 0x15 /**< Set AB status, 0->AB, 1->BA. */,
 		GET_AB_STATUS: 0x16 /**< Get AB status, 0->AB, 1->BA. */,
 	} as const;
-	#lastValue;
-	async setLedColor(r, g, b) {
+	#lastValue: number | undefined;
+	async setLedColor(r: number, g: number, b: number) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
 	async getLedColor() {
@@ -76,7 +76,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 	// saveToFlash
 	// 0: Do not save
 	// 1: Save
-	async setEncoderABDirect(direct, saveToFlash = 0) {
+	async setEncoderABDirect(direct: number, saveToFlash = 0) {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = direct;

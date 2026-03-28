@@ -1,11 +1,4 @@
-import type {
-	ChainBus,
-	DeviceConstructor,
-	DeviceFactoryOptions,
-	DeviceMixin,
-	PacketBuffer,
-	WaitForPacketResult,
-} from "types";
+import type { ChainBus, DeviceFactoryOptions, PacketBuffer, WaitForPacketResult } from "types";
 
 class M5ChainDevice {
 	static CMD = {
@@ -109,35 +102,20 @@ class M5ChainDevice {
 	}
 }
 
-type M5ChainDeviceConstructor = DeviceConstructor<M5ChainDevice> & typeof M5ChainDevice;
+// biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin composition is easier to express with any here.
+type AnyDeviceConstructor = any;
 
-function withDeviceFeatures(): M5ChainDeviceConstructor;
-function withDeviceFeatures<TAdded1 extends object>(
-	feature1: DeviceMixin<M5ChainDeviceConstructor, TAdded1>,
-): ReturnType<DeviceMixin<M5ChainDeviceConstructor, TAdded1>>;
-function withDeviceFeatures<TAdded1 extends object, TAdded2 extends object>(
-	feature1: DeviceMixin<M5ChainDeviceConstructor, TAdded1>,
-	feature2: DeviceMixin<ReturnType<DeviceMixin<M5ChainDeviceConstructor, TAdded1>>, TAdded2>,
-): ReturnType<DeviceMixin<ReturnType<DeviceMixin<M5ChainDeviceConstructor, TAdded1>>, TAdded2>>;
-function withDeviceFeatures<TAdded1 extends object, TAdded2 extends object, TAdded3 extends object>(
-	feature1: DeviceMixin<M5ChainDeviceConstructor, TAdded1>,
-	feature2: DeviceMixin<ReturnType<DeviceMixin<M5ChainDeviceConstructor, TAdded1>>, TAdded2>,
-	feature3: DeviceMixin<
-		ReturnType<DeviceMixin<ReturnType<DeviceMixin<M5ChainDeviceConstructor, TAdded1>>, TAdded2>>,
-		TAdded3
-	>,
-): ReturnType<
-	DeviceMixin<ReturnType<DeviceMixin<ReturnType<DeviceMixin<M5ChainDeviceConstructor, TAdded1>>, TAdded2>>, TAdded3>
->;
-function withDeviceFeatures(...features: Array<DeviceMixin<DeviceConstructor, object>>) {
+function withDeviceFeatures(
+	...features: Array<(Base: AnyDeviceConstructor) => AnyDeviceConstructor>
+): AnyDeviceConstructor {
 	return features.reduce((Base, feature) => {
-		const Derived = feature(Base as DeviceConstructor) as unknown as M5ChainDeviceConstructor;
+		const Derived = feature(Base);
 		Derived.CMD = {
 			...(Base.CMD ?? {}),
 			...(Derived.CMD ?? {}),
-		};
+		} as typeof M5ChainDevice.CMD;
 		return Derived;
-	}, M5ChainDevice as M5ChainDeviceConstructor);
+	}, M5ChainDevice as AnyDeviceConstructor);
 }
 
 export { M5ChainDevice, withDeviceFeatures };

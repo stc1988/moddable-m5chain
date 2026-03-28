@@ -15,8 +15,8 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	} as const;
-	#lastValue;
-	async setLedColor(r, g, b) {
+	#lastValue: { x: number; y: number } | undefined;
+	async setLedColor(r: number, g: number, b: number) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
 	async getLedColor() {
@@ -66,7 +66,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 			yMax: packet[9],
 		};
 	}
-	async setJoystickMappedRange(xMin, xMax, yMin, yMax) {
+	async setJoystickMappedRange(xMin: number, xMax: number, yMin: number, yMax: number) {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = xMin;

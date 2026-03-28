@@ -66,11 +66,10 @@ export interface M5ChainDeviceLike {
 	dispatchOnPoll?(value: unknown): void;
 }
 
-export type DeviceConstructor<TInstance = object> = abstract new (
-	bus: ChainBus,
-	options: DeviceFactoryOptions,
-) => TInstance;
+// biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].
+export type DeviceConstructor<TInstance = object> = new (...args: any[]) => TInstance;
 
 export type DeviceMixin<TBase extends DeviceConstructor, TAdded extends object> = (
 	Base: TBase,
-) => DeviceConstructor<InstanceType<TBase> & TAdded> & TBase;
+	// biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].
+) => (new (...args: any[]) => InstanceType<TBase> & TAdded) & TBase;

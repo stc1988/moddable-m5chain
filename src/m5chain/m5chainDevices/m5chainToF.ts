@@ -24,9 +24,9 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll) {
 		IDLE: 0,
 		MEASURING: 1,
 	} as const;
-	#lastDistance;
+	#lastDistance: number | undefined;
 
-	async setLedColor(r, g, b) {
+	async setLedColor(r: number, g: number, b: number) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
 	async getLedColor() {
@@ -56,7 +56,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll) {
 		return await this.getDistance();
 	}
 
-	async setMeasurementTime(time) {
+	async setMeasurementTime(time: number) {
 		if (time < 20 || time > 200) {
 			throw new RangeError("Measurement time must be between 20 and 200 milliseconds.");
 		}
@@ -75,7 +75,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll) {
 		return packet[6];
 	}
 
-	async setMeasurementMode(mode) {
+	async setMeasurementMode(mode: number) {
 		if (![0, 1, 2].includes(mode)) {
 			throw new RangeError("Measurement mode must be 0 (stop), 1 (single), or 2 (continuous).");
 		}
@@ -94,7 +94,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll) {
 		return packet[6];
 	}
 
-	async setMeasurementStatus(status) {
+	async setMeasurementStatus(status: number) {
 		if (![0, 1].includes(status)) {
 			throw new RangeError("Measurement status must be 0 (idle) or 1 (measuring).");
 		}

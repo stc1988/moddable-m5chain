@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"allowJs": true,
 		"incremental": true,
+		"noImplicitAny": true,
 		"outDir": "dist",
 		"lib": ["es2022"],
 		"module": "es2022",

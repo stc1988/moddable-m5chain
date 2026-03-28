@@ -11,10 +11,19 @@ import type {
 } from "types";
 
 type M5ChainOptions = {
-	transmit?: unknown;
-	receive?: unknown;
+	transmit?: number;
+	receive?: number;
 	debug?: boolean;
 	pollingInterval?: number;
+};
+
+declare const device: {
+	I2C: {
+		default: {
+			data: number;
+			clock: number;
+		};
+	};
 };
 
 export default class M5Chain {
@@ -37,9 +46,9 @@ export default class M5Chain {
 	#sendBuffer = new Uint8Array(256);
 	#receiveResolve: ((result: WaitForPacketResult) => void) | null = null;
 	#receiveReject: ((reason?: unknown) => void) | null = null;
-	#receiveTimeoutId: number | null = null;
+	#receiveTimeoutId: ReturnType<typeof Timer.set> | null = null;
 	#enumPending = false;
-	#enumTimer: number | null = null;
+	#enumTimer: ReturnType<typeof Timer.set> | null = null;
 	#enumRunning = false;
 	#receiveMatch: PacketMatch | null = null;
 	#pollFailureCount = 0;
@@ -60,7 +69,7 @@ export default class M5Chain {
 			baud: 115200,
 			format: "buffer",
 			port: 1,
-			onReadable: function (bytesReadable) {
+			onReadable: function (this: { read(bytesReadable: number): ArrayBufferLike }, bytesReadable: number) {
 				const chunk = new Uint8Array(this.read(bytesReadable));
 				if (chunk.length === 0) return;
 
@@ -170,7 +179,7 @@ export default class M5Chain {
 	}
 	async lock() {
 		let unlock: (() => void) | undefined;
-		const p = new Promise((resolve) => {
+		const p = new Promise<void>((resolve) => {
 			unlock = () => {
 				resolve();
 			};
