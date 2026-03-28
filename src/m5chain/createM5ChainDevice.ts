@@ -4,13 +4,25 @@ import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
 
-const DEVICE_CLASSES = [M5ChainEncoder, M5ChainAngle, M5ChainKey, M5ChainJoyStick, M5ChainToF];
-export default function createM5ChainDevice(m5chain: any, options: any): any {
-	const DeviceClass = DEVICE_CLASSES.find((cls: any) => cls.DEVICE_TYPE === options.type);
+type DeviceOptions = {
+	id: number;
+	type: number;
+};
 
-	if (!DeviceClass) {
+type DeviceInstance = M5ChainEncoder | M5ChainAngle | M5ChainKey | M5ChainJoyStick | M5ChainToF;
+
+type DeviceClass = {
+	DEVICE_TYPE: number;
+	new (m5chain: object, options: DeviceOptions): DeviceInstance;
+};
+
+const DEVICE_CLASSES = [M5ChainEncoder, M5ChainAngle, M5ChainKey, M5ChainJoyStick, M5ChainToF];
+export default function createM5ChainDevice(m5chain: object, options: DeviceOptions): DeviceInstance {
+	const DeviceCtor = (DEVICE_CLASSES as DeviceClass[]).find((cls) => cls.DEVICE_TYPE === options.type);
+
+	if (!DeviceCtor) {
 		throw new Error(`Unknown device type: ${options.type}`);
 	}
 
-	return new DeviceClass(m5chain, options);
+	return new DeviceCtor(m5chain, options);
 }

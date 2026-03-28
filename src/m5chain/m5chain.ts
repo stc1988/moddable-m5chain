@@ -151,13 +151,18 @@ export default class M5Chain {
 		trace(`[m5chain][${level}] ${message}\n`);
 	}
 	async lock() {
-		let unlock;
+		let unlock: (() => void) | undefined;
 		const p = new Promise((resolve) => {
-			unlock = resolve;
+			unlock = () => {
+				resolve();
+			};
 		});
 		const prev = this.#mutex;
 		this.#mutex = prev.then(() => p);
 		await prev;
+		if (!unlock) {
+			throw new Error("lock initialization failed");
+		}
 		return unlock;
 	}
 

@@ -60,7 +60,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll) {
 	// 1: Counterclockwise
 	async setAngleRotationDirection(direction) {
 		const bus = this.bus;
-		const cmdBuffer = bus.buffer;
+		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = direction;
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.SET_CLOCKWISE_STATUS, cmdBuffer, 1);
 		const result = packet[6];

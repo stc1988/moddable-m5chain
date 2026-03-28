@@ -32,7 +32,7 @@ const HasKey = (Base) =>
 		// 1: Presse
 		async getKeyStatus() {
 			const bus = this.bus;
-			const returnPacket = await bus.sendAndWait(this.id, this.constructor.CMD.KEY.GET_STATUS, m5chain.cmdBuffer, 0);
+			const returnPacket = await bus.sendAndWait(this.id, this.constructor.CMD.KEY.GET_STATUS, bus.cmdBuffer, 0);
 			const keyStatus = returnPacket[6];
 			return keyStatus;
 		}
@@ -75,7 +75,7 @@ const HasKey = (Base) =>
 
 		async getKeyMode() {
 			const bus = this.bus;
-			const packet = bus.sendAndWait(this.id, this.constructor.CMD.KEY.GET_MODE, bus.cmdBuffer, 0);
+			const packet = await bus.sendAndWait(this.id, this.constructor.CMD.KEY.GET_MODE, bus.cmdBuffer, 0);
 			const mode = packet[6];
 			return mode;
 		}

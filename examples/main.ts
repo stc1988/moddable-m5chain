@@ -6,5 +6,5 @@ interface ModModule {
 
 if (Modules.has("mod")) {
 	const mod = Modules.importNow("mod") as ModModule;
-	await mod.main()
+	await mod.main();
 }
