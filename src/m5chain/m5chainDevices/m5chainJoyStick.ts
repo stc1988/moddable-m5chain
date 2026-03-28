@@ -14,7 +14,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 		SET_ADC_XY_MAPPED_RANGE: 0x33 /**< Command to set mapped range for X and Y axes */,
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
-	};
+	} as const;
 	#lastValue;
 	async setLedColor(r, g, b) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);

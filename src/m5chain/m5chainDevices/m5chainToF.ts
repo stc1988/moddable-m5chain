@@ -14,16 +14,16 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll) {
 		SET_MEASUREMENT_STATUS: 0x55 /**< Set the current measurement status. */,
 		GET_MEASUREMENT_STATUS: 0x56 /**< Get the current measurement status. */,
 		GET_MEASUREMENT_COMPLETION_FLAG: 0x57 /**< Get the measurement completion flag. */,
-	};
+	} as const;
 	static MEASUREMENT_MODE = {
 		STOP: 0,
 		SINGLE: 1,
 		CONTINUOUS: 2,
-	};
+	} as const;
 	static MEASUREMENT_STATUS = {
 		IDLE: 0,
 		MEASURING: 1,
-	};
+	} as const;
 	#lastDistance;
 
 	async setLedColor(r, g, b) {

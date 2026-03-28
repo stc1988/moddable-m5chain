@@ -10,7 +10,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll) {
 		GET_8ADC: 0x31 /**< Command to get the latest 8-bit mapped ADC value */,
 		SET_CLOCKWISE_STATUS: 0x32 /**< Command to set the clockwise direction status */,
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
-	};
+	} as const;
 	#lastValue;
 	async setLedColor(r, g, b) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);

@@ -13,7 +13,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 		RESET_INC_VALUE: 0x14 /**< Reset encoder increment value. */,
 		SET_AB_STATUS: 0x15 /**< Set AB status, 0->AB, 1->BA. */,
 		GET_AB_STATUS: 0x16 /**< Get AB status, 0->AB, 1->BA. */,
-	};
+	} as const;
 	#lastValue;
 	async setLedColor(r, g, b) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
