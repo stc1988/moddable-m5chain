@@ -11,7 +11,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 | [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | No | Yes (normalized `0.00`-`1.00`) | See [Angle](#angle-m5chainangle) |
 | [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | Yes | No | See [Key](#key-m5chainkey) |
 | [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | See [JoyStick](#joystick-m5chainjoystick) |
-| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | No | No | No | No | No | See [ToF](#tof-m5chaintof) |
+| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | No | Yes (distance in mm) | See [ToF](#tof-m5chaintof) |
 
 ## Features
 
@@ -88,7 +88,7 @@ Available on devices with `HasKey` (Encoder / Key / JoyStick).
 
 ### `device.onPoll = (value) => {}`
 
-Available on devices with `CanPoll` (Encoder / Angle / JoyStick).  
+Available on devices with `CanPoll` (Encoder / Angle / JoyStick / ToF).  
 If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` handlers are `null`.
 
 ## API
@@ -110,7 +110,7 @@ If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` h
 
 ### LED Features (`HasLed`)
 
-Available on: Encoder / Angle / Key / JoyStick
+Available on: Encoder / Angle / Key / JoyStick / ToF
 
 - `await device.setLedColor(r, g, b)` (single-LED wrapper provided by each device class)
 - `await device.getLedColor() -> { r, g, b }`
@@ -130,7 +130,7 @@ Available on: Encoder / Key / JoyStick
 
 ### Poll Features (`CanPoll`)
 
-Available on: Encoder / Angle / JoyStick
+Available on: Encoder / Angle / JoyStick / ToF
 
 - `device.onPoll = (value) => {}`
 
@@ -139,6 +139,7 @@ Available on: Encoder / Angle / JoyStick
 - Encoder: delta from previous value (`number`)
 - Angle: normalized value (`0.00` - `1.00`)
 - JoyStick: `{ x, y }` (`-128` - `127`)
+- ToF: measured distance in millimeters (`number`)
 
 ### Device-specific APIs
 
@@ -180,7 +181,22 @@ Use Common Device API + `HasLed` + `HasKey` APIs.
 
 ### [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) (`M5ChainToF`)
 
-Currently only the common device API is implemented.
+- `await device.setLedColor(r, g, b)`
+- `await device.getLedColor() -> { r, g, b }`
+- `await device.setLedBrightness(brightness, saveToFlash = 0)`
+- `await device.getLedBrightness()`
+- `await device.getDistance()`
+- `await device.getMeasurementDistance()`
+- `await device.setMeasurementTime(time)` (`20` - `200` ms)
+- `await device.getMeasurementTime()`
+- `await device.setMeasurementMode(mode)` (`0`: stop, `1`: single, `2`: continuous)
+- `await device.getMeasurementMode()`
+- `await device.setMeasurementStatus(status)` (`0`: idle, `1`: measuring)
+- `await device.getMeasurementStatus()`
+- `await device.getMeasurementCompletionFlag()`
+- `await device.isMeasurementComplete()`
+- `await device.triggerMeasurement()`
+- `device.onPoll = (distance) => {}`
 
 ## Packet Format (Summary)
 
@@ -194,7 +210,7 @@ Currently only the common device API is implemented.
 ## Examples
 
 - `examples/basic`: device discovery, info read, and event subscription
-- `examples/led`: LED control for Encoder/Angle/Key/JoyStick
+- `examples/led`: LED control for Encoder/Angle/Key/JoyStick/ToF
 
 ## Development
 

@@ -3,6 +3,7 @@ import M5ChainAngle from "m5chainAngle";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
+import M5ChainToF from "m5chainToF";
 
 import config from "mod/config";
 
@@ -48,6 +49,9 @@ function attachDevice(device) {
 		case M5ChainJoyStick.DEVICE_TYPE:
 			attachJoyStick(device);
 			break;
+		case M5ChainToF.DEVICE_TYPE:
+			attachToF(device);
+			break;
 	}
 }
 
@@ -80,5 +84,11 @@ function attachJoyStick(device) {
 
 	device.onPoll = (position) => {
 		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${position.x}\ty:${position.y}\n`);
+	};
+}
+
+function attachToF(device) {
+	device.onPoll = (distance) => {
+		trace(`ToF Device ID	: ${device.id}, distance	: ${distance} mm\n`);
 	};
 }

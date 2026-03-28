@@ -3,6 +3,7 @@ import M5ChainAngle from "m5chainAngle";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
+import M5ChainToF from "m5chainToF";
 
 import config from "mod/config";
 
@@ -99,6 +100,9 @@ function attachDevice(device) {
 		case M5ChainJoyStick.DEVICE_TYPE:
 			attachJoyStick(device);
 			break;
+		case M5ChainToF.DEVICE_TYPE:
+			attachToF(device);
+			break;
 	}
 }
 
@@ -151,6 +155,15 @@ function attachJoyStick(device) {
 		const brightness = norm(-position.y);
 		const saturation = 1.0;
 		const { r, g, b } = hsvToRGB(hue, saturation, brightness);
+		await device.setLedColor(r, g, b);
+	};
+}
+
+function attachToF(device) {
+	device.onPoll = async (distance) => {
+		trace(`ToF Device ID	: ${device.id}, distance	: ${distance} mm\n`);
+		const brightness = Math.max(0.1, Math.min(1, 1 - distance / 2000));
+		const { r, g, b } = hsvToRGB(0.58, 1.0, brightness);
 		await device.setLedColor(r, g, b);
 	};
 }

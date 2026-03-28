@@ -60,7 +60,7 @@ const HasLed = (Base) =>
 		}
 		async getLedBrightness() {
 			const bus = this.bus;
-			const packet = await bus.sendAndWait(this.id, this.constructor.CMD.GET_RGB_LIGHT, bus.cmdBuffer, 0);
+			const packet = await bus.sendAndWait(this.id, this.constructor.CMD.RGB.GET_RGB_LIGHT, bus.cmdBuffer, 0);
 			return packet[6];
 		}
 	};
