@@ -70,8 +70,8 @@ export interface M5ChainDeviceLike {
 	onDisconnected?(): void;
 	onDispatchEvent?(buffer: PacketBuffer): void;
 	hasOnPoll?(): boolean;
-	polling?(): Promise<unknown>;
-	dispatchOnPoll?(value: unknown): void;
+	polling?<T = unknown>(): Promise<T | undefined>;
+	dispatchOnPoll?<T = unknown>(value: T): void;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].

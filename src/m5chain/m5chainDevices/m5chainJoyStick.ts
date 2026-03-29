@@ -3,8 +3,14 @@ import CanPoll from "canPoll";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
+import type { PollHandler } from "types";
 
-class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
+type JoystickValue = {
+	x: number;
+	y: number;
+};
+
+class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<JoystickValue>) {
 	static DEVICE_TYPE = 0x0004;
 	static CMD = {
 		...super.CMD,
@@ -15,7 +21,9 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll) {
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	} as const;
-	#lastValue: { x: number; y: number } | undefined;
+	#lastValue: JoystickValue | undefined;
+	declare onPoll: PollHandler<JoystickValue>;
+	declare dispatchOnPoll: (value: JoystickValue) => void;
 	async setLedColor(r: number, g: number, b: number) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}

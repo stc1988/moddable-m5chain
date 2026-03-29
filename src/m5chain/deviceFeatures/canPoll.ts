@@ -8,30 +8,44 @@ type CanPollMethods<T = unknown> = {
 	dispatchOnPoll(value: T): void;
 };
 
-const CanPoll = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
-	class extends Base {
-		#onPoll: PollHandler = null;
+type CanPollMixin = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
+	Base: TBase,
+) => (new (...args: ConstructorParameters<TBase>) => InstanceType<TBase> & CanPollMethods<T>) & TBase;
 
-		set onPoll(fn: PollHandler) {
+const CanPoll = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
+	Base: TBase,
+) =>
+	class extends Base {
+		#onPoll: PollHandler<T> = null;
+
+		set onPoll(fn: PollHandler<T>) {
+			if (fn !== null && typeof fn !== "function") {
+				throw new Error("onPoll must be a function or null");
+			}
+
+			const wasActive = this.#onPoll !== null;
+			const nextActive = fn !== null;
 			this.#onPoll = fn;
-			this.bus._notifyPollingStateChanged();
+			if (wasActive !== nextActive) {
+				this.bus._notifyPollingStateChanged();
+			}
 		}
 
-		get onPoll(): PollHandler {
+		get onPoll(): PollHandler<T> {
 			return this.#onPoll;
 		}
 
 		hasOnPoll() {
-			return !!this.#onPoll;
+			return this.#onPoll !== null;
 		}
 
-		async polling(): Promise<unknown> {
-			throw Error("polling is not implemented");
+		async polling(): Promise<T | undefined> {
+			throw new Error("polling is not implemented");
 		}
 
-		dispatchOnPoll(value: unknown) {
+		dispatchOnPoll(value: T) {
 			this.#onPoll?.(value);
 		}
 	};
 
-export default CanPoll as DeviceMixin<DeviceConstructor<M5ChainDevice>, CanPollMethods>;
+export default CanPoll as CanPollMixin & DeviceMixin<DeviceConstructor<M5ChainDevice>, CanPollMethods>;

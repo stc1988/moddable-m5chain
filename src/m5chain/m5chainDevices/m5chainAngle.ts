@@ -1,8 +1,9 @@
 import CanPoll from "canPoll";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
+import type { PollHandler } from "types";
 
-class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll) {
+class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	static DEVICE_TYPE = 0x0002;
 	static CMD = {
 		...super.CMD,
@@ -12,6 +13,8 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll) {
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const;
 	#lastValue: number | undefined;
+	declare onPoll: PollHandler<number>;
+	declare dispatchOnPoll: (value: number) => void;
 	async setLedColor(r: number, g: number, b: number) {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
