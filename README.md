@@ -123,8 +123,8 @@ Available on: Encoder / Angle / Key / JoyStick / ToF
 Available on: Encoder / Key / JoyStick
 
 - `await device.isKeyPressed() -> boolean`
-- `await device.setKeyTriggerInterval(doubleClick, longPress)`
-- `await device.getKeyTriggerInterval() -> { doubleClick, longPress }`
+- `await device.setKeyTriggerInterval(doubleClickMs, longPressMs)`
+- `await device.getKeyTriggerInterval() -> { doubleClickMs, longPressMs }`
 - `await device.setKeyMode(mode)` (`0`: non-active, `1`: active report)
 - `await device.getKeyMode()`
 - `device.onPush = (status) => {}` (`status`: `0 | 1 | 2`)

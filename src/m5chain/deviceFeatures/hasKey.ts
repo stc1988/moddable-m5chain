@@ -25,8 +25,8 @@ type HasKeyMethods = {
 	onPush: KeyHandler;
 	onDispatchEvent(buffer: PacketBuffer): void;
 	isKeyPressed(): Promise<boolean>;
-	setKeyTriggerInterval(doubleClick: number, longPress: number): Promise<void>;
-	getKeyTriggerInterval(): Promise<{ doubleClick: number; longPress: number }>;
+	setKeyTriggerInterval(doubleClickMs: number, longPressMs: number): Promise<void>;
+	getKeyTriggerInterval(): Promise<{ doubleClickMs: number; longPressMs: number }>;
 	setKeyMode(mode: KeyMode): Promise<void>;
 	getKeyMode(): Promise<KeyMode>;
 };
@@ -66,6 +66,10 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			return this.#onPush;
 		}
 
+		get #commands() {
+			return (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
+		}
+
 		onDispatchEvent(buffer: PacketBuffer) {
 			const keyEvent = buffer[6] as KeyEvent;
 			this.onPush?.(keyEvent);
@@ -73,39 +77,35 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 
 		async isKeyPressed(): Promise<boolean> {
 			const bus = this.bus;
-			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
-			const returnPacket = await bus.sendAndWait(this.id, commands.KEY.GET_STATUS, bus.cmdBuffer, 0);
+			const returnPacket = await bus.sendAndWait(this.id, this.#commands.KEY.GET_STATUS, bus.cmdBuffer, 0);
 			return (returnPacket[6] as KeyStatus) === KEY_STATUS.PRESSED;
 		}
 
-		async setKeyTriggerInterval(doubleClick: number, longPress: number) {
+		async setKeyTriggerInterval(doubleClickMs: number, longPressMs: number) {
 			const bus = this.bus;
 			const cmdBuffer = bus.cmdBuffer;
-			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
-			cmdBuffer[0] = doubleClick;
-			cmdBuffer[1] = longPress;
-			const packet = await bus.sendAndWait(this.id, commands.KEY.SET_TRIGGER_TIMEOUT, cmdBuffer, 2);
+			cmdBuffer[0] = doubleClickMs;
+			cmdBuffer[1] = longPressMs;
+			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.SET_TRIGGER_TIMEOUT, cmdBuffer, 2);
 			const result = packet[6];
 			if (result !== 1) {
 				throw new Error("setKeyTriggerInterval failed.\n");
 			}
 		}
 
-		async getKeyTriggerInterval(): Promise<{ doubleClick: number; longPress: number }> {
+		async getKeyTriggerInterval(): Promise<{ doubleClickMs: number; longPressMs: number }> {
 			const bus = this.bus;
-			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
-			const packet = await bus.sendAndWait(this.id, commands.KEY.GET_TRIGGER_TIMEOUT, bus.cmdBuffer, 0);
+			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.GET_TRIGGER_TIMEOUT, bus.cmdBuffer, 0);
 			return {
-				doubleClick: packet[6],
-				longPress: packet[7],
+				doubleClickMs: packet[6],
+				longPressMs: packet[7],
 			};
 		}
 
 		async setKeyMode(mode: KeyMode) {
 			const bus = this.bus;
-			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
 			bus.cmdBuffer[0] = mode;
-			const packet = await bus.sendAndWait(this.id, commands.KEY.SET_MODE, bus.cmdBuffer, 1);
+			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.SET_MODE, bus.cmdBuffer, 1);
 			const result = packet[6];
 			if (result !== 1) {
 				throw new Error("setKeyMode failed.\n");
@@ -114,8 +114,7 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 
 		async getKeyMode(): Promise<KeyMode> {
 			const bus = this.bus;
-			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
-			const packet = await bus.sendAndWait(this.id, commands.KEY.GET_MODE, bus.cmdBuffer, 0);
+			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.GET_MODE, bus.cmdBuffer, 0);
 			return packet[6] as KeyMode;
 		}
 	};
