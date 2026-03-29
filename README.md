@@ -82,6 +82,7 @@ await m5chain.start();
 
 Available on devices with `HasKey` (Encoder / Key / JoyStick).
 
+- `status` is a key event, not the pressed/released state
 - `0`: single click
 - `1`: double click
 - `2`: long press
@@ -121,12 +122,12 @@ Available on: Encoder / Angle / Key / JoyStick / ToF
 
 Available on: Encoder / Key / JoyStick
 
-- `await device.getKeyStatus()`
+- `await device.isKeyPressed() -> boolean`
 - `await device.setKeyTriggerInterval(doubleClick, longPress)`
 - `await device.getKeyTriggerInterval() -> { doubleClick, longPress }`
 - `await device.setKeyMode(mode)` (`0`: non-active, `1`: active report)
 - `await device.getKeyMode()`
-- `device.onPush = (status) => {}`
+- `device.onPush = (status) => {}` (`status`: `0 | 1 | 2`)
 
 ### Poll Features (`CanPoll`)
 

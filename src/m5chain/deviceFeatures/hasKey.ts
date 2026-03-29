@@ -1,14 +1,34 @@
 import type { M5ChainDevice } from "m5chainDevice";
-import type { DeviceConstructor, DeviceMixin, KeyHandler, PacketBuffer } from "types";
+import {
+	KEY_EVENT,
+	type DeviceConstructor,
+	type DeviceMixin,
+	type KeyEvent,
+	type KeyHandler,
+	type PacketBuffer,
+} from "types";
+
+const KEY_MODE = {
+	PASSIVE: 0,
+	ACTIVE: 1,
+} as const;
+
+const KEY_STATUS = {
+	RELEASED: 0,
+	PRESSED: 1,
+} as const;
+
+type KeyMode = (typeof KEY_MODE)[keyof typeof KEY_MODE];
+type KeyStatus = (typeof KEY_STATUS)[keyof typeof KEY_STATUS];
 
 type HasKeyMethods = {
 	onPush: KeyHandler;
 	onDispatchEvent(buffer: PacketBuffer): void;
-	getKeyStatus(): Promise<number>;
+	isKeyPressed(): Promise<boolean>;
 	setKeyTriggerInterval(doubleClick: number, longPress: number): Promise<void>;
 	getKeyTriggerInterval(): Promise<{ doubleClick: number; longPress: number }>;
-	setKeyMode(mode: number): Promise<void>;
-	getKeyMode(): Promise<number>;
+	setKeyMode(mode: KeyMode): Promise<void>;
+	getKeyMode(): Promise<KeyMode>;
 };
 
 type KeyCommandSet = {
@@ -47,15 +67,15 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		}
 
 		onDispatchEvent(buffer: PacketBuffer) {
-			const keyStatus = buffer[6];
-			this.onPush?.(keyStatus);
+			const keyEvent = buffer[6] as KeyEvent;
+			this.onPush?.(keyEvent);
 		}
 
-		async getKeyStatus(): Promise<number> {
+		async isKeyPressed(): Promise<boolean> {
 			const bus = this.bus;
 			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
 			const returnPacket = await bus.sendAndWait(this.id, commands.KEY.GET_STATUS, bus.cmdBuffer, 0);
-			return returnPacket[6];
+			return (returnPacket[6] as KeyStatus) === KEY_STATUS.PRESSED;
 		}
 
 		async setKeyTriggerInterval(doubleClick: number, longPress: number) {
@@ -81,7 +101,7 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			};
 		}
 
-		async setKeyMode(mode: number) {
+		async setKeyMode(mode: KeyMode) {
 			const bus = this.bus;
 			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
 			bus.cmdBuffer[0] = mode;
@@ -92,12 +112,13 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			}
 		}
 
-		async getKeyMode(): Promise<number> {
+		async getKeyMode(): Promise<KeyMode> {
 			const bus = this.bus;
 			const commands = (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
 			const packet = await bus.sendAndWait(this.id, commands.KEY.GET_MODE, bus.cmdBuffer, 0);
-			return packet[6];
+			return packet[6] as KeyMode;
 		}
 	};
 
+export { KEY_EVENT, KEY_MODE, KEY_STATUS };
 export default HasKey as DeviceMixin<DeviceConstructor<M5ChainDevice>, HasKeyMethods>;

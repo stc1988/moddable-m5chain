@@ -56,8 +56,8 @@ function attachDevice(device) {
 }
 
 function attachEncoder(device) {
-	device.onPush = (keyStatus) => {
-		trace(`Encoder Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
+	device.onPush = (keyEvent) => {
+		trace(`Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
 	};
 
 	device.onPoll = (value) => {
@@ -72,14 +72,14 @@ function attachAngle(device) {
 }
 
 function attachKey(device) {
-	device.onPush = (keyStatus) => {
-		trace(`Key Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
+	device.onPush = (keyEvent) => {
+		trace(`Key Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
 	};
 }
 
 function attachJoyStick(device) {
-	device.onPush = (keyStatus) => {
-		trace(`JoyStick Device ID\t: ${device.id}, Key Status\t: ${keyStatus}\n`);
+	device.onPush = (keyEvent) => {
+		trace(`JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
 	};
 
 	device.onPoll = (position) => {
