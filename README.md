@@ -161,7 +161,7 @@ See the dedicated [Device-specific APIs](#device-specific-apis) section below.
 
 - `await device.getAngle12Adc()`
 - `await device.getAngle12Deg()`
-- `await device.getAngle12value()`
+- `await device.getAngle12Value()`
 - `await device.getAngle8Adc()`
 - `await device.setAngleRotationDirection(direction)`
 - `await device.getAngleRotationDirection()`
