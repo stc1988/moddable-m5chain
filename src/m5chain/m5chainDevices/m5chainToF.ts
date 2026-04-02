@@ -1,7 +1,11 @@
 import CanPoll from "canPoll";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { LedColor, PollHandler } from "types";
+
+export type MeasurementMode = 0 | 1 | 2;
+export type MeasurementStatus = 0 | 1;
+export type MeasurementCompletionFlag = 0 | 1;
 
 class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	static DEVICE_TYPE = 0x0005;
@@ -29,15 +33,15 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
 
-	async setLedColor(r: number, g: number, b: number) {
+	async setLedColor(r: number, g: number, b: number): Promise<void> {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
-	async getLedColor() {
+	async getLedColor(): Promise<LedColor> {
 		const colors = await super.getLedColor(0, 1);
 		return colors[0];
 	}
 
-	async polling() {
+	async polling(): Promise<number | undefined> {
 		const current = await this.getDistance();
 		if (this.#lastDistance === undefined) {
 			this.#lastDistance = current;
@@ -50,16 +54,16 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		return current;
 	}
 
-	async getDistance() {
+	async getDistance(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_DISTANCE, bus.cmdBuffer, 0);
 		return (packet[7] << 8) | packet[6];
 	}
-	async getMeasurementDistance() {
+	async getMeasurementDistance(): Promise<number> {
 		return await this.getDistance();
 	}
 
-	async setMeasurementTime(time: number) {
+	async setMeasurementTime(time: number): Promise<void> {
 		if (time < 20 || time > 200) {
 			throw new RangeError("Measurement time must be between 20 and 200 milliseconds.");
 		}
@@ -72,16 +76,13 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 			throw new Error("setMeasurementTime failed.\n");
 		}
 	}
-	async getMeasurementTime() {
+	async getMeasurementTime(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_TIME, bus.cmdBuffer, 0);
 		return packet[6];
 	}
 
-	async setMeasurementMode(mode: number) {
-		if (![0, 1, 2].includes(mode)) {
-			throw new RangeError("Measurement mode must be 0 (stop), 1 (single), or 2 (continuous).");
-		}
+	async setMeasurementMode(mode: MeasurementMode): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = mode;
@@ -91,16 +92,17 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 			throw new Error("setMeasurementMode failed.\n");
 		}
 	}
-	async getMeasurementMode() {
+	async getMeasurementMode(): Promise<MeasurementMode> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_MODE, bus.cmdBuffer, 0);
-		return packet[6];
+		const mode = packet[6];
+		if (mode !== 0 && mode !== 1 && mode !== 2) {
+			throw new Error(`Unknown measurement mode: ${mode}`);
+		}
+		return mode;
 	}
 
-	async setMeasurementStatus(status: number) {
-		if (![0, 1].includes(status)) {
-			throw new RangeError("Measurement status must be 0 (idle) or 1 (measuring).");
-		}
+	async setMeasurementStatus(status: MeasurementStatus): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = status;
@@ -110,21 +112,29 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 			throw new Error("setMeasurementStatus failed.\n");
 		}
 	}
-	async getMeasurementStatus() {
+	async getMeasurementStatus(): Promise<MeasurementStatus> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_STATUS, bus.cmdBuffer, 0);
-		return packet[6];
+		const status = packet[6];
+		if (status !== 0 && status !== 1) {
+			throw new Error(`Unknown measurement status: ${status}`);
+		}
+		return status;
 	}
 
-	async getMeasurementCompletionFlag() {
+	async getMeasurementCompletionFlag(): Promise<MeasurementCompletionFlag> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_COMPLETION_FLAG, bus.cmdBuffer, 0);
-		return packet[6];
+		const flag = packet[6];
+		if (flag !== 0 && flag !== 1) {
+			throw new Error(`Unknown measurement completion flag: ${flag}`);
+		}
+		return flag;
 	}
-	async isMeasurementComplete() {
+	async isMeasurementComplete(): Promise<boolean> {
 		return (await this.getMeasurementCompletionFlag()) === 1;
 	}
-	async triggerMeasurement() {
+	async triggerMeasurement(): Promise<void> {
 		await this.setMeasurementStatus(M5ChainToF.MEASUREMENT_STATUS.MEASURING);
 	}
 }

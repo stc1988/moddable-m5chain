@@ -2,7 +2,10 @@ import CanPoll from "canPoll";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { LedColor, PollHandler } from "types";
+
+export type EncoderABDirection = 0 | 1;
+export type SaveToFlash = 0 | 1;
 
 class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>) {
 	static DEVICE_TYPE = 0x0001;
@@ -18,15 +21,15 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	#lastValue: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
-	async setLedColor(r: number, g: number, b: number) {
+	async setLedColor(r: number, g: number, b: number): Promise<void> {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
-	async getLedColor() {
+	async getLedColor(): Promise<LedColor> {
 		const colors = await super.getLedColor(0, 1);
 		return colors[0];
 	}
 
-	async polling() {
+	async polling(): Promise<number | undefined> {
 		const current = await this.getEncoderValue();
 
 		if (this.#lastValue === undefined) {
@@ -41,7 +44,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	}
 
 	// -32768 ~32767
-	async getEncoderValue() {
+	async getEncoderValue(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_VALUE, bus.cmdBuffer, 0);
 		const value = (packet[7] << 8) | packet[6];
@@ -49,14 +52,14 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	}
 
 	// -32768 ~32767
-	async getEncoderIncValue() {
+	async getEncoderIncValue(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_INC_VALUE, bus.cmdBuffer, 0);
 		const value = (packet[7] << 8) | packet[6];
 		return (value << 16) >> 16;
 	}
 
-	async resetEncoderValue() {
+	async resetEncoderValue(): Promise<void> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.RESET_VALUE, bus.cmdBuffer, 0);
 		const result = packet[6];
@@ -65,7 +68,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 		}
 	}
 
-	async resetEncoderIncValue() {
+	async resetEncoderIncValue(): Promise<void> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.RESET_INC_VALUE, bus.cmdBuffer, 0);
 		const result = packet[6];
@@ -79,7 +82,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	// saveToFlash
 	// 0: Do not save
 	// 1: Save
-	async setEncoderABDirect(direct: number, saveToFlash = 0) {
+	async setEncoderABDirect(direct: EncoderABDirection, saveToFlash: SaveToFlash = 0): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = direct;
@@ -93,10 +96,14 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 
 	// 0: Clockwise increase
 	// 1: Clockwise decrease
-	async getEncoderABDirect() {
+	async getEncoderABDirect(): Promise<EncoderABDirection> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_AB_STATUS, bus.cmdBuffer, 0);
-		return packet[6];
+		const direction = packet[6];
+		if (direction !== 0 && direction !== 1) {
+			throw new Error(`Unknown encoder AB direction: ${direction}`);
+		}
+		return direction;
 	}
 }
 

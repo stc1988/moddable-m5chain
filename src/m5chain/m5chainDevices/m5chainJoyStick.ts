@@ -3,11 +3,18 @@ import CanPoll from "canPoll";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { LedColor, PollHandler } from "types";
 
-type JoystickValue = {
+export type JoystickValue = {
 	x: number;
 	y: number;
+};
+
+export type JoystickMappedRange = {
+	xMin: number;
+	xMax: number;
+	yMin: number;
+	yMax: number;
 };
 
 class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<JoystickValue>) {
@@ -24,15 +31,15 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 	#lastValue: JoystickValue | undefined;
 	declare onPoll: PollHandler<JoystickValue>;
 	declare dispatchOnPoll: (value: JoystickValue) => void;
-	async setLedColor(r: number, g: number, b: number) {
+	async setLedColor(r: number, g: number, b: number): Promise<void> {
 		return await super.setLedColor(0, 1, [{ r, g, b }]);
 	}
-	async getLedColor() {
+	async getLedColor(): Promise<LedColor> {
 		const colors = await super.getLedColor(0, 1);
 		return colors[0];
 	}
 
-	async polling() {
+	async polling(): Promise<JoystickValue | undefined> {
 		const current = await this.getJoystickMappedInt8Value();
 		if (this.#lastValue === undefined) {
 			this.#lastValue = current;
@@ -47,7 +54,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 	}
 
 	// 0 ~ 65535
-	async getJoystick16Adc() {
+	async getJoystick16Adc(): Promise<JoystickValue> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_16ADC, bus.cmdBuffer, 0);
 		return {
@@ -56,7 +63,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 		};
 	}
 	//0 ~ 255
-	async getJoystick8Adc() {
+	async getJoystick8Adc(): Promise<JoystickValue> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_8ADC, bus.cmdBuffer, 0);
 		return {
@@ -64,7 +71,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 			y: packet[7],
 		};
 	}
-	async getJoystickMappedRange() {
+	async getJoystickMappedRange(): Promise<JoystickMappedRange> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_RANGE, bus.cmdBuffer, 0);
 		return {
@@ -74,7 +81,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 			yMax: packet[9],
 		};
 	}
-	async setJoystickMappedRange(xMin: number, xMax: number, yMin: number, yMax: number) {
+	async setJoystickMappedRange(xMin: number, xMax: number, yMin: number, yMax: number): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = xMin;
@@ -88,7 +95,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 		}
 	}
 	//-4095-4095
-	async getJoystickMappedInt16Value() {
+	async getJoystickMappedInt16Value(): Promise<JoystickValue> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_INT16_VALUE, bus.cmdBuffer, 0);
 		const x = (packet[7] << 8) | packet[6];
@@ -99,7 +106,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 		};
 	}
 	//  -128~127
-	async getJoystickMappedInt8Value() {
+	async getJoystickMappedInt8Value(): Promise<JoystickValue> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_INT8_VALUE, bus.cmdBuffer, 0);
 		return {
