@@ -7,5 +7,12 @@
 	],
 	"modules": {
 		"*": ["./mod"]
+	},
+	"typescript": {
+		"tsconfig": {
+			"compilerOptions": {
+				"rootDir": "$(PWD)/../../"
+			}
+		}
 	}
 }

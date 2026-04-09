@@ -69,8 +69,10 @@ export default class M5Chain {
 			baud: 115200,
 			format: "buffer",
 			port: 1,
-			onReadable: function (this: { read(bytesReadable: number): ArrayBufferLike }, bytesReadable: number) {
-				const chunk = new Uint8Array(this.read(bytesReadable));
+			onReadable: function (this: Serial, bytesReadable: number) {
+				const readResult = this.read(bytesReadable);
+				if (!(readResult instanceof ArrayBuffer)) return;
+				const chunk = new Uint8Array(readResult);
 				if (chunk.length === 0) return;
 
 				// Append to rx buffer (grow if needed)
@@ -144,7 +146,11 @@ export default class M5Chain {
 						(self.#receiveMatch ? self.#receiveMatch(frame, packetSize) : packetCmd === self.#sendCmd);
 
 					if (shouldResolve) {
-						self.#receiveResolve(frame);
+						const resolve = self.#receiveResolve;
+						if (!resolve) {
+							continue;
+						}
+						resolve(frame);
 						self.#clearPendingWait();
 						continue;
 					}
@@ -451,8 +457,9 @@ export default class M5Chain {
 					);
 				}
 			}
-		} catch (e) {
-			this.#log(`scan failed: ${e?.message ?? e}`);
+		} catch (e: unknown) {
+			const message = e instanceof Error ? e.message : String(e);
+			this.#log(`scan failed: ${message}`);
 			this.#deviceList = [];
 		}
 		return this.#deviceList;

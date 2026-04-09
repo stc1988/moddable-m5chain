@@ -22,6 +22,7 @@
 			"commodetto/*": ["./node_modules/@moddable/typings/commodetto/*"],
 			"dns/*": ["./node_modules/@moddable/typings/dns/*"],
 			"mc/*": ["./node_modules/@moddable/typings/mc/*"],
+			"mod/*": ["./node_modules/@moddable/typings/mod/*"],
 			"pins/*": ["./node_modules/@moddable/typings/pins/*"],
 			"piu/*": ["./node_modules/@moddable/typings/piu/*"],
 			"text/*": ["./node_modules/@moddable/typings/text/*"],
