@@ -6,18 +6,20 @@ M5Stack documentation: [Chain ToF](https://docs.m5stack.com/en/chain/Chain_ToF)
 
 ```ts
 import M5ChainToF, {
-	type MeasurementCompletionFlag,
-	type MeasurementMode,
-	type MeasurementStatus,
+	MeasurementMode,
+	MeasurementCompletionFlag,
+	MeasurementStatus,
 } from "m5chainToF";
 ```
+
+These exports can also be used as TypeScript types.
 
 | Export | Description |
 | --- | --- |
 | `M5ChainToF` | Default class export. |
-| `MeasurementMode` | `0 \| 1 \| 2`; stop, single, or continuous measurement. |
-| `MeasurementStatus` | `0 \| 1`; idle or measuring. |
-| `MeasurementCompletionFlag` | `0 \| 1`; incomplete or complete. |
+| `MeasurementMode` | Measurement mode values: `STOP = 0`, `SINGLE = 1`, `CONTINUOUS = 2`. |
+| `MeasurementStatus` | Measurement status values: `IDLE = 0`, `MEASURING = 1`. |
+| `MeasurementCompletionFlag` | Completion flag values: `INCOMPLETE = 0`, `COMPLETE = 1`. |
 
 ## Capabilities
 
@@ -28,14 +30,14 @@ import M5ChainToF, {
 ## Usage
 
 ```ts
-import M5ChainToF from "m5chainToF";
+import M5ChainToF, { MeasurementMode } from "m5chainToF";
 
 if (device.type === M5ChainToF.DEVICE_TYPE) {
 	const tof = device as M5ChainToF;
 
 	await tof.setLedColor(80, 80, 255);
 	await tof.setMeasurementTime(50);
-	await tof.setMeasurementMode(M5ChainToF.MEASUREMENT_MODE.CONTINUOUS);
+	await tof.setMeasurementMode(MeasurementMode.CONTINUOUS);
 
 	tof.onPoll = (distance) => {
 		trace(`distance=${distance}mm\n`);
@@ -51,12 +53,12 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 | `await device.getMeasurementDistance()` | Alias for `getDistance()`. |
 | `await device.setMeasurementTime(time)` | Sets measurement time. Range: `20` to `200` ms. |
 | `await device.getMeasurementTime()` | Reads measurement time in milliseconds. |
-| `await device.setMeasurementMode(mode)` | Sets mode. `0`: stop, `1`: single, `2`: continuous. |
-| `await device.getMeasurementMode()` | Reads measurement mode. |
-| `await device.setMeasurementStatus(status)` | Sets status. `0`: idle, `1`: measuring. |
-| `await device.getMeasurementStatus()` | Reads measurement status. |
-| `await device.getMeasurementCompletionFlag()` | Reads completion flag. |
-| `await device.isMeasurementComplete()` | Returns `true` when completion flag is `1`. |
+| `await device.setMeasurementMode(mode)` | Sets mode. Use `MeasurementMode.STOP` (`0`), `MeasurementMode.SINGLE` (`1`), or `MeasurementMode.CONTINUOUS` (`2`). |
+| `await device.getMeasurementMode()` | Reads measurement mode as a `MeasurementMode` value. |
+| `await device.setMeasurementStatus(status)` | Sets status. Use `MeasurementStatus.IDLE` (`0`) or `MeasurementStatus.MEASURING` (`1`). |
+| `await device.getMeasurementStatus()` | Reads measurement status as a `MeasurementStatus` value. |
+| `await device.getMeasurementCompletionFlag()` | Reads completion flag as `MeasurementCompletionFlag.INCOMPLETE` (`0`) or `MeasurementCompletionFlag.COMPLETE` (`1`). |
+| `await device.isMeasurementComplete()` | Returns `true` when completion flag is `MeasurementCompletionFlag.COMPLETE` (`1`). |
 | `await device.triggerMeasurement()` | Starts a measurement by setting status to measuring. |
 
 ## Poll Value
