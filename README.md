@@ -5,20 +5,20 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ## Device Capability Matrix
 
-| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Poll Event (`onPoll`) | Device-specific API |
+| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Poll Event (`onPoll`) | API Guide |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Yes (delta value) | See [Encoder](#encoder-m5chainencoder) |
-| [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | Yes (normalized `0.00`-`1.00`) | See [Angle](#angle-m5chainangle) |
-| [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | No | See [Key](#key-m5chainkey) |
-| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | See [JoyStick](#joystick-m5chainjoystick) |
-| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Yes (distance in mm) | See [ToF](#tof-m5chaintof) |
+| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Yes (delta value) | [Encoder API](docs/devices/encoder.md) |
+| [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | Yes (normalized `0.00`-`1.00`) | [Angle API](docs/devices/angle.md) |
+| [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | No | [Key API](docs/devices/key.md) |
+| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | [JoyStick API](docs/devices/joystick.md) |
+| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Yes (distance in mm) | [ToF API](docs/devices/tof.md) |
 
 ## Features
 
 - Packet transport and matching (`sendPacket` / `sendAndWait`)
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
-- Feature composition with mixins (LED, Key, Poll)
+- Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Poll](docs/features/can-poll.md))
 - Poll loop runs only when at least one device has `onPoll` set
 
 ## Setup
@@ -44,7 +44,6 @@ For M5Stack products, the default UART pins are set to the Grove port.
 If you use an M5Atom series device with  [Atom Chain Base](https://docs.m5stack.com/ja/accessory/Atomic_ToChain_Base), automatically provides a `config.m5chain` pin configuration.
 
 See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
-
 
 ## Minimal Usage
 
@@ -122,93 +121,39 @@ If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` h
 
 Available on: Encoder / Angle / Key / JoyStick / ToF
 
-- `await device.setLedColor(r, g, b)`
-- `r`, `g`, and `b` must be integers from `0` to `255`
-- `await device.getLedColor() -> { r, g, b }` (`0` - `255` each)
-- `await device.setLedBrightness(brightness, saveToFlash = false)`
-- `brightness` must be from `0` to `1`; `saveToFlash` is a boolean
-- `await device.getLedBrightness() -> number` (`0` - `1`)
+See [HasLed API](docs/features/has-led.md).
 
 ### Key Features (`HasKey`)
 
 Available on: Encoder / Key / JoyStick
 
-- `await device.isKeyPressed() -> boolean`
-- `await device.setKeyTriggerInterval(doubleClickMs, longPressMs)`
-- `await device.getKeyTriggerInterval() -> { doubleClickMs, longPressMs }`
-- `await device.setKeyMode(mode)` (`0`: non-active, `1`: active report)
-- `await device.getKeyMode()`
-- `device.onPush = (keyEvent) => {}` (`keyEvent`: `KEY_EVENT.SINGLE_CLICK` / `KEY_EVENT.DOUBLE_CLICK` / `KEY_EVENT.LONG_PRESS`)
+See [HasKey API](docs/features/has-key.md).
 
 ### Poll Features (`CanPoll`)
 
 Available on: Encoder / Angle / JoyStick / ToF
 
-- `device.onPoll = (value) => {}`
-
-`value` by device type:
-
-- Encoder: delta from previous value (`number`)
-- Angle: normalized value (`0.00` - `1.00`)
-- JoyStick: `{ x, y }` (`-128` - `127`)
-- ToF: measured distance in millimeters (`number`)
+See [CanPoll API](docs/features/can-poll.md).
 
 ### Device-specific APIs
 
-See the dedicated [Device-specific APIs](#device-specific-apis) section below.
+Device-specific usage, TypeScript exports, and method details are split into focused pages:
 
-## Device-specific APIs
+- [Device API index](docs/devices/README.md)
+- [Encoder API](docs/devices/encoder.md)
+- [Angle API](docs/devices/angle.md)
+- [Key API](docs/devices/key.md)
+- [JoyStick API](docs/devices/joystick.md)
+- [ToF API](docs/devices/tof.md)
 
-### [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) (`M5ChainEncoder`)
+Feature mixin details are also split into focused pages:
 
-- `await device.getEncoderValue()`
-- `await device.getEncoderIncValue()`
-- `await device.resetEncoderValue()`
-- `await device.resetEncoderIncValue()`
-- `await device.setEncoderABDirect(direct, saveToFlash = 0)`
-- `await device.getEncoderABDirect()`
+- [Feature API index](docs/features/README.md)
+- [HasLed API](docs/features/has-led.md)
+- [HasKey API](docs/features/has-key.md)
+- [CanPoll API](docs/features/can-poll.md)
 
-### [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) (`M5ChainAngle`)
-
-- `await device.getAngle12Adc()`
-- `await device.getAngle12Deg()`
-- `await device.getAngle12Value()`
-- `await device.getAngle8Adc()`
-- `await device.setAngleRotationDirection(direction)`
-- `await device.getAngleRotationDirection()`
-
-### [Key](https://docs.m5stack.com/en/chain/Chain_Key) (`M5ChainKey`)
-
-No additional device-specific methods.  
-Use Common Device API + `HasLed` + `HasKey` APIs.
-
-### [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) (`M5ChainJoyStick`)
-
-- `await device.getJoystick16Adc() -> { x, y }`
-- `await device.getJoystick8Adc() -> { x, y }`
-- `await device.getJoystickMappedRange() -> { xMin, xMax, yMin, yMax }`
-- `await device.setJoystickMappedRange(xMin, xMax, yMin, yMax)`
-- `await device.getJoystickMappedInt16Value() -> { x, y }`
-- `await device.getJoystickMappedInt8Value() -> { x, y }`
-
-### [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) (`M5ChainToF`)
-
-- `await device.setLedColor(r, g, b)`
-- `await device.getLedColor() -> { r, g, b }` (`0` - `255` each)
-- `await device.setLedBrightness(brightness, saveToFlash = false)` (`brightness`: `0` - `1`)
-- `await device.getLedBrightness() -> number` (`0` - `1`)
-- `await device.getDistance()`
-- `await device.getMeasurementDistance()`
-- `await device.setMeasurementTime(time)` (`20` - `200` ms)
-- `await device.getMeasurementTime()`
-- `await device.setMeasurementMode(mode)` (`0`: stop, `1`: single, `2`: continuous)
-- `await device.getMeasurementMode()`
-- `await device.setMeasurementStatus(status)` (`0`: idle, `1`: measuring)
-- `await device.getMeasurementStatus()`
-- `await device.getMeasurementCompletionFlag()`
-- `await device.isMeasurementComplete()`
-- `await device.triggerMeasurement()`
-- `device.onPoll = (distance) => {}`
+README intentionally keeps only the setup, event model, and shared API surface so device and feature pages can grow without making the first-read path hard to scan.
 
 ## Examples
 
