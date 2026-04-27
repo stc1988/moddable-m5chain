@@ -1,12 +1,15 @@
 import type { M5ChainDevice } from "m5chainDevice";
-import {
-	KEY_EVENT,
-	type DeviceConstructor,
-	type DeviceMixin,
-	type KeyEvent,
-	type KeyHandler,
-	type PacketBuffer,
-} from "types";
+import type { DeviceConstructor, DeviceMixin, PacketBuffer } from "types";
+
+const KEY_EVENT = {
+	SINGLE_CLICK: 0,
+	DOUBLE_CLICK: 1,
+	LONG_PRESS: 2,
+} as const;
+
+type KeyEvent = (typeof KEY_EVENT)[keyof typeof KEY_EVENT];
+
+type KeyHandler = ((keyEvent: KeyEvent) => void) | null;
 
 const KEY_MODE = {
 	PASSIVE: 0,
@@ -119,5 +122,5 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		}
 	};
 
-export { KEY_EVENT, KEY_MODE, KEY_STATUS };
+export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyHandler };
 export default HasKey as DeviceMixin<DeviceConstructor<M5ChainDevice>, HasKeyMethods>;

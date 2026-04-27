@@ -7,7 +7,7 @@
 		"lint": "biome lint --write ."
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.3.14",
+		"@biomejs/biome": "2.4.13",
 		"@moddable/typings": "^7.2.1"
 	}
 }

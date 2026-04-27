@@ -1,9 +1,11 @@
-import deepEqual from "deepEqual";
 import CanPoll from "canPoll";
+import deepEqual from "deepEqual";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { LedColor, PollHandler } from "types";
+
+export { KEY_EVENT, type KeyEvent } from "hasKey";
 
 export type JoystickValue = {
 	x: number;
