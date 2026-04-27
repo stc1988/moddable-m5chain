@@ -18,7 +18,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 - Packet transport and matching (`sendPacket` / `sendAndWait`)
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
-- Feature composition with mixins (LED, Key, Poll)
+- Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Poll](docs/features/can-poll.md))
 - Poll loop runs only when at least one device has `onPoll` set
 
 ## Setup
@@ -121,36 +121,19 @@ If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` h
 
 Available on: Encoder / Angle / Key / JoyStick / ToF
 
-- `await device.setLedColor(r, g, b)`
-- `r`, `g`, and `b` must be integers from `0` to `255`
-- `await device.getLedColor() -> { r, g, b }` (`0` - `255` each)
-- `await device.setLedBrightness(brightness, saveToFlash = false)`
-- `brightness` must be from `0` to `1`; `saveToFlash` is a boolean
-- `await device.getLedBrightness() -> number` (`0` - `1`)
+See [HasLed API](docs/features/has-led.md).
 
 ### Key Features (`HasKey`)
 
 Available on: Encoder / Key / JoyStick
 
-- `await device.isKeyPressed() -> boolean`
-- `await device.setKeyTriggerInterval(doubleClickMs, longPressMs)`
-- `await device.getKeyTriggerInterval() -> { doubleClickMs, longPressMs }`
-- `await device.setKeyMode(mode)` (`0`: non-active, `1`: active report)
-- `await device.getKeyMode()`
-- `device.onPush = (keyEvent) => {}` (`keyEvent`: `KEY_EVENT.SINGLE_CLICK` / `KEY_EVENT.DOUBLE_CLICK` / `KEY_EVENT.LONG_PRESS`)
+See [HasKey API](docs/features/has-key.md).
 
 ### Poll Features (`CanPoll`)
 
 Available on: Encoder / Angle / JoyStick / ToF
 
-- `device.onPoll = (value) => {}`
-
-`value` by device type:
-
-- Encoder: delta from previous value (`number`)
-- Angle: normalized value (`0.00` - `1.00`)
-- JoyStick: `{ x, y }` (`-128` - `127`)
-- ToF: measured distance in millimeters (`number`)
+See [CanPoll API](docs/features/can-poll.md).
 
 ### Device-specific APIs
 
@@ -163,7 +146,14 @@ Device-specific usage, TypeScript exports, and method details are split into foc
 - [JoyStick API](docs/devices/joystick.md)
 - [ToF API](docs/devices/tof.md)
 
-README intentionally keeps only the setup, event model, and shared API surface so device pages can grow without making the first-read path hard to scan.
+Feature mixin details are also split into focused pages:
+
+- [Feature API index](docs/features/README.md)
+- [HasLed API](docs/features/has-led.md)
+- [HasKey API](docs/features/has-key.md)
+- [CanPoll API](docs/features/can-poll.md)
+
+README intentionally keeps only the setup, event model, and shared API surface so device and feature pages can grow without making the first-read path hard to scan.
 
 ## Examples
 

@@ -4,6 +4,8 @@ This directory keeps device-specific API documentation separate from the main RE
 
 The main README should stay focused on installation, startup, the event model, and shared APIs. Add or expand per-device examples here when a device needs method-level details, TypeScript import notes, or usage patterns that would make the README harder to scan.
 
+Shared mixin APIs are documented separately in [Feature API Guides](../features/README.md).
+
 ## Devices
 
 | Device | Class | Module | Capabilities |
