@@ -41,8 +41,7 @@ In your app's `manifest.json`, include this module's manifest.
 
 For M5Stack products, the default UART pins are set to the Grove port.
 
-If you use an M5Atom series device with  [Atom Chain Base](https://docs.m5stack.com/ja/accessory/Atomic_ToChain_Base), including
-`./src/m5chain/manifest.json` automatically provides a `config.m5chain` pin configuration.
+If you use an M5Atom series device with  [Atom Chain Base](https://docs.m5stack.com/ja/accessory/Atomic_ToChain_Base), automatically provides a `config.m5chain` pin configuration.
 
 See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
 
@@ -51,7 +50,7 @@ See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
 
 ```js
 import M5Chain from "m5chain";
-import config from "mod/config";
+import config from "mc/config";
 
 const m5chain = new M5Chain({
 	transmit: config.m5chain.transmit,
@@ -208,15 +207,6 @@ Use Common Device API + `HasLed` + `HasKey` APIs.
 - `await device.isMeasurementComplete()`
 - `await device.triggerMeasurement()`
 - `device.onPoll = (distance) => {}`
-
-## Packet Format (Summary)
-
-- Header: `0xAA 0x55`
-- Length: 2 bytes (little-endian)
-- Payload: `id`, `cmd`, `data...`, `crc8`
-- Footer: `0x55 0xAA`
-
-`sendAndWait(id, cmd, ...)` resolves only when both `id` and `cmd` match.
 
 ## Examples
 
