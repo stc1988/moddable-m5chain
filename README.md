@@ -92,7 +92,7 @@ device.onPush = async (keyEvent) => {
 };
 ```
 
-`KEY_EVENT` and the TypeScript `KeyEvent` type are also exported from the key-capable device modules:
+`KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their TypeScript types are also exported from the key-capable device modules:
 `m5chainEncoder`, `m5chainKey`, and `m5chainJoyStick`.
 
 ### `device.onPoll = (value) => {}`

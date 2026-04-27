@@ -36,8 +36,8 @@ m5chain.onDeviceListChanged = (devices) => {
 };
 ```
 
-Key-capable devices also export `KEY_EVENT` and the `KeyEvent` type from their device modules.
+Key-capable devices also export `KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their related types from their device modules.
 
 ```ts
-import M5ChainKey, { KEY_EVENT, type KeyEvent } from "m5chainKey";
+import M5ChainKey, { KEY_EVENT, KEY_MODE, type KeyEvent, type KeyMode } from "m5chainKey";
 ```

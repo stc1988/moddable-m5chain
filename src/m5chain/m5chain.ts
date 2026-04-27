@@ -10,7 +10,7 @@ import type {
 	WaitForPacketResult,
 } from "types";
 
-export { KEY_EVENT, type KeyEvent } from "hasKey";
+export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
 type M5ChainOptions = {
 	transmit?: number;

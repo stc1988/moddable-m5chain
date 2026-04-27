@@ -24,6 +24,37 @@ const KEY_STATUS = {
 type KeyMode = (typeof KEY_MODE)[keyof typeof KEY_MODE];
 type KeyStatus = (typeof KEY_STATUS)[keyof typeof KEY_STATUS];
 
+function keyModeToValue(mode: KeyMode): number {
+	if (mode !== KEY_MODE.PASSIVE && mode !== KEY_MODE.ACTIVE) {
+		throw new RangeError(`Unknown key mode: ${mode}`);
+	}
+	return mode;
+}
+
+function keyEventFromValue(value: number): KeyEvent {
+	switch (value) {
+		case 0:
+			return KEY_EVENT.SINGLE_CLICK;
+		case 1:
+			return KEY_EVENT.DOUBLE_CLICK;
+		case 2:
+			return KEY_EVENT.LONG_PRESS;
+		default:
+			throw new Error(`Unknown key event: ${value}`);
+	}
+}
+
+function keyModeFromValue(value: number): KeyMode {
+	switch (value) {
+		case 0:
+			return KEY_MODE.PASSIVE;
+		case 1:
+			return KEY_MODE.ACTIVE;
+		default:
+			throw new Error(`Unknown key mode: ${value}`);
+	}
+}
+
 type HasKeyMethods = {
 	onPush: KeyHandler;
 	onDispatchEvent(buffer: PacketBuffer): void;
@@ -74,7 +105,7 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		}
 
 		onDispatchEvent(buffer: PacketBuffer) {
-			const keyEvent = buffer[6] as KeyEvent;
+			const keyEvent = keyEventFromValue(buffer[6]);
 			this.onPush?.(keyEvent);
 		}
 
@@ -107,7 +138,7 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 
 		async setKeyMode(mode: KeyMode) {
 			const bus = this.bus;
-			bus.cmdBuffer[0] = mode;
+			bus.cmdBuffer[0] = keyModeToValue(mode);
 			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.SET_MODE, bus.cmdBuffer, 1);
 			const result = packet[6];
 			if (result !== 1) {
@@ -118,9 +149,9 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		async getKeyMode(): Promise<KeyMode> {
 			const bus = this.bus;
 			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.GET_MODE, bus.cmdBuffer, 0);
-			return packet[6] as KeyMode;
+			return keyModeFromValue(packet[6]);
 		}
 	};
 
-export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyHandler };
+export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyHandler, type KeyMode, type KeyStatus };
 export default HasKey as DeviceMixin<DeviceConstructor<M5ChainDevice>, HasKeyMethods>;

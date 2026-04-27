@@ -7,17 +7,27 @@ M5Stack documentation: [Chain Joystick](https://docs.m5stack.com/en/chain/Chain_
 ```ts
 import M5ChainJoyStick, {
 	KEY_EVENT,
+	KEY_MODE,
+	KEY_STATUS,
 	type JoystickMappedRange,
 	type JoystickValue,
 	type KeyEvent,
+	type KeyMode,
+	type KeyStatus,
 } from "m5chainJoyStick";
 ```
+
+`KEY_EVENT`, `KEY_MODE`, and `KEY_STATUS` values can also be used through their TypeScript types.
 
 | Export | Description |
 | --- | --- |
 | `M5ChainJoyStick` | Default class export. |
 | `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
+| `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
+| `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
 | `KeyEvent` | Type of values passed to `onPush`. |
+| `KeyMode` | Type of values accepted by `setKeyMode` and returned by `getKeyMode`. |
+| `KeyStatus` | Type of key status values used internally by key state reads. |
 | `JoystickValue` | `{ x: number; y: number }`. |
 | `JoystickMappedRange` | `{ xMin, xMax, yMin, yMax }`. |
 
@@ -31,12 +41,13 @@ import M5ChainJoyStick, {
 ## Usage
 
 ```ts
-import M5ChainJoyStick, { KEY_EVENT } from "m5chainJoyStick";
+import M5ChainJoyStick, { KEY_EVENT, KEY_MODE } from "m5chainJoyStick";
 
 if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 	const joystick = device as M5ChainJoyStick;
 
 	await joystick.setLedColor(0, 180, 255);
+	await joystick.setKeyMode(KEY_MODE.ACTIVE);
 
 	joystick.onPush = (keyEvent) => {
 		if (keyEvent === KEY_EVENT.LONG_PRESS) {

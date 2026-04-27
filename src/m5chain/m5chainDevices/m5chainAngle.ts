@@ -3,9 +3,21 @@ import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { PollHandler } from "types";
 
-type AngleRotationDirection = 0 | 1;
+export const AngleRotationDirection = {
+	CLOCKWISE: 0,
+	COUNTERCLOCKWISE: 1,
+} as const;
+export type AngleRotationDirection = (typeof AngleRotationDirection)[keyof typeof AngleRotationDirection];
+
 const ADC_12BIT_MAX = 0x0fff;
 const ANGLE_DEGREE_RANGE = 280;
+
+function angleRotationDirectionToValue(direction: AngleRotationDirection): number {
+	if (direction !== AngleRotationDirection.CLOCKWISE && direction !== AngleRotationDirection.COUNTERCLOCKWISE) {
+		throw new RangeError(`Unknown angle rotation direction: ${direction}`);
+	}
+	return direction;
+}
 
 class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	static DEVICE_TYPE = 0x0002;
@@ -16,6 +28,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		SET_CLOCKWISE_STATUS: 0x32 /**< Command to set the clockwise direction status */,
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const;
+	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
 	#lastValue: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
@@ -61,7 +74,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	async setAngleRotationDirection(direction: AngleRotationDirection): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
-		cmdBuffer[0] = direction;
+		cmdBuffer[0] = angleRotationDirectionToValue(direction);
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.SET_CLOCKWISE_STATUS, cmdBuffer, 1);
 		const result = packet[6];
 		if (result !== 1) {
@@ -75,10 +88,14 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.GET_CLOCKWISE_STATUS, bus.cmdBuffer, 0);
 		const direction = packet[6];
-		if (direction !== 0 && direction !== 1) {
-			throw new Error(`Unknown angle rotation direction: ${direction}`);
+		switch (direction) {
+			case 0:
+				return AngleRotationDirection.CLOCKWISE;
+			case 1:
+				return AngleRotationDirection.COUNTERCLOCKWISE;
+			default:
+				throw new Error(`Unknown angle rotation direction: ${direction}`);
 		}
-		return direction;
 	}
 }
 

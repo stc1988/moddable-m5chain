@@ -4,10 +4,33 @@ import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { PollHandler } from "types";
 
-export { KEY_EVENT, type KeyEvent } from "hasKey";
+export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
-export type EncoderABDirection = 0 | 1;
-export type SaveToFlash = 0 | 1;
+export const EncoderABDirection = {
+	CLOCKWISE_INCREASE: 0,
+	CLOCKWISE_DECREASE: 1,
+} as const;
+export type EncoderABDirection = (typeof EncoderABDirection)[keyof typeof EncoderABDirection];
+
+export const SaveToFlash = {
+	DISABLE: 0,
+	ENABLE: 1,
+} as const;
+export type SaveToFlash = (typeof SaveToFlash)[keyof typeof SaveToFlash];
+
+function encoderABDirectionToValue(direction: EncoderABDirection): number {
+	if (direction !== EncoderABDirection.CLOCKWISE_INCREASE && direction !== EncoderABDirection.CLOCKWISE_DECREASE) {
+		throw new RangeError(`Unknown encoder AB direction: ${direction}`);
+	}
+	return direction;
+}
+
+function saveToFlashToValue(saveToFlash: SaveToFlash): number {
+	if (saveToFlash !== SaveToFlash.DISABLE && saveToFlash !== SaveToFlash.ENABLE) {
+		throw new RangeError(`Unknown save-to-flash value: ${saveToFlash}`);
+	}
+	return saveToFlash;
+}
 
 class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>) {
 	static DEVICE_TYPE = 0x0001;
@@ -20,6 +43,8 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 		SET_AB_STATUS: 0x15 /**< Set AB status, 0->AB, 1->BA. */,
 		GET_AB_STATUS: 0x16 /**< Get AB status, 0->AB, 1->BA. */,
 	} as const;
+	static ENCODER_AB_DIRECTION = EncoderABDirection;
+	static SAVE_TO_FLASH = SaveToFlash;
 	#lastValue: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
@@ -80,8 +105,8 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	async setEncoderABDirect(direct: EncoderABDirection, saveToFlash: SaveToFlash = 0): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
-		cmdBuffer[0] = direct;
-		cmdBuffer[1] = saveToFlash;
+		cmdBuffer[0] = encoderABDirectionToValue(direct);
+		cmdBuffer[1] = saveToFlashToValue(saveToFlash);
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.SET_AB_STATUS, cmdBuffer, 2);
 		const result = packet[6];
 		if (result !== 1) {
@@ -95,10 +120,14 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_AB_STATUS, bus.cmdBuffer, 0);
 		const direction = packet[6];
-		if (direction !== 0 && direction !== 1) {
-			throw new Error(`Unknown encoder AB direction: ${direction}`);
+		switch (direction) {
+			case 0:
+				return EncoderABDirection.CLOCKWISE_INCREASE;
+			case 1:
+				return EncoderABDirection.CLOCKWISE_DECREASE;
+			default:
+				throw new Error(`Unknown encoder AB direction: ${direction}`);
 		}
-		return direction;
 	}
 }
 
