@@ -31,8 +31,7 @@ In your app's `manifest.json`, include this module's manifest.
 {
 	"include": [
 		{
-			"git":"https://github.com/stc1988/moddable-m5chain.git",
-			"manifest":"./src/m5chain/manifest.json"
+			"git":"https://github.com/stc1988/moddable-m5chain.git"
 		}
 	]
 }
