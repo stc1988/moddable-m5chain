@@ -3,7 +3,7 @@ import deepEqual from "deepEqual";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { LedColor, PollHandler } from "types";
+import type { PollHandler } from "types";
 
 export { KEY_EVENT, type KeyEvent } from "hasKey";
 
@@ -33,13 +33,6 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 	#lastValue: JoystickValue | undefined;
 	declare onPoll: PollHandler<JoystickValue>;
 	declare dispatchOnPoll: (value: JoystickValue) => void;
-	async setLedColor(r: number, g: number, b: number): Promise<void> {
-		return await super.setLedColor(0, 1, [{ r, g, b }]);
-	}
-	async getLedColor(): Promise<LedColor> {
-		const colors = await super.getLedColor(0, 1);
-		return colors[0];
-	}
 
 	async polling(): Promise<JoystickValue | undefined> {
 		const current = await this.getJoystickMappedInt8Value();

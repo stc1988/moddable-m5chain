@@ -122,10 +122,12 @@ If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` h
 
 Available on: Encoder / Angle / Key / JoyStick / ToF
 
-- `await device.setLedColor(r, g, b)` (single-LED wrapper provided by each device class)
-- `await device.getLedColor() -> { r, g, b }`
-- `await device.setLedBrightness(brightness, saveToFlash = 0)`
-- `await device.getLedBrightness()`
+- `await device.setLedColor(r, g, b)`
+- `r`, `g`, and `b` must be integers from `0` to `255`
+- `await device.getLedColor() -> { r, g, b }` (`0` - `255` each)
+- `await device.setLedBrightness(brightness, saveToFlash = false)`
+- `brightness` must be from `0` to `1`; `saveToFlash` is a boolean
+- `await device.getLedBrightness() -> number` (`0` - `1`)
 
 ### Key Features (`HasKey`)
 
@@ -192,9 +194,9 @@ Use Common Device API + `HasLed` + `HasKey` APIs.
 ### [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) (`M5ChainToF`)
 
 - `await device.setLedColor(r, g, b)`
-- `await device.getLedColor() -> { r, g, b }`
-- `await device.setLedBrightness(brightness, saveToFlash = 0)`
-- `await device.getLedBrightness()`
+- `await device.getLedColor() -> { r, g, b }` (`0` - `255` each)
+- `await device.setLedBrightness(brightness, saveToFlash = false)` (`brightness`: `0` - `1`)
+- `await device.getLedBrightness() -> number` (`0` - `1`)
 - `await device.getDistance()`
 - `await device.getMeasurementDistance()`
 - `await device.setMeasurementTime(time)` (`20` - `200` ms)

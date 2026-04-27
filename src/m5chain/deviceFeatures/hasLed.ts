@@ -2,9 +2,11 @@ import type { M5ChainDevice } from "m5chainDevice";
 import type { DeviceConstructor, DeviceMixin, LedColor } from "types";
 
 type HasLedMethods = {
-	setLedColor(index: number, num: number, colors: LedColor[]): Promise<void>;
-	getLedColor(index: number, num: number): Promise<LedColor[]>;
-	setLedBrightness(brightness: number, saveToFlash?: number): Promise<void>;
+	setLedColor(r: number, g: number, b: number): Promise<void>;
+	getLedColor(): Promise<LedColor>;
+	setLedColors(index: number, num: number, colors: LedColor[]): Promise<void>;
+	getLedColors(index: number, num: number): Promise<LedColor[]>;
+	setLedBrightness(brightness: number, saveToFlash?: boolean): Promise<void>;
 	getLedBrightness(): Promise<number>;
 };
 
@@ -17,6 +19,18 @@ type RgbCommandSet = {
 	};
 };
 
+function assertIntegerInRange(name: string, value: number, min: number, max: number) {
+	if (typeof value !== "number" || Number.isNaN(value) || value !== Math.floor(value) || value < min || value > max) {
+		throw new RangeError(`${name} must be an integer between ${min} and ${max}.`);
+	}
+}
+
+function assertUnitInterval(name: string, value: number) {
+	if (typeof value !== "number" || Number.isNaN(value) || value < 0 || value > 1) {
+		throw new RangeError(`${name} must be between 0 and 1.`);
+	}
+}
+
 const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 	class extends Base {
 		static CMD = {
@@ -28,7 +42,26 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			},
 		} as const;
 
-		async setLedColor(index: number, num: number, colors: LedColor[]) {
+		async setLedColor(r: number, g: number, b: number): Promise<void> {
+			return await this.setLedColors(0, 1, [{ r, g, b }]);
+		}
+
+		async getLedColor(): Promise<LedColor> {
+			const colors = await this.getLedColors(0, 1);
+			return colors[0];
+		}
+
+		async setLedColors(index: number, num: number, colors: LedColor[]) {
+			assertIntegerInRange("index", index, 0, 255);
+			assertIntegerInRange("num", num, 0, 255);
+			if (colors.length < num) {
+				throw new RangeError(`colors must contain at least ${num} entries.`);
+			}
+			for (let i = 0; i < num; i++) {
+				assertIntegerInRange(`colors[${i}].r`, colors[i].r, 0, 255);
+				assertIntegerInRange(`colors[${i}].g`, colors[i].g, 0, 255);
+				assertIntegerInRange(`colors[${i}].b`, colors[i].b, 0, 255);
+			}
 			const bus = this.bus;
 			const cmdBuffer = bus.cmdBuffer;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
@@ -42,11 +75,13 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			const packet = await bus.sendAndWait(this.id, commands.RGB.SET_RGB_VALUE, cmdBuffer, num * 3 + 2);
 			const result = packet[6];
 			if (result !== 1) {
-				throw new Error("setLedColor failed.\n");
+				throw new Error("setLedColors failed.\n");
 			}
 		}
 
-		async getLedColor(index: number, num: number): Promise<LedColor[]> {
+		async getLedColors(index: number, num: number): Promise<LedColor[]> {
+			assertIntegerInRange("index", index, 0, 255);
+			assertIntegerInRange("num", num, 0, 255);
 			const bus = this.bus;
 			const cmdBuffer = bus.cmdBuffer;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
@@ -70,13 +105,16 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			return colors;
 		}
 
-		// 0-1
-		async setLedBrightness(brightness: number, saveToFlash = 0) {
+		async setLedBrightness(brightness: number, saveToFlash = false) {
+			assertUnitInterval("brightness", brightness);
+			if (saveToFlash !== true && saveToFlash !== false) {
+				throw new RangeError("saveToFlash must be a boolean.");
+			}
 			const bus = this.bus;
 			const cmdBuffer = bus.cmdBuffer;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
-			cmdBuffer[0] = brightness * 100;
-			cmdBuffer[1] = saveToFlash;
+			cmdBuffer[0] = Math.round(brightness * 100);
+			cmdBuffer[1] = saveToFlash ? 1 : 0;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.SET_RGB_LIGHT, cmdBuffer, 2);
 			const result = packet[6];
 			if (result !== 1) {
@@ -88,7 +126,7 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			const bus = this.bus;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.GET_RGB_LIGHT, bus.cmdBuffer, 0);
-			return packet[6];
+			return packet[6] / 100;
 		}
 	};
 
