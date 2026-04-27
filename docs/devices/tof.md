@@ -17,9 +17,9 @@ These exports can also be used as TypeScript types.
 | Export | Description |
 | --- | --- |
 | `M5ChainToF` | Default class export. |
-| `MeasurementMode` | Named values: `STOP`, `SINGLE`, or `CONTINUOUS`. |
-| `MeasurementStatus` | Named values: `IDLE` or `MEASURING`. |
-| `MeasurementCompletionFlag` | Named values: `INCOMPLETE` or `COMPLETE`. |
+| `MeasurementMode` | Measurement mode values: `STOP = 0`, `SINGLE = 1`, `CONTINUOUS = 2`. |
+| `MeasurementStatus` | Measurement status values: `IDLE = 0`, `MEASURING = 1`. |
+| `MeasurementCompletionFlag` | Completion flag values: `INCOMPLETE = 0`, `COMPLETE = 1`. |
 
 ## Capabilities
 
@@ -53,12 +53,12 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 | `await device.getMeasurementDistance()` | Alias for `getDistance()`. |
 | `await device.setMeasurementTime(time)` | Sets measurement time. Range: `20` to `200` ms. |
 | `await device.getMeasurementTime()` | Reads measurement time in milliseconds. |
-| `await device.setMeasurementMode(mode)` | Sets mode. Use `MeasurementMode.STOP`, `MeasurementMode.SINGLE`, or `MeasurementMode.CONTINUOUS`. |
+| `await device.setMeasurementMode(mode)` | Sets mode. Use `MeasurementMode.STOP` (`0`), `MeasurementMode.SINGLE` (`1`), or `MeasurementMode.CONTINUOUS` (`2`). |
 | `await device.getMeasurementMode()` | Reads measurement mode as a `MeasurementMode` value. |
-| `await device.setMeasurementStatus(status)` | Sets status. Use `MeasurementStatus.IDLE` or `MeasurementStatus.MEASURING`. |
+| `await device.setMeasurementStatus(status)` | Sets status. Use `MeasurementStatus.IDLE` (`0`) or `MeasurementStatus.MEASURING` (`1`). |
 | `await device.getMeasurementStatus()` | Reads measurement status as a `MeasurementStatus` value. |
-| `await device.getMeasurementCompletionFlag()` | Reads completion flag as `MeasurementCompletionFlag.INCOMPLETE` or `MeasurementCompletionFlag.COMPLETE`. |
-| `await device.isMeasurementComplete()` | Returns `true` when completion flag is `MeasurementCompletionFlag.COMPLETE`. |
+| `await device.getMeasurementCompletionFlag()` | Reads completion flag as `MeasurementCompletionFlag.INCOMPLETE` (`0`) or `MeasurementCompletionFlag.COMPLETE` (`1`). |
+| `await device.isMeasurementComplete()` | Returns `true` when completion flag is `MeasurementCompletionFlag.COMPLETE` (`1`). |
 | `await device.triggerMeasurement()` | Starts a measurement by setting status to measuring. |
 
 ## Poll Value

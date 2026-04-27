@@ -4,49 +4,36 @@ import { withDeviceFeatures } from "m5chainDevice";
 import type { PollHandler } from "types";
 
 export const MeasurementMode = {
-	STOP: "stop",
-	SINGLE: "single",
-	CONTINUOUS: "continuous",
+	STOP: 0,
+	SINGLE: 1,
+	CONTINUOUS: 2,
 } as const;
 export type MeasurementMode = (typeof MeasurementMode)[keyof typeof MeasurementMode];
 
 export const MeasurementStatus = {
-	IDLE: "idle",
-	MEASURING: "measuring",
+	IDLE: 0,
+	MEASURING: 1,
 } as const;
 export type MeasurementStatus = (typeof MeasurementStatus)[keyof typeof MeasurementStatus];
 
 export const MeasurementCompletionFlag = {
-	INCOMPLETE: "incomplete",
-	COMPLETE: "complete",
+	INCOMPLETE: 0,
+	COMPLETE: 1,
 } as const;
 export type MeasurementCompletionFlag = (typeof MeasurementCompletionFlag)[keyof typeof MeasurementCompletionFlag];
 
-const MEASUREMENT_MODE_VALUE = {
-	[MeasurementMode.STOP]: 0,
-	[MeasurementMode.SINGLE]: 1,
-	[MeasurementMode.CONTINUOUS]: 2,
-} as const;
-
-const MEASUREMENT_STATUS_VALUE = {
-	[MeasurementStatus.IDLE]: 0,
-	[MeasurementStatus.MEASURING]: 1,
-} as const;
-
 function measurementModeToValue(mode: MeasurementMode): number {
-	const value = MEASUREMENT_MODE_VALUE[mode];
-	if (value === undefined) {
+	if (mode !== MeasurementMode.STOP && mode !== MeasurementMode.SINGLE && mode !== MeasurementMode.CONTINUOUS) {
 		throw new RangeError(`Unknown measurement mode: ${mode}`);
 	}
-	return value;
+	return mode;
 }
 
 function measurementStatusToValue(status: MeasurementStatus): number {
-	const value = MEASUREMENT_STATUS_VALUE[status];
-	if (value === undefined) {
+	if (status !== MeasurementStatus.IDLE && status !== MeasurementStatus.MEASURING) {
 		throw new RangeError(`Unknown measurement status: ${status}`);
 	}
-	return value;
+	return status;
 }
 
 class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
