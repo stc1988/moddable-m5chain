@@ -5,13 +5,13 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ## Device Capability Matrix
 
-| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Key Event (`onPush`) | Poll Event (`onPoll`) | Device-specific API |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Yes | Yes (delta value) | See [Encoder](#encoder-m5chainencoder) |
-| [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | No | Yes (normalized `0.00`-`1.00`) | See [Angle](#angle-m5chainangle) |
-| [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | Yes | No | See [Key](#key-m5chainkey) |
-| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | See [JoyStick](#joystick-m5chainjoystick) |
-| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | No | Yes (distance in mm) | See [ToF](#tof-m5chaintof) |
+| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Poll Event (`onPoll`) | Device-specific API |
+| --- | --- | --- | --- | --- | --- | --- |
+| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Yes (delta value) | See [Encoder](#encoder-m5chainencoder) |
+| [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | Yes (normalized `0.00`-`1.00`) | See [Angle](#angle-m5chainangle) |
+| [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | No | See [Key](#key-m5chainkey) |
+| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | See [JoyStick](#joystick-m5chainjoystick) |
+| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Yes (distance in mm) | See [ToF](#tof-m5chaintof) |
 
 ## Features
 
