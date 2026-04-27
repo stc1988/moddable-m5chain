@@ -165,3 +165,6 @@ When asking for changes, the following expectations apply:
 - Breaking API changes are acceptable.
 - If code changes, update documentation accordingly.
 - For implementation changes, run `npm run format` and `npm run lint`, then address reported lint findings.
+- After modifying this repository, verify that Moddable builds pass with:
+  - `mcconfig -d -m -p esp32/m5atom_matrix -t build ./examples/manifest.json`
+  - `mcrun -d -m -p esp32/m5atom_matrix -t build ./examples/basic/manifest.json`
