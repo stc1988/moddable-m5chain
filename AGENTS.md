@@ -160,6 +160,8 @@ m5chain.start();
 
 When asking for changes, the following expectations apply:
 
+- This repository is a user-facing library for developers who use `m5chain`; prioritize APIs and behavior that are easy to understand and use from an application.
+- When making changes, consider both the end-user experience of the library and the maintainability for developers working on this repository.
 - Refactors are welcome.
 - Please commit and report in clean, sensible units.
 - Breaking API changes are acceptable.
