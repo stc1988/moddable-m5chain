@@ -1,10 +1,10 @@
-import M5Chain, { KEY_EVENT, type KeyEvent } from "m5chain";
 import M5ChainAngle from "m5chainAngle";
 import M5ChainEncoder from "m5chainEncoder";
+import type { JoystickValue } from "m5chainJoyStick";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
-import type { JoystickValue } from "m5chainJoyStick";
+import M5Chain, { KEY_EVENT, type KeyEvent } from "m5chain";
 
 //import config from "mod/config";
 

@@ -1,5 +1,5 @@
-import deepEqual from "deepEqual";
 import CanPoll from "canPoll";
+import deepEqual from "deepEqual";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";

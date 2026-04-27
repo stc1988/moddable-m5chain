@@ -1,9 +1,9 @@
-import M5Chain from "m5chain";
 import M5ChainAngle from "m5chainAngle";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
+import M5Chain from "m5chain";
 
 import config from "mod/config";
 
