@@ -3,9 +3,51 @@ import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { PollHandler } from "types";
 
-export type MeasurementMode = 0 | 1 | 2;
-export type MeasurementStatus = 0 | 1;
-export type MeasurementCompletionFlag = 0 | 1;
+export const MeasurementMode = {
+	STOP: "stop",
+	SINGLE: "single",
+	CONTINUOUS: "continuous",
+} as const;
+export type MeasurementMode = (typeof MeasurementMode)[keyof typeof MeasurementMode];
+
+export const MeasurementStatus = {
+	IDLE: "idle",
+	MEASURING: "measuring",
+} as const;
+export type MeasurementStatus = (typeof MeasurementStatus)[keyof typeof MeasurementStatus];
+
+export const MeasurementCompletionFlag = {
+	INCOMPLETE: "incomplete",
+	COMPLETE: "complete",
+} as const;
+export type MeasurementCompletionFlag = (typeof MeasurementCompletionFlag)[keyof typeof MeasurementCompletionFlag];
+
+const MEASUREMENT_MODE_VALUE = {
+	[MeasurementMode.STOP]: 0,
+	[MeasurementMode.SINGLE]: 1,
+	[MeasurementMode.CONTINUOUS]: 2,
+} as const;
+
+const MEASUREMENT_STATUS_VALUE = {
+	[MeasurementStatus.IDLE]: 0,
+	[MeasurementStatus.MEASURING]: 1,
+} as const;
+
+function measurementModeToValue(mode: MeasurementMode): number {
+	const value = MEASUREMENT_MODE_VALUE[mode];
+	if (value === undefined) {
+		throw new RangeError(`Unknown measurement mode: ${mode}`);
+	}
+	return value;
+}
+
+function measurementStatusToValue(status: MeasurementStatus): number {
+	const value = MEASUREMENT_STATUS_VALUE[status];
+	if (value === undefined) {
+		throw new RangeError(`Unknown measurement status: ${status}`);
+	}
+	return value;
+}
 
 class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	static DEVICE_TYPE = 0x0005;
@@ -20,15 +62,9 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		GET_MEASUREMENT_STATUS: 0x56 /**< Get the current measurement status. */,
 		GET_MEASUREMENT_COMPLETION_FLAG: 0x57 /**< Get the measurement completion flag. */,
 	} as const;
-	static MEASUREMENT_MODE = {
-		STOP: 0,
-		SINGLE: 1,
-		CONTINUOUS: 2,
-	} as const;
-	static MEASUREMENT_STATUS = {
-		IDLE: 0,
-		MEASURING: 1,
-	} as const;
+	static MEASUREMENT_MODE = MeasurementMode;
+	static MEASUREMENT_STATUS = MeasurementStatus;
+	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;
 	#lastDistance: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
@@ -77,7 +113,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	async setMeasurementMode(mode: MeasurementMode): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
-		cmdBuffer[0] = mode;
+		cmdBuffer[0] = measurementModeToValue(mode);
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_MODE, cmdBuffer, 1);
 		const result = packet[6];
 		if (result !== 1) {
@@ -88,16 +124,22 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_MODE, bus.cmdBuffer, 0);
 		const mode = packet[6];
-		if (mode !== 0 && mode !== 1 && mode !== 2) {
-			throw new Error(`Unknown measurement mode: ${mode}`);
+		switch (mode) {
+			case 0:
+				return MeasurementMode.STOP;
+			case 1:
+				return MeasurementMode.SINGLE;
+			case 2:
+				return MeasurementMode.CONTINUOUS;
+			default:
+				throw new Error(`Unknown measurement mode: ${mode}`);
 		}
-		return mode;
 	}
 
 	async setMeasurementStatus(status: MeasurementStatus): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
-		cmdBuffer[0] = status;
+		cmdBuffer[0] = measurementStatusToValue(status);
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_STATUS, cmdBuffer, 1);
 		const result = packet[6];
 		if (result !== 1) {
@@ -108,26 +150,34 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_STATUS, bus.cmdBuffer, 0);
 		const status = packet[6];
-		if (status !== 0 && status !== 1) {
-			throw new Error(`Unknown measurement status: ${status}`);
+		switch (status) {
+			case 0:
+				return MeasurementStatus.IDLE;
+			case 1:
+				return MeasurementStatus.MEASURING;
+			default:
+				throw new Error(`Unknown measurement status: ${status}`);
 		}
-		return status;
 	}
 
 	async getMeasurementCompletionFlag(): Promise<MeasurementCompletionFlag> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_COMPLETION_FLAG, bus.cmdBuffer, 0);
 		const flag = packet[6];
-		if (flag !== 0 && flag !== 1) {
-			throw new Error(`Unknown measurement completion flag: ${flag}`);
+		switch (flag) {
+			case 0:
+				return MeasurementCompletionFlag.INCOMPLETE;
+			case 1:
+				return MeasurementCompletionFlag.COMPLETE;
+			default:
+				throw new Error(`Unknown measurement completion flag: ${flag}`);
 		}
-		return flag;
 	}
 	async isMeasurementComplete(): Promise<boolean> {
-		return (await this.getMeasurementCompletionFlag()) === 1;
+		return (await this.getMeasurementCompletionFlag()) === MeasurementCompletionFlag.COMPLETE;
 	}
 	async triggerMeasurement(): Promise<void> {
-		await this.setMeasurementStatus(M5ChainToF.MEASUREMENT_STATUS.MEASURING);
+		await this.setMeasurementStatus(MeasurementStatus.MEASURING);
 	}
 }
 
