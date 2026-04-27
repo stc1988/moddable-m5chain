@@ -83,9 +83,20 @@ await m5chain.start();
 Available on devices with `HasKey` (Encoder / Key / JoyStick).
 
 - `status` is a key event, not the pressed/released state
-- `0`: single click
-- `1`: double click
-- `2`: long press
+- Use `KEY_EVENT.SINGLE_CLICK`, `KEY_EVENT.DOUBLE_CLICK`, or `KEY_EVENT.LONG_PRESS`
+
+```js
+import M5Chain, { KEY_EVENT } from "m5chain";
+
+device.onPush = async (keyEvent) => {
+	if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
+		await device.setLedColor(255, 0, 0);
+	}
+};
+```
+
+`KEY_EVENT` and the TypeScript `KeyEvent` type are also exported from the key-capable device modules:
+`m5chainEncoder`, `m5chainKey`, and `m5chainJoyStick`.
 
 ### `device.onPoll = (value) => {}`
 
@@ -127,7 +138,7 @@ Available on: Encoder / Key / JoyStick
 - `await device.getKeyTriggerInterval() -> { doubleClickMs, longPressMs }`
 - `await device.setKeyMode(mode)` (`0`: non-active, `1`: active report)
 - `await device.getKeyMode()`
-- `device.onPush = (status) => {}` (`status`: `0 | 1 | 2`)
+- `device.onPush = (keyEvent) => {}` (`keyEvent`: `KEY_EVENT.SINGLE_CLICK` / `KEY_EVENT.DOUBLE_CLICK` / `KEY_EVENT.LONG_PRESS`)
 
 ### Poll Features (`CanPoll`)
 

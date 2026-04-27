@@ -1,4 +1,4 @@
 declare module "mod/config" {
-  var Config: {file: {root: string}} & Record<string, any>;
-  export {Config as default};
+	var Config: { file: { root: string } } & Record<string, unknown>;
+	export { Config as default };
 }

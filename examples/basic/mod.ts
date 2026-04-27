@@ -1,10 +1,9 @@
-import M5Chain from "m5chain";
+import M5Chain, { KEY_EVENT, type KeyEvent } from "m5chain";
 import M5ChainAngle from "m5chainAngle";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
-import type { KeyEvent } from "types";
 import type { JoystickValue } from "m5chainJoyStick";
 
 //import config from "mod/config";
@@ -32,8 +31,8 @@ function isExampleDevice(device: unknown): device is DeviceWithInfo {
 export async function main() {
 	// if config is not defined in manifest file, use device.I2C.default.data and clock.
 	const m5chain = new M5Chain({
-//		transmit: config.m5chain.transmit,
-//		receive: config.m5chain.receive,
+		//		transmit: config.m5chain.transmit,
+		//		receive: config.m5chain.receive,
 		debug: false,
 	});
 
@@ -82,9 +81,22 @@ function attachDevice(device: M5ChainExampleDevice) {
 	}
 }
 
+function keyEventName(keyEvent: KeyEvent): string {
+	switch (keyEvent) {
+		case KEY_EVENT.SINGLE_CLICK:
+			return "single click";
+		case KEY_EVENT.DOUBLE_CLICK:
+			return "double click";
+		case KEY_EVENT.LONG_PRESS:
+			return "long press";
+		default:
+			return `unknown(${keyEvent})`;
+	}
+}
+
 function attachEncoder(device: M5ChainEncoder) {
 	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
+		trace(`Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 
 	device.onPoll = (value: number) => {
@@ -100,13 +112,13 @@ function attachAngle(device: M5ChainAngle) {
 
 function attachKey(device: M5ChainKey) {
 	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`Key Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
+		trace(`Key Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 }
 
 function attachJoyStick(device: M5ChainJoyStick) {
 	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
+		trace(`JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 
 	device.onPoll = (position: JoystickValue) => {

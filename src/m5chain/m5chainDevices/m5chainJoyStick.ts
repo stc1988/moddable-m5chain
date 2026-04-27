@@ -5,6 +5,8 @@ import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { LedColor, PollHandler } from "types";
 
+export { KEY_EVENT, type KeyEvent } from "hasKey";
+
 export type JoystickValue = {
 	x: number;
 	y: number;

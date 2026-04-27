@@ -35,16 +35,6 @@ export type LedColor = {
 
 export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void;
 
-export const KEY_EVENT = {
-	SINGLE_CLICK: 0,
-	DOUBLE_CLICK: 1,
-	LONG_PRESS: 2,
-} as const;
-
-export type KeyEvent = (typeof KEY_EVENT)[keyof typeof KEY_EVENT];
-
-export type KeyHandler = ((keyEvent: KeyEvent) => void) | null;
-
 export type PollHandler<T = unknown> = ((value: T) => void) | null;
 
 export interface ChainBus {

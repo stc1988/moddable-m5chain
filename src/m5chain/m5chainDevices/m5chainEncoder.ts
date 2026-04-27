@@ -4,6 +4,8 @@ import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { LedColor, PollHandler } from "types";
 
+export { KEY_EVENT, type KeyEvent } from "hasKey";
+
 export type EncoderABDirection = 0 | 1;
 export type SaveToFlash = 0 | 1;
 
