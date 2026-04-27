@@ -122,7 +122,7 @@ If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` h
 
 Available on: Encoder / Angle / Key / JoyStick / ToF
 
-- `await device.setLedColor(r, g, b)` (single-LED wrapper provided by each device class)
+- `await device.setLedColor(r, g, b)`
 - `r`, `g`, and `b` must be integers from `0` to `255`
 - `await device.getLedColor() -> { r, g, b }` (`0` - `255` each)
 - `await device.setLedBrightness(brightness, saveToFlash = false)`

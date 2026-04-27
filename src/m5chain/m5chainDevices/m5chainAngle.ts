@@ -1,7 +1,7 @@
 import CanPoll from "canPoll";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { LedColor, PollHandler } from "types";
+import type { PollHandler } from "types";
 
 type AngleRotationDirection = 0 | 1;
 const ADC_12BIT_MAX = 0x0fff;
@@ -19,13 +19,6 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	#lastValue: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
-	async setLedColor(r: number, g: number, b: number): Promise<void> {
-		return await super.setLedColor(0, 1, [{ r, g, b }]);
-	}
-	async getLedColor(): Promise<LedColor> {
-		const colors = await super.getLedColor(0, 1);
-		return colors[0];
-	}
 
 	async polling(): Promise<number | undefined> {
 		const current = await this.getAngle12Value();

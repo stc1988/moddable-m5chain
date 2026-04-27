@@ -2,7 +2,7 @@ import CanPoll from "canPoll";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { LedColor, PollHandler } from "types";
+import type { PollHandler } from "types";
 
 export { KEY_EVENT, type KeyEvent } from "hasKey";
 
@@ -23,13 +23,6 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	#lastValue: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
-	async setLedColor(r: number, g: number, b: number): Promise<void> {
-		return await super.setLedColor(0, 1, [{ r, g, b }]);
-	}
-	async getLedColor(): Promise<LedColor> {
-		const colors = await super.getLedColor(0, 1);
-		return colors[0];
-	}
 
 	async polling(): Promise<number | undefined> {
 		const current = await this.getEncoderValue();
