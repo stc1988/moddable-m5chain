@@ -1,15 +1,19 @@
 {
 	"include": ["src/**/*", "examples/**/*"],
 	"compilerOptions": {
-		"allowJs": true,
 		"incremental": true,
-		"noImplicitAny": true,
 		"outDir": "dist",
-		"lib": ["es2022"],
+		"lib": ["es2025"],
 		"module": "es2022",
 		"sourceMap": true,
-		"target": "ES2022",
-		"baseUrl": ".",
+		"target": "es2025",
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+		"strict": true,
+		"noImplicitAny": false,
+		"noImplicitThis": false,
+		"strictNullChecks": false,
 		"paths": {
 			"*": [
 				"./node_modules/@moddable/typings/*",
@@ -28,19 +32,20 @@
 			"text/*": ["./node_modules/@moddable/typings/text/*"],
 			"embedded:io/*": ["./node_modules/@moddable/typings/embedded_io/*"],
 			"embedded:io/audio/*": ["./node_modules/@moddable/typings/embedded_io/audio/*"],
-			"embedded:io/bluetoothle/*": ["./node_modules/@moddable/typings/embedded_io/ble/*"],
+			"embedded:io/bluetooth/*": ["./node_modules/@moddable/typings/embedded_io/bluetooth/*"],
 			"embedded:io/socket/*": ["./node_modules/@moddable/typings/embedded_io/socket/*"],
 			"embedded:network/http/*": ["./node_modules/@moddable/typings/embedded_network/http/*"],
 			"embedded:network/mqtt/*": ["./node_modules/@moddable/typings/embedded_network/mqtt/*"],
 			"embedded:network/websocket/*": ["./node_modules/@moddable/typings/embedded_network/websocket/*"],
 			"embedded:network/dns/resolver/*": ["./node_modules/@moddable/typings/embedded_network/dns/resolver/*"],
 			"embedded:network/interface/*": ["./node_modules/@moddable/typings/embedded_network/interface/*"],
-			"embedded:network/ntp/*": ["./node_modules/@moddable/typings/embedded_network/ntp/*"],
-			"embedded:network/*": ["./node_modules/@moddable/typings/embedded_network/*"],
-			"embedded:*": ["./node_modules/@moddable/typings/embedded/*"],
 			"embedded:storage/*": ["./node_modules/@moddable/typings/embedded/storage/*"],
-			"mqtt/js": ["./node_modules/@moddable/typings/mqtt/js"]
+			"embedded:provider/*": ["./node_modules/@moddable/typings/embedded/provider/*"]
 		},
-		"types": ["./node_modules/@moddable/typings/xs", "./node_modules/@moddable/typings/mcpack"]
+		"types": [
+			"./node_modules/@moddable/typings/xs",
+			"./node_modules/@moddable/typings/mcpack",
+			"./node_modules/@moddable/typings/global"
+		]
 	}
 }
