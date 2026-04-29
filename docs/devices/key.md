@@ -52,7 +52,7 @@ if (device.type === M5ChainKey.DEVICE_TYPE) {
 | Method | Description |
 | --- | --- |
 | `await device.isKeyPressed()` | Reads whether the key is currently pressed. |
-| `await device.setKeyTriggerInterval(doubleClickMs, longPressMs)` | Sets double-click and long-press trigger intervals. |
+| `await device.setKeyTriggerInterval(doubleClickMs, longPressMs)` | Sets double-click and long-press trigger intervals in milliseconds. `doubleClickMs` must be `100` to `1000` in `100` ms steps. `longPressMs` must be `3000` to `10000` in `1000` ms steps. |
 | `await device.getKeyTriggerInterval()` | Reads `{ doubleClickMs, longPressMs }`. |
 | `await device.setKeyMode(mode)` | Sets key mode. Use `KEY_MODE.PASSIVE` (`0`) or `KEY_MODE.ACTIVE` (`1`). |
 | `await device.getKeyMode()` | Reads key mode as a `KeyMode` value. |
