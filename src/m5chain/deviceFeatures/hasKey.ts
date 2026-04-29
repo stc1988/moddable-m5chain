@@ -31,6 +31,32 @@ function keyModeToValue(mode: KeyMode): number {
 	return mode;
 }
 
+function doubleClickMsToProtocolValue(doubleClickMs: number): number {
+	if (
+		typeof doubleClickMs !== "number" ||
+		Number.isNaN(doubleClickMs) ||
+		doubleClickMs < 100 ||
+		doubleClickMs > 1000 ||
+		doubleClickMs % 100 !== 0
+	) {
+		throw new RangeError("doubleClickMs must be 100 to 1000 milliseconds in 100ms steps.");
+	}
+	return doubleClickMs / 100 - 1;
+}
+
+function longPressMsToProtocolValue(longPressMs: number): number {
+	if (
+		typeof longPressMs !== "number" ||
+		Number.isNaN(longPressMs) ||
+		longPressMs < 3000 ||
+		longPressMs > 10000 ||
+		longPressMs % 1000 !== 0
+	) {
+		throw new RangeError("longPressMs must be 3000 to 10000 milliseconds in 1000ms steps.");
+	}
+	return longPressMs / 1000 - 3;
+}
+
 function keyEventFromValue(value: number): KeyEvent {
 	switch (value) {
 		case 0:
@@ -118,8 +144,8 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		async setKeyTriggerInterval(doubleClickMs: number, longPressMs: number) {
 			const bus = this.bus;
 			const cmdBuffer = bus.cmdBuffer;
-			cmdBuffer[0] = doubleClickMs;
-			cmdBuffer[1] = longPressMs;
+			cmdBuffer[0] = doubleClickMsToProtocolValue(doubleClickMs);
+			cmdBuffer[1] = longPressMsToProtocolValue(longPressMs);
 			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.SET_TRIGGER_TIMEOUT, cmdBuffer, 2);
 			const result = packet[6];
 			if (result !== 1) {
@@ -131,8 +157,8 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			const bus = this.bus;
 			const packet = await bus.sendAndWait(this.id, this.#commands.KEY.GET_TRIGGER_TIMEOUT, bus.cmdBuffer, 0);
 			return {
-				doubleClickMs: packet[6],
-				longPressMs: packet[7],
+				doubleClickMs: (packet[6] + 1) * 100,
+				longPressMs: (packet[7] + 3) * 1000,
 			};
 		}
 
