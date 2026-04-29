@@ -1,5 +1,4 @@
 import CanPoll from "canPoll";
-import deepEqual from "deepEqual";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
@@ -30,22 +29,11 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	} as const;
-	#lastValue: JoystickValue | undefined;
 	declare onPoll: PollHandler<JoystickValue>;
 	declare dispatchOnPoll: (value: JoystickValue) => void;
 
-	async polling(): Promise<JoystickValue | undefined> {
-		const current = await this.getJoystickMappedInt8Value();
-		if (this.#lastValue === undefined) {
-			this.#lastValue = current;
-			return current;
-		}
-		if (deepEqual(current, this.#lastValue)) {
-			return undefined;
-		}
-
-		this.#lastValue = current;
-		return current;
+	async polling(): Promise<JoystickValue> {
+		return await this.getJoystickMappedInt8Value();
 	}
 
 	// 0 ~ 65535

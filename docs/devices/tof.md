@@ -63,4 +63,4 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 
 ## Poll Value
 
-`onPoll` receives the measured distance in millimeters. It dispatches when the distance changes.
+`onPoll` receives the measured distance in millimeters on every poll.

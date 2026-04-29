@@ -74,4 +74,4 @@ if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 
 ## Poll Value
 
-`onPoll` receives `{ x, y }` from `getJoystickMappedInt8Value()`. It dispatches when either axis changes.
+`onPoll` receives `{ x, y }` from `getJoystickMappedInt8Value()` on every poll.

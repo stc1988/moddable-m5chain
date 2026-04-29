@@ -29,23 +29,11 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const;
 	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
-	#lastValue: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
 
-	async polling(): Promise<number | undefined> {
-		const current = await this.getAngle12Value();
-		if (this.#lastValue === undefined) {
-			this.#lastValue = current;
-			return current;
-		}
-
-		if (current === this.#lastValue) {
-			return undefined;
-		}
-
-		this.#lastValue = current;
-		return current;
+	async polling(): Promise<number> {
+		return await this.getAngle12Value();
 	}
 
 	async getAngle12Adc(): Promise<number> {

@@ -100,6 +100,8 @@ device.onPush = async (keyEvent) => {
 Available on devices with `CanPoll` (Encoder / Angle / JoyStick / ToF).  
 If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` handlers are `null`.
 
+Angle, JoyStick, and ToF dispatch the latest sampled value on every poll. Encoder dispatches the delta from the previous encoder value and skips dispatch while the value is unchanged.
+
 ## API
 
 ### M5Chain

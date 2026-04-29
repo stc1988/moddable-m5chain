@@ -52,21 +52,11 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	static MEASUREMENT_MODE = MeasurementMode;
 	static MEASUREMENT_STATUS = MeasurementStatus;
 	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;
-	#lastDistance: number | undefined;
 	declare onPoll: PollHandler<number>;
 	declare dispatchOnPoll: (value: number) => void;
 
-	async polling(): Promise<number | undefined> {
-		const current = await this.getDistance();
-		if (this.#lastDistance === undefined) {
-			this.#lastDistance = current;
-			return current;
-		}
-		if (current === this.#lastDistance) {
-			return undefined;
-		}
-		this.#lastDistance = current;
-		return current;
+	async polling(): Promise<number> {
+		return await this.getDistance();
 	}
 
 	async getDistance(): Promise<number> {

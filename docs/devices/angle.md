@@ -51,4 +51,4 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 
 ## Poll Value
 
-`onPoll` receives the normalized value from `getAngle12Value()`. It dispatches when the value changes.
+`onPoll` receives the normalized value from `getAngle12Value()` on every poll.

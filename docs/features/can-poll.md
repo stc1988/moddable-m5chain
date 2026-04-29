@@ -48,6 +48,8 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 
 ## Poll Values
 
+Angle, JoyStick, and ToF dispatch the latest sampled value on every poll. Encoder dispatches only when the encoder value changes.
+
 | Device | `onPoll` value |
 | --- | --- |
 | Encoder | Delta from previous encoder value (`number`) |
