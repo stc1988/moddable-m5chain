@@ -3,11 +3,24 @@ import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
-import M5Chain from "m5chain";
+import M5Chain, { KEY_EVENT, type KeyEvent } from "m5chain";
+import type { LedColor } from "types";
 
 import config from "mod/config";
 
-function hsvToRGB(h, s, v) {
+type SupportedLedDevice = M5ChainEncoder | M5ChainAngle | M5ChainKey | M5ChainJoyStick | M5ChainToF;
+
+function isSupportedLedDevice(device: unknown): device is SupportedLedDevice {
+	return (
+		device instanceof M5ChainEncoder ||
+		device instanceof M5ChainAngle ||
+		device instanceof M5ChainKey ||
+		device instanceof M5ChainJoyStick ||
+		device instanceof M5ChainToF
+	);
+}
+
+function hsvToRGB(h: number, s: number, v: number): LedColor {
 	h = Math.max(0, Math.min(1, h));
 	s = Math.max(0, Math.min(1, s));
 	v = Math.max(0, Math.min(1, v));
@@ -62,7 +75,7 @@ function hsvToRGB(h, s, v) {
 		b: Math.round(bl * 255),
 	};
 }
-function norm(v) {
+function norm(v: number): number {
 	// -128..127 → 0.0..1.0
 	return Math.max(0, Math.min(1, (v + 128) / 255));
 }
@@ -79,6 +92,9 @@ export async function main() {
 		trace("device list changed\n");
 
 		for (const device of devices) {
+			if (!isSupportedLedDevice(device)) {
+				continue;
+			}
 			attachDevice(device);
 		}
 	};
@@ -86,27 +102,29 @@ export async function main() {
 	m5chain.start();
 }
 
-function attachDevice(device) {
-	switch (device.type) {
-		case M5ChainEncoder.DEVICE_TYPE:
-			attachEncoder(device);
-			break;
-		case M5ChainAngle.DEVICE_TYPE:
-			attachAngle(device);
-			break;
-		case M5ChainKey.DEVICE_TYPE:
-			attachKey(device);
-			break;
-		case M5ChainJoyStick.DEVICE_TYPE:
-			attachJoyStick(device);
-			break;
-		case M5ChainToF.DEVICE_TYPE:
-			attachToF(device);
-			break;
+function attachDevice(device: SupportedLedDevice) {
+	if (device instanceof M5ChainEncoder) {
+		attachEncoder(device);
+		return;
+	}
+	if (device instanceof M5ChainAngle) {
+		attachAngle(device);
+		return;
+	}
+	if (device instanceof M5ChainKey) {
+		attachKey(device);
+		return;
+	}
+	if (device instanceof M5ChainJoyStick) {
+		attachJoyStick(device);
+		return;
+	}
+	if (device instanceof M5ChainToF) {
+		attachToF(device);
 	}
 }
 
-function attachEncoder(device) {
+function attachEncoder(device: M5ChainEncoder) {
 	let phase = 0;
 	const STEP = 1 / 36;
 	device.onSample = async function () {
@@ -120,7 +138,7 @@ function attachEncoder(device) {
 	};
 }
 
-function attachAngle(device) {
+function attachAngle(device: M5ChainAngle) {
 	device.onSample = async function () {
 		const sample = this.sample();
 		if (sample === undefined) return;
@@ -130,11 +148,11 @@ function attachAngle(device) {
 	};
 }
 
-function attachKey(device) {
+function attachKey(device: M5ChainKey) {
 	let step = 0;
-	device.onPush = async (keyEvent) => {
+	device.onPush = async (keyEvent: KeyEvent) => {
 		trace(`Key Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
-		if (keyEvent === 0) {
+		if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
 			step = (step + 1) % 9;
 			const levels = [0.1, 0.5, 1];
 			const brightness = levels[step % 3];
@@ -152,7 +170,7 @@ function attachKey(device) {
 	};
 }
 
-function attachJoyStick(device) {
+function attachJoyStick(device: M5ChainJoyStick) {
 	device.onSample = async function () {
 		const sample = this.sample();
 		if (sample === undefined) return;
@@ -165,7 +183,7 @@ function attachJoyStick(device) {
 	};
 }
 
-function attachToF(device) {
+function attachToF(device: M5ChainToF) {
 	device.onSample = async function () {
 		const sample = this.sample();
 		if (sample === undefined) return;
