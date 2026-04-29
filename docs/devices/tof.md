@@ -25,7 +25,7 @@ These exports can also be used as TypeScript types.
 
 - Common device API
 - LED API
-- Poll API
+- Sample API
 
 ## Usage
 

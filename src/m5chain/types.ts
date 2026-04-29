@@ -64,7 +64,7 @@ export interface M5ChainDeviceLike {
 	onDisconnected?(): void;
 	onDispatchEvent?(buffer: PacketBuffer): void;
 	hasOnSample?(): boolean;
-	polling?<T = unknown>(): Promise<T | undefined>;
+	readSample?<T = unknown>(): Promise<T | undefined>;
 	dispatchOnSample?<T = unknown>(value: T): void;
 }
 

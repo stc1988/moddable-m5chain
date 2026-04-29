@@ -1,4 +1,4 @@
-import CanPoll from "canPoll";
+import CanSample from "canSample";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
@@ -32,7 +32,7 @@ function saveToFlashToValue(saveToFlash: SaveToFlash): number {
 	return saveToFlash;
 }
 
-class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>) {
+class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>) {
 	static DEVICE_TYPE = 0x0001;
 	static CMD = {
 		...super.CMD,
@@ -50,7 +50,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	declare sample: () => number | undefined;
 	declare dispatchOnSample: (value: number) => void;
 
-	async polling(): Promise<number | undefined> {
+	async readSample(): Promise<number | undefined> {
 		const current = await this.getEncoderValue();
 
 		if (this.#lastValue === undefined) {

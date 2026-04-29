@@ -36,7 +36,7 @@ import M5ChainJoyStick, {
 - Common device API
 - LED API
 - Key API
-- Poll API
+- Sample API
 
 ## Usage
 

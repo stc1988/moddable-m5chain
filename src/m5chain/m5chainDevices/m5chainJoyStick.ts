@@ -1,4 +1,4 @@
-import CanPoll from "canPoll";
+import CanSample from "canSample";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
@@ -18,7 +18,7 @@ export type JoystickMappedRange = {
 	yMax: number;
 };
 
-class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<JoystickValue>) {
+class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>) {
 	static DEVICE_TYPE = 0x0004;
 	static CMD = {
 		...super.CMD,
@@ -33,7 +33,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 	declare sample: () => JoystickValue | undefined;
 	declare dispatchOnSample: (value: JoystickValue) => void;
 
-	async polling(): Promise<JoystickValue> {
+	async readSample(): Promise<JoystickValue> {
 		return await this.getJoystickMappedInt8Value();
 	}
 

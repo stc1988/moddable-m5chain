@@ -1,4 +1,4 @@
-import CanPoll from "canPoll";
+import CanSample from "canSample";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { SampleHandler } from "types";
@@ -19,7 +19,7 @@ function angleRotationDirectionToValue(direction: AngleRotationDirection): numbe
 	return direction;
 }
 
-class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
+class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0002;
 	static CMD = {
 		...super.CMD,
@@ -33,7 +33,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	declare sample: () => number | undefined;
 	declare dispatchOnSample: (value: number) => void;
 
-	async polling(): Promise<number> {
+	async readSample(): Promise<number> {
 		return await this.getAngle12Value();
 	}
 

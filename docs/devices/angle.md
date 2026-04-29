@@ -19,7 +19,7 @@ import M5ChainAngle, { AngleRotationDirection } from "m5chainAngle";
 
 - Common device API
 - LED API
-- Poll API
+- Sample API
 
 ## Usage
 

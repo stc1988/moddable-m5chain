@@ -11,7 +11,7 @@
 		"m5chainJoyStick",
 		"m5chainKey",
 		"m5chainTof",
-		"canPoll",
+		"canSample",
 		"hasLed",
 		"hasKey"
 	]

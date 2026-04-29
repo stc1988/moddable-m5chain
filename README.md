@@ -5,7 +5,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ## Device Capability Matrix
 
-| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Sample Event (`onSample`) | API Guide |
+| Device | Type ID | `HasLed` | `HasKey` | `CanSample` | Sample Event (`onSample`) | API Guide |
 | --- | --- | --- | --- | --- | --- | --- |
 | [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Yes (delta value) | [Encoder API](docs/devices/encoder.md) |
 | [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | Yes (normalized `0.00`-`1.00`) | [Angle API](docs/devices/angle.md) |
@@ -18,7 +18,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 - Packet transport and matching (`sendPacket` / `sendAndWait`)
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
-- Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Poll](docs/features/can-poll.md))
+- Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Sample](docs/features/can-sample.md))
 - Poll loop runs only when at least one device has `onSample` set
 
 ## Setup
@@ -97,7 +97,8 @@ device.onPush = async (keyEvent) => {
 
 ### `device.onSample = function () {}`
 
-Available on devices with `CanPoll` (Encoder / Angle / JoyStick / ToF).  
+Available on devices with `CanSample` (Encoder / Angle / JoyStick / ToF).
+
 If any device has `onSample` set, bus polling starts. It stops when all `onSample` handlers are `null`.
 
 Use `device.sample()` to read the latest sample. Inside `onSample`, `this` is bound to the device:
@@ -139,11 +140,11 @@ Available on: Encoder / Key / JoyStick
 
 See [HasKey API](docs/features/has-key.md).
 
-### Sample Features (`CanPoll`)
+### Sample Features (`CanSample`)
 
 Available on: Encoder / Angle / JoyStick / ToF
 
-See [CanPoll API](docs/features/can-poll.md).
+See [CanSample API](docs/features/can-sample.md).
 
 ### Device-specific APIs
 
@@ -161,7 +162,7 @@ Feature mixin details are also split into focused pages:
 - [Feature API index](docs/features/README.md)
 - [HasLed API](docs/features/has-led.md)
 - [HasKey API](docs/features/has-key.md)
-- [CanPoll API](docs/features/can-poll.md)
+- [CanSample API](docs/features/can-sample.md)
 
 README intentionally keeps only the setup, event model, and shared API surface so device and feature pages can grow without making the first-read path hard to scan.
 

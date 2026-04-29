@@ -1,19 +1,19 @@
 import type { M5ChainDevice } from "m5chainDevice";
 import type { DeviceConstructor, DeviceMixin, SampleHandler } from "types";
 
-type CanPollMethods<T = unknown> = {
+type CanSampleMethods<T = unknown> = {
 	onSample: SampleHandler<T>;
 	hasOnSample(): boolean;
-	polling(): Promise<T | undefined>;
+	readSample(): Promise<T | undefined>;
 	sample(): T | undefined;
 	dispatchOnSample(value: T): void;
 };
 
-type CanPollMixin = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
+type CanSampleMixin = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
 	Base: TBase,
-) => (new (...args: ConstructorParameters<TBase>) => InstanceType<TBase> & CanPollMethods<T>) & TBase;
+) => (new (...args: ConstructorParameters<TBase>) => InstanceType<TBase> & CanSampleMethods<T>) & TBase;
 
-const CanPoll = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
+const CanSample = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
 	Base: TBase,
 ) =>
 	class extends Base {
@@ -41,8 +41,8 @@ const CanPoll = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = D
 			return this.#onSample !== null;
 		}
 
-		async polling(): Promise<T | undefined> {
-			throw new Error("polling is not implemented");
+		async readSample(): Promise<T | undefined> {
+			throw new Error("readSample is not implemented");
 		}
 
 		sample(): T | undefined {
@@ -59,4 +59,4 @@ const CanPoll = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = D
 		}
 	};
 
-export default CanPoll as CanPollMixin & DeviceMixin<DeviceConstructor<M5ChainDevice>, CanPollMethods>;
+export default CanSample as CanSampleMixin & DeviceMixin<DeviceConstructor<M5ChainDevice>, CanSampleMethods>;

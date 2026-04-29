@@ -1,4 +1,4 @@
-import CanPoll from "canPoll";
+import CanSample from "canSample";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type { SampleHandler } from "types";
@@ -36,7 +36,7 @@ function measurementStatusToValue(status: MeasurementStatus): number {
 	return status;
 }
 
-class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
+class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0005;
 	static CMD = {
 		...super.CMD,
@@ -56,7 +56,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	declare sample: () => number | undefined;
 	declare dispatchOnSample: (value: number) => void;
 
-	async polling(): Promise<number> {
+	async readSample(): Promise<number> {
 		return await this.getDistance();
 	}
 
