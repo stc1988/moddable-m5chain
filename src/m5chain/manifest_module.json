@@ -10,7 +10,7 @@
 		"m5chainDevice",
 		"m5chainJoyStick",
 		"m5chainKey",
-		"m5chainTof",
+		"m5chainToF",
 		"canSample",
 		"hasLed",
 		"hasKey"
