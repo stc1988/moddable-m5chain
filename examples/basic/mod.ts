@@ -27,6 +27,17 @@ function isSupportedM5ChainDevice(device: unknown): device is DeviceWithInfo {
 	);
 }
 
+function unsupportedDeviceMessage(device: unknown): string {
+	if (typeof device !== "object" || device === null) {
+		return "Unsupported M5Chain device detected\n";
+	}
+
+	const deviceInfo = device as { id?: unknown; type?: unknown };
+	const id = typeof deviceInfo.id === "number" ? deviceInfo.id.toString() : "unknown";
+	const type = typeof deviceInfo.type === "number" ? `0x${deviceInfo.type.toString(16)}` : "unknown";
+	return `Unsupported M5Chain device detected: ID: ${id}, Type: ${type}\n`;
+}
+
 export async function main() {
 	// if config is not defined in manifest file, use device.I2C.default.data and clock.
 	const m5chain = new M5Chain({
@@ -40,6 +51,7 @@ export async function main() {
 
 		for (const device of devices) {
 			if (!isSupportedM5ChainDevice(device)) {
+				trace(unsupportedDeviceMessage(device));
 				continue;
 			}
 			attachDevice(device);
