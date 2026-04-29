@@ -50,10 +50,8 @@ import M5ChainJoyStick, { KEY_EVENT, KEY_MODE } from "m5chainJoyStick";
 if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 	const joystick = device as M5ChainJoyStick;
 
-	await joystick.configure({
-		led: { color: { r: 0, g: 180, b: 255 } },
-		key: { mode: KEY_MODE.ACTIVE },
-	});
+	await joystick.setLedColor(0, 180, 255);
+	await joystick.configure({ key: { mode: KEY_MODE.ACTIVE } });
 
 	joystick.onPush = (keyEvent) => {
 		if (keyEvent === KEY_EVENT.LONG_PRESS) {
@@ -75,7 +73,7 @@ if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 | `await device.getJoystick16Adc()` | Reads raw 16-bit ADC values. Range: `0` to `65535`. |
 | `await device.getJoystick8Adc()` | Reads raw 8-bit ADC values. Range: `0` to `255`. |
 | `await device.configure({ joystick })` | Applies joystick configuration. |
-| `await device.readConfiguration()` | Reads LED, key, and joystick configuration from the device. |
+| `await device.readConfiguration()` | Reads key and joystick configuration from the device. |
 | `await device.getJoystickMappedInt16Value()` | Reads signed mapped 16-bit values. Range: `-4095` to `4095`. |
 | `await device.getJoystickMappedInt8Value()` | Reads signed mapped 8-bit values. Range: `-128` to `127`. |
 

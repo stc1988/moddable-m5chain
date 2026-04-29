@@ -42,8 +42,8 @@ import M5ChainEncoder, { EncoderABDirection, KEY_EVENT, SaveToFlash } from "m5ch
 if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 	const encoder = device as M5ChainEncoder;
 
+	await encoder.setLedColor(0, 40, 255);
 	await encoder.configure({
-		led: { color: { r: 0, g: 40, b: 255 } },
 		encoder: {
 			abDirection: EncoderABDirection.CLOCKWISE_INCREASE,
 			saveToFlash: SaveToFlash.DISABLE,
@@ -69,7 +69,7 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 | Method | Description |
 | --- | --- |
 | `await device.configure({ encoder })` | Applies encoder configuration. |
-| `await device.readConfiguration()` | Reads LED, key, and encoder configuration from the device. |
+| `await device.readConfiguration()` | Reads key and encoder configuration from the device. |
 | `await device.getEncoderValue()` | Reads the signed encoder value. Range: `-32768` to `32767`. |
 | `await device.getEncoderIncValue()` | Reads the signed increment value. Range: `-32768` to `32767`. |
 | `await device.resetEncoderValue()` | Resets the encoder value. |

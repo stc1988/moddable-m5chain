@@ -64,7 +64,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	declare dispatchOnSample: (value: number) => void;
 
 	async configure(options: EncoderConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["led", "key", "encoder"]);
+		assertKnownConfigurationOptions(options, ["key", "encoder"]);
 		await super.configure(options);
 		if (options.encoder === undefined) return;
 		assertObjectOption("options.encoder", options.encoder);

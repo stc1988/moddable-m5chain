@@ -46,7 +46,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 	declare dispatchOnSample: (value: number) => void;
 
 	async configure(options: AngleConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["led", "angle"]);
+		assertKnownConfigurationOptions(options, ["angle"]);
 		await super.configure(options);
 		if (options.angle === undefined) return;
 		assertObjectOption("options.angle", options.angle);

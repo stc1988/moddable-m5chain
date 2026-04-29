@@ -36,14 +36,12 @@ import M5ChainKey, { KEY_EVENT, KEY_MODE } from "m5chainKey";
 if (device.type === M5ChainKey.DEVICE_TYPE) {
 	const key = device as M5ChainKey;
 
-	await key.configure({
-		led: { color: { r: 255, g: 255, b: 255 } },
-		key: { mode: KEY_MODE.ACTIVE },
-	});
+	await key.setLedColor(255, 255, 255);
+	await key.configure({ key: { mode: KEY_MODE.ACTIVE } });
 
 	key.onPush = async (keyEvent) => {
 		if (keyEvent === KEY_EVENT.DOUBLE_CLICK) {
-			await key.configure({ led: { color: { r: 255, g: 0, b: 0 } } });
+			await key.setLedColor(255, 0, 0);
 		}
 	};
 }
@@ -53,8 +51,8 @@ if (device.type === M5ChainKey.DEVICE_TYPE) {
 
 | Method | Description |
 | --- | --- |
-| `await device.configure({ led, key })` | Applies LED and key configuration. |
-| `await device.readConfiguration()` | Reads LED and key configuration from the device. |
+| `await device.configure({ key })` | Applies key configuration. |
+| `await device.readConfiguration()` | Reads key configuration from the device. |
 | `await device.isKeyPressed()` | Reads whether the key is currently pressed. |
 | `device.onPush = (keyEvent) => {}` | Handles key events when active reporting is enabled. |
 

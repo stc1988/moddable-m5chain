@@ -9,7 +9,7 @@ class M5ChainKey extends withDeviceFeatures(HasLed, HasKey) {
 	static DEVICE_TYPE = 0x0003;
 
 	async configure(options: DeviceConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["led", "key"]);
+		assertKnownConfigurationOptions(options, ["key"]);
 		await super.configure(options);
 	}
 

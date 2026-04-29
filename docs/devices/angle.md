@@ -31,10 +31,8 @@ import M5ChainAngle, { AngleRotationDirection } from "m5chainAngle";
 if (device.type === M5ChainAngle.DEVICE_TYPE) {
 	const angle = device as M5ChainAngle;
 
-	await angle.configure({
-		led: { color: { r: 0, g: 255, b: 80 } },
-		angle: { rotationDirection: AngleRotationDirection.CLOCKWISE },
-	});
+	await angle.setLedColor(0, 255, 80);
+	await angle.configure({ angle: { rotationDirection: AngleRotationDirection.CLOCKWISE } });
 
 	angle.onSample = function () {
 		const sample = this.sample();
@@ -52,7 +50,7 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 | `await device.getAngle12Value()` | Reads a normalized value rounded to two decimals. Range: `0.00` to `1.00`. |
 | `await device.getAngle8Adc()` | Reads the 8-bit mapped ADC value. |
 | `await device.configure({ angle })` | Applies angle configuration. |
-| `await device.readConfiguration()` | Reads LED and angle configuration from the device. |
+| `await device.readConfiguration()` | Reads angle configuration from the device. |
 
 ## Configuration
 

@@ -39,8 +39,8 @@ import M5ChainToF, { MeasurementMode } from "m5chainToF";
 if (device.type === M5ChainToF.DEVICE_TYPE) {
 	const tof = device as M5ChainToF;
 
+	await tof.setLedColor(80, 80, 255);
 	await tof.configure({
-		led: { color: { r: 80, g: 80, b: 255 } },
 		tof: {
 			measurementTime: 50,
 			measurementMode: MeasurementMode.CONTINUOUS,
@@ -59,7 +59,7 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 | Method | Description |
 | --- | --- |
 | `await device.configure({ tof })` | Applies ToF configuration. |
-| `await device.readConfiguration()` | Reads LED and ToF configuration from the device. |
+| `await device.readConfiguration()` | Reads ToF configuration from the device. |
 | `await device.getDistance()` | Reads measured distance in millimeters. |
 | `await device.getMeasurementDistance()` | Alias for `getDistance()`. |
 | `await device.getMeasurementStatus()` | Reads measurement status as a `MeasurementStatus` value. |

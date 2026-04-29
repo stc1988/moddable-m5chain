@@ -71,7 +71,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 	declare dispatchOnSample: (value: number) => void;
 
 	async configure(options: ToFConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["led", "tof"]);
+		assertKnownConfigurationOptions(options, ["tof"]);
 		await super.configure(options);
 		if (options.tof === undefined) return;
 		assertObjectOption("options.tof", options.tof);

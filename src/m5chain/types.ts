@@ -33,16 +33,6 @@ export type LedColor = {
 	b: number;
 };
 
-export type LedConfiguration = {
-	color?: LedColor;
-	colors?: {
-		index: number;
-		values: LedColor[];
-	};
-	brightness?: number;
-	saveToFlash?: boolean;
-};
-
 export type KeyTriggerInterval = {
 	doubleClickMs?: number;
 	longPressMs?: number;
@@ -54,15 +44,10 @@ export type KeyConfiguration<TMode = number> = {
 };
 
 export type DeviceConfiguration = {
-	led?: LedConfiguration;
 	key?: KeyConfiguration;
 };
 
 export type DeviceConfigurationSnapshot = {
-	led?: {
-		color: LedColor;
-		brightness: number;
-	};
 	key?: {
 		mode: number;
 		triggerInterval: {

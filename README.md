@@ -87,7 +87,7 @@ import M5Chain, { KEY_EVENT } from "m5chain";
 
 device.onPush = async (keyEvent) => {
 	if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
-		await device.configure({ led: { color: { r: 255, g: 0, b: 0 } } });
+		await device.setLedColor(255, 0, 0);
 	}
 };
 ```

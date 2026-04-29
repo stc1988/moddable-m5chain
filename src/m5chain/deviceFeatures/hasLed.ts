@@ -1,17 +1,13 @@
 import type { M5ChainDevice } from "m5chainDevice";
-import { assertObjectOption } from "m5chainDevice";
-import type {
-	DeviceConfiguration,
-	DeviceConfigurationSnapshot,
-	DeviceConstructor,
-	DeviceMixin,
-	LedColor,
-	LedConfiguration,
-} from "types";
+import type { DeviceConstructor, DeviceMixin, LedColor } from "types";
 
 type HasLedMethods = {
-	configure(options?: DeviceConfiguration): Promise<void>;
-	readConfiguration(): Promise<DeviceConfigurationSnapshot>;
+	setLedColor(r: number, g: number, b: number): Promise<void>;
+	getLedColor(): Promise<LedColor>;
+	setLedColors(index: number, num: number, colors: LedColor[]): Promise<void>;
+	getLedColors(index: number, num: number): Promise<LedColor[]>;
+	setLedBrightness(brightness: number, saveToFlash?: boolean): Promise<void>;
+	getLedBrightness(): Promise<number>;
 };
 
 type RgbCommandSet = {
@@ -46,50 +42,16 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			},
 		} as const;
 
-		async configure(options: DeviceConfiguration = {}): Promise<void> {
-			await super.configure(options);
-			await this.#configureLed(options.led);
+		async setLedColor(r: number, g: number, b: number): Promise<void> {
+			return await this.setLedColors(0, 1, [{ r, g, b }]);
 		}
 
-		async readConfiguration(): Promise<DeviceConfigurationSnapshot> {
-			return {
-				...(await super.readConfiguration()),
-				led: {
-					color: await this.#getLedColor(),
-					brightness: await this.#getLedBrightness(),
-				},
-			};
-		}
-
-		async #configureLed(options: LedConfiguration | undefined): Promise<void> {
-			if (options === undefined) return;
-			assertObjectOption("options.led", options);
-			if (options.color !== undefined) {
-				const color = options.color;
-				assertObjectOption("options.led.color", color);
-				await this.#setLedColors(0, 1, [color]);
-			}
-			if (options.colors !== undefined) {
-				assertObjectOption("options.led.colors", options.colors);
-				const values = options.colors.values;
-				if (!Array.isArray(values)) {
-					throw new RangeError("options.led.colors.values must be an array.");
-				}
-				await this.#setLedColors(options.colors.index, values.length, values);
-			}
-			if (options.brightness !== undefined) {
-				await this.#setLedBrightness(options.brightness, options.saveToFlash ?? false);
-			} else if (options.saveToFlash !== undefined) {
-				throw new RangeError("options.led.saveToFlash requires options.led.brightness.");
-			}
-		}
-
-		async #getLedColor(): Promise<LedColor> {
-			const colors = await this.#getLedColors(0, 1);
+		async getLedColor(): Promise<LedColor> {
+			const colors = await this.getLedColors(0, 1);
 			return colors[0];
 		}
 
-		async #setLedColors(index: number, num: number, colors: LedColor[]) {
+		async setLedColors(index: number, num: number, colors: LedColor[]) {
 			assertIntegerInRange("index", index, 0, 255);
 			assertIntegerInRange("num", num, 0, 255);
 			if (!Array.isArray(colors)) {
@@ -116,11 +78,11 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			const packet = await bus.sendAndWait(this.id, commands.RGB.SET_RGB_VALUE, cmdBuffer, num * 3 + 2);
 			const result = packet[6];
 			if (result !== 1) {
-				throw new Error("configure led colors failed.\n");
+				throw new Error("setLedColors failed.\n");
 			}
 		}
 
-		async #getLedColors(index: number, num: number): Promise<LedColor[]> {
+		async getLedColors(index: number, num: number): Promise<LedColor[]> {
 			assertIntegerInRange("index", index, 0, 255);
 			assertIntegerInRange("num", num, 0, 255);
 			const bus = this.bus;
@@ -146,7 +108,7 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			return colors;
 		}
 
-		async #setLedBrightness(brightness: number, saveToFlash = false) {
+		async setLedBrightness(brightness: number, saveToFlash = false) {
 			assertUnitInterval("brightness", brightness);
 			if (saveToFlash !== true && saveToFlash !== false) {
 				throw new RangeError("saveToFlash must be a boolean.");
@@ -159,11 +121,11 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			const packet = await bus.sendAndWait(this.id, commands.RGB.SET_RGB_LIGHT, cmdBuffer, 2);
 			const result = packet[6];
 			if (result !== 1) {
-				throw new Error("configure led brightness failed.\n");
+				throw new Error("setLedBrightness failed.\n");
 			}
 		}
 
-		async #getLedBrightness(): Promise<number> {
+		async getLedBrightness(): Promise<number> {
 			const bus = this.bus;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.GET_RGB_LIGHT, bus.cmdBuffer, 0);

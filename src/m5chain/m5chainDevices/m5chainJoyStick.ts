@@ -46,7 +46,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 	declare dispatchOnSample: (value: JoystickValue) => void;
 
 	async configure(options: JoystickConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["led", "key", "joystick"]);
+		assertKnownConfigurationOptions(options, ["key", "joystick"]);
 		await super.configure(options);
 		if (options.joystick === undefined) return;
 		assertObjectOption("options.joystick", options.joystick);
