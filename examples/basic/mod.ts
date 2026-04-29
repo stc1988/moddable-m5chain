@@ -7,14 +7,14 @@ import M5Chain, { KEY_EVENT, type KeyEvent } from "m5chain";
 
 //import config from "mod/config";
 
-type M5ChainExampleDevice = M5ChainEncoder | M5ChainAngle | M5ChainKey | M5ChainJoyStick | M5ChainToF;
+type SupportedM5ChainDevice = M5ChainEncoder | M5ChainAngle | M5ChainKey | M5ChainJoyStick | M5ChainToF;
 
-type DeviceWithInfo = M5ChainExampleDevice & {
+type DeviceWithInfo = SupportedM5ChainDevice & {
 	getBootloaderVersion(): Promise<number>;
 	getFirmwareVersion(): Promise<number>;
 };
 
-function isExampleDevice(device: unknown): device is DeviceWithInfo {
+function isSupportedM5ChainDevice(device: unknown): device is DeviceWithInfo {
 	if (typeof device !== "object" || device === null) {
 		return false;
 	}
@@ -39,7 +39,7 @@ export async function main() {
 		trace("device list changed\n");
 
 		for (const device of devices) {
-			if (!isExampleDevice(device)) {
+			if (!isSupportedM5ChainDevice(device)) {
 				continue;
 			}
 			attachDevice(device);
@@ -58,7 +58,7 @@ async function fetchDeviceInfo(device: DeviceWithInfo) {
 	);
 }
 
-function attachDevice(device: M5ChainExampleDevice) {
+function attachDevice(device: SupportedM5ChainDevice) {
 	if (device instanceof M5ChainEncoder) {
 		attachEncoder(device);
 		return;
