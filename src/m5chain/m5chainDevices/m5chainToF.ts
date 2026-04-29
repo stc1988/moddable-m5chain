@@ -1,7 +1,7 @@
 import CanSample from "canSample";
 import HasLed from "hasLed";
-import { withDeviceFeatures } from "m5chainDevice";
-import type { SampleHandler } from "types";
+import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
 
 export const MeasurementMode = {
 	STOP: 0,
@@ -21,6 +21,20 @@ export const MeasurementCompletionFlag = {
 	COMPLETE: 1,
 } as const;
 export type MeasurementCompletionFlag = (typeof MeasurementCompletionFlag)[keyof typeof MeasurementCompletionFlag];
+
+export type ToFConfiguration = DeviceConfiguration & {
+	tof?: {
+		measurementTime?: number;
+		measurementMode?: MeasurementMode;
+	};
+};
+
+export type ToFConfigurationSnapshot = DeviceConfigurationSnapshot & {
+	tof: {
+		measurementTime: number;
+		measurementMode: MeasurementMode;
+	};
+};
 
 function measurementModeToValue(mode: MeasurementMode): number {
 	if (mode !== MeasurementMode.STOP && mode !== MeasurementMode.SINGLE && mode !== MeasurementMode.CONTINUOUS) {
@@ -56,6 +70,29 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 	declare sample: () => number | undefined;
 	declare dispatchOnSample: (value: number) => void;
 
+	async configure(options: ToFConfiguration = {}): Promise<void> {
+		assertKnownConfigurationOptions(options, ["tof"]);
+		await super.configure(options);
+		if (options.tof === undefined) return;
+		assertObjectOption("options.tof", options.tof);
+		if (options.tof.measurementTime !== undefined) {
+			await this.#setMeasurementTime(options.tof.measurementTime);
+		}
+		if (options.tof.measurementMode !== undefined) {
+			await this.#setMeasurementMode(options.tof.measurementMode);
+		}
+	}
+
+	async readConfiguration(): Promise<ToFConfigurationSnapshot> {
+		return {
+			...(await super.readConfiguration()),
+			tof: {
+				measurementTime: await this.#getMeasurementTime(),
+				measurementMode: await this.#getMeasurementMode(),
+			},
+		};
+	}
+
 	async readSample(): Promise<number> {
 		return await this.getDistance();
 	}
@@ -69,7 +106,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		return await this.getDistance();
 	}
 
-	async setMeasurementTime(time: number): Promise<void> {
+	async #setMeasurementTime(time: number): Promise<void> {
 		if (time < 20 || time > 200) {
 			throw new RangeError("Measurement time must be between 20 and 200 milliseconds.");
 		}
@@ -79,26 +116,26 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_TIME, cmdBuffer, 1);
 		const result = packet[6];
 		if (result !== 1) {
-			throw new Error("setMeasurementTime failed.\n");
+			throw new Error("configure measurement time failed.\n");
 		}
 	}
-	async getMeasurementTime(): Promise<number> {
+	async #getMeasurementTime(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_TIME, bus.cmdBuffer, 0);
 		return packet[6];
 	}
 
-	async setMeasurementMode(mode: MeasurementMode): Promise<void> {
+	async #setMeasurementMode(mode: MeasurementMode): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = measurementModeToValue(mode);
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_MODE, cmdBuffer, 1);
 		const result = packet[6];
 		if (result !== 1) {
-			throw new Error("setMeasurementMode failed.\n");
+			throw new Error("configure measurement mode failed.\n");
 		}
 	}
-	async getMeasurementMode(): Promise<MeasurementMode> {
+	async #getMeasurementMode(): Promise<MeasurementMode> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_MODE, bus.cmdBuffer, 0);
 		const mode = packet[6];
@@ -114,14 +151,14 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		}
 	}
 
-	async setMeasurementStatus(status: MeasurementStatus): Promise<void> {
+	async #setMeasurementStatus(status: MeasurementStatus): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = measurementStatusToValue(status);
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_STATUS, cmdBuffer, 1);
 		const result = packet[6];
 		if (result !== 1) {
-			throw new Error("setMeasurementStatus failed.\n");
+			throw new Error("set measurement status failed.\n");
 		}
 	}
 	async getMeasurementStatus(): Promise<MeasurementStatus> {
@@ -155,7 +192,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		return (await this.getMeasurementCompletionFlag()) === MeasurementCompletionFlag.COMPLETE;
 	}
 	async triggerMeasurement(): Promise<void> {
-		await this.setMeasurementStatus(MeasurementStatus.MEASURING);
+		await this.#setMeasurementStatus(MeasurementStatus.MEASURING);
 	}
 }
 

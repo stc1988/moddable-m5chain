@@ -54,6 +54,9 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		async setLedColors(index: number, num: number, colors: LedColor[]) {
 			assertIntegerInRange("index", index, 0, 255);
 			assertIntegerInRange("num", num, 0, 255);
+			if (!Array.isArray(colors)) {
+				throw new RangeError("colors must be an array.");
+			}
 			if (colors.length < num) {
 				throw new RangeError(`colors must contain at least ${num} entries.`);
 			}

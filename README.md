@@ -124,6 +124,8 @@ Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on ev
 - `device.id`
 - `device.type`
 - `device.uuid` (after `init()`)
+- `await device.configure(options)` applies device and feature settings
+- `await device.readConfiguration()` reads current device and feature settings from the chain device
 - `await device.getUID(uidType = 1)` (`uidType: 0 | 1`)
 - `await device.getBootloaderVersion()`
 - `await device.getFirmwareVersion()`

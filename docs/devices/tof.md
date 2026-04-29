@@ -9,6 +9,8 @@ import M5ChainToF, {
 	MeasurementMode,
 	MeasurementCompletionFlag,
 	MeasurementStatus,
+	type ToFConfiguration,
+	type ToFConfigurationSnapshot,
 } from "m5chainToF";
 ```
 
@@ -20,6 +22,8 @@ These exports can also be used as TypeScript types.
 | `MeasurementMode` | Measurement mode values: `STOP = 0`, `SINGLE = 1`, `CONTINUOUS = 2`. |
 | `MeasurementStatus` | Measurement status values: `IDLE = 0`, `MEASURING = 1`. |
 | `MeasurementCompletionFlag` | Completion flag values: `INCOMPLETE = 0`, `COMPLETE = 1`. |
+| `ToFConfiguration` | Type accepted by `configure()`. |
+| `ToFConfigurationSnapshot` | Type returned by `readConfiguration()`. |
 
 ## Capabilities
 
@@ -36,8 +40,12 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 	const tof = device as M5ChainToF;
 
 	await tof.setLedColor(80, 80, 255);
-	await tof.setMeasurementTime(50);
-	await tof.setMeasurementMode(MeasurementMode.CONTINUOUS);
+	await tof.configure({
+		tof: {
+			measurementTime: 50,
+			measurementMode: MeasurementMode.CONTINUOUS,
+		},
+	});
 
 	tof.onSample = function () {
 		const sample = this.sample();
@@ -50,17 +58,21 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 
 | Method | Description |
 | --- | --- |
+| `await device.configure({ tof })` | Applies ToF configuration. |
+| `await device.readConfiguration()` | Reads ToF configuration from the device. |
 | `await device.getDistance()` | Reads measured distance in millimeters. |
 | `await device.getMeasurementDistance()` | Alias for `getDistance()`. |
-| `await device.setMeasurementTime(time)` | Sets measurement time. Range: `20` to `200` ms. |
-| `await device.getMeasurementTime()` | Reads measurement time in milliseconds. |
-| `await device.setMeasurementMode(mode)` | Sets mode. Use `MeasurementMode.STOP` (`0`), `MeasurementMode.SINGLE` (`1`), or `MeasurementMode.CONTINUOUS` (`2`). |
-| `await device.getMeasurementMode()` | Reads measurement mode as a `MeasurementMode` value. |
-| `await device.setMeasurementStatus(status)` | Sets status. Use `MeasurementStatus.IDLE` (`0`) or `MeasurementStatus.MEASURING` (`1`). |
 | `await device.getMeasurementStatus()` | Reads measurement status as a `MeasurementStatus` value. |
 | `await device.getMeasurementCompletionFlag()` | Reads completion flag as `MeasurementCompletionFlag.INCOMPLETE` (`0`) or `MeasurementCompletionFlag.COMPLETE` (`1`). |
 | `await device.isMeasurementComplete()` | Returns `true` when completion flag is `MeasurementCompletionFlag.COMPLETE` (`1`). |
 | `await device.triggerMeasurement()` | Starts a measurement by setting status to measuring. |
+
+## Configuration
+
+| Option | Description |
+| --- | --- |
+| `tof.measurementTime` | Sets measurement time. Range: `20` to `200` ms. |
+| `tof.measurementMode` | Sets mode. Use `MeasurementMode.STOP` (`0`), `MeasurementMode.SINGLE` (`1`), or `MeasurementMode.CONTINUOUS` (`2`). |
 
 ## Sample Value
 

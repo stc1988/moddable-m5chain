@@ -33,6 +33,30 @@ export type LedColor = {
 	b: number;
 };
 
+export type KeyTriggerInterval = {
+	doubleClickMs?: number;
+	longPressMs?: number;
+};
+
+export type KeyConfiguration<TMode = number> = {
+	mode?: TMode;
+	triggerInterval?: KeyTriggerInterval;
+};
+
+export type DeviceConfiguration = {
+	key?: KeyConfiguration;
+};
+
+export type DeviceConfigurationSnapshot = {
+	key?: {
+		mode: number;
+		triggerInterval: {
+			doubleClickMs: number;
+			longPressMs: number;
+		};
+	};
+};
+
 export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void;
 
 export type SampleProvider<T = unknown> = {
@@ -61,6 +85,8 @@ export interface M5ChainDeviceLike {
 	type: number;
 	uuid?: string;
 	init(): Promise<void>;
+	configure?(options?: DeviceConfiguration): Promise<void>;
+	readConfiguration?(): Promise<DeviceConfigurationSnapshot>;
 	onDisconnected?(): void;
 	onDispatchEvent?(buffer: PacketBuffer): void;
 	hasOnSample?(): boolean;

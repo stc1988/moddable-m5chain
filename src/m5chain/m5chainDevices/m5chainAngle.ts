@@ -1,13 +1,25 @@
 import CanSample from "canSample";
 import HasLed from "hasLed";
-import { withDeviceFeatures } from "m5chainDevice";
-import type { SampleHandler } from "types";
+import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
 
 export const AngleRotationDirection = {
 	CLOCKWISE: 0,
 	COUNTERCLOCKWISE: 1,
 } as const;
 export type AngleRotationDirection = (typeof AngleRotationDirection)[keyof typeof AngleRotationDirection];
+
+export type AngleConfiguration = DeviceConfiguration & {
+	angle?: {
+		rotationDirection?: AngleRotationDirection;
+	};
+};
+
+export type AngleConfigurationSnapshot = DeviceConfigurationSnapshot & {
+	angle: {
+		rotationDirection: AngleRotationDirection;
+	};
+};
 
 const ADC_12BIT_MAX = 0x0fff;
 const ANGLE_DEGREE_RANGE = 280;
@@ -32,6 +44,25 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 	declare onSample: SampleHandler<number>;
 	declare sample: () => number | undefined;
 	declare dispatchOnSample: (value: number) => void;
+
+	async configure(options: AngleConfiguration = {}): Promise<void> {
+		assertKnownConfigurationOptions(options, ["angle"]);
+		await super.configure(options);
+		if (options.angle === undefined) return;
+		assertObjectOption("options.angle", options.angle);
+		if (options.angle.rotationDirection !== undefined) {
+			await this.#setAngleRotationDirection(options.angle.rotationDirection);
+		}
+	}
+
+	async readConfiguration(): Promise<AngleConfigurationSnapshot> {
+		return {
+			...(await super.readConfiguration()),
+			angle: {
+				rotationDirection: await this.#getAngleRotationDirection(),
+			},
+		};
+	}
 
 	async readSample(): Promise<number> {
 		return await this.getAngle12Value();
@@ -60,20 +91,20 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 
 	// 0: Clockwise
 	// 1: Counterclockwise
-	async setAngleRotationDirection(direction: AngleRotationDirection): Promise<void> {
+	async #setAngleRotationDirection(direction: AngleRotationDirection): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = angleRotationDirectionToValue(direction);
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.SET_CLOCKWISE_STATUS, cmdBuffer, 1);
 		const result = packet[6];
 		if (result !== 1) {
-			throw new Error("setAngleRotationDirection failed.\n");
+			throw new Error("configure angle rotation direction failed.\n");
 		}
 	}
 
 	// 0: Clockwise
 	// 1: Counterclockwise
-	async getAngleRotationDirection(): Promise<AngleRotationDirection> {
+	async #getAngleRotationDirection(): Promise<AngleRotationDirection> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.GET_CLOCKWISE_STATUS, bus.cmdBuffer, 0);
 		const direction = packet[6];

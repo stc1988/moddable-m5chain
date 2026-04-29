@@ -1,8 +1,8 @@
 import CanSample from "canSample";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
-import { withDeviceFeatures } from "m5chainDevice";
-import type { SampleHandler } from "types";
+import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -16,6 +16,18 @@ export type JoystickMappedRange = {
 	xMax: number;
 	yMin: number;
 	yMax: number;
+};
+
+export type JoystickConfiguration = DeviceConfiguration & {
+	joystick?: {
+		mappedRange?: JoystickMappedRange;
+	};
+};
+
+export type JoystickConfigurationSnapshot = DeviceConfigurationSnapshot & {
+	joystick: {
+		mappedRange: JoystickMappedRange;
+	};
 };
 
 class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>) {
@@ -32,6 +44,27 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 	declare onSample: SampleHandler<JoystickValue>;
 	declare sample: () => JoystickValue | undefined;
 	declare dispatchOnSample: (value: JoystickValue) => void;
+
+	async configure(options: JoystickConfiguration = {}): Promise<void> {
+		assertKnownConfigurationOptions(options, ["key", "joystick"]);
+		await super.configure(options);
+		if (options.joystick === undefined) return;
+		assertObjectOption("options.joystick", options.joystick);
+		if (options.joystick.mappedRange !== undefined) {
+			const range = options.joystick.mappedRange;
+			assertObjectOption("options.joystick.mappedRange", range);
+			await this.#setJoystickMappedRange(range.xMin, range.xMax, range.yMin, range.yMax);
+		}
+	}
+
+	async readConfiguration(): Promise<JoystickConfigurationSnapshot> {
+		return {
+			...(await super.readConfiguration()),
+			joystick: {
+				mappedRange: await this.#getJoystickMappedRange(),
+			},
+		};
+	}
 
 	async readSample(): Promise<JoystickValue> {
 		return await this.getJoystickMappedInt8Value();
@@ -55,7 +88,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 			y: packet[7],
 		};
 	}
-	async getJoystickMappedRange(): Promise<JoystickMappedRange> {
+	async #getJoystickMappedRange(): Promise<JoystickMappedRange> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_RANGE, bus.cmdBuffer, 0);
 		return {
@@ -65,7 +98,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 			yMax: packet[9],
 		};
 	}
-	async setJoystickMappedRange(xMin: number, xMax: number, yMin: number, yMax: number): Promise<void> {
+	async #setJoystickMappedRange(xMin: number, xMax: number, yMin: number, yMax: number): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = xMin;
@@ -75,7 +108,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.SET_ADC_XY_MAPPED_RANGE, cmdBuffer, 4);
 		const result = packet[6];
 		if (result !== 1) {
-			throw new Error("setJoystickMappedRange failed.\n");
+			throw new Error("configure joystick mapped range failed.\n");
 		}
 	}
 	//-4095-4095

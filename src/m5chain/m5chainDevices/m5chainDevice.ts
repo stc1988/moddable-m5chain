@@ -1,4 +1,20 @@
-import type { ChainBus, DeviceFactoryOptions } from "types";
+import type { ChainBus, DeviceConfiguration, DeviceConfigurationSnapshot, DeviceFactoryOptions } from "types";
+
+function assertObjectOption(name: string, value: unknown) {
+	if (value === undefined) return;
+	if (!value || typeof value !== "object" || Array.isArray(value)) {
+		throw new TypeError(`${name} must be an object.`);
+	}
+}
+
+function assertKnownConfigurationOptions(options: DeviceConfiguration, known: string[]) {
+	const allowed = new Set(known);
+	for (const key in options) {
+		if (!allowed.has(key)) {
+			throw new RangeError(`Unsupported configuration option: ${key}`);
+		}
+	}
+}
 
 class M5ChainDevice {
 	static CMD = {
@@ -34,6 +50,14 @@ class M5ChainDevice {
 
 	async init() {
 		this.#uuid = await this.getUID();
+	}
+
+	async configure(options: DeviceConfiguration = {}): Promise<void> {
+		assertObjectOption("options", options);
+	}
+
+	async readConfiguration(): Promise<DeviceConfigurationSnapshot> {
+		return {};
 	}
 
 	//  UID_Type UID type
@@ -96,4 +120,4 @@ function withDeviceFeatures(
 	}, M5ChainDevice as AnyDeviceConstructor);
 }
 
-export { M5ChainDevice, withDeviceFeatures };
+export { M5ChainDevice, assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures };

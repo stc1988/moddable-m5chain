@@ -24,14 +24,15 @@ import type { LedColor } from "types";
 
 ## Common Device Methods
 
-`HasLed` exposes the single-LED methods used by application code:
+`HasLed` exposes LED operation methods used by application code:
 
 ```ts
 await device.setLedColor(255, 0, 0);
+await device.setLedBrightness(0.5);
 const color = await device.getLedColor();
 ```
 
-The single-LED methods call the indexed methods with `index = 0` and `num = 1`.
+LED color and brightness are output state, not device configuration. They are intentionally not accepted by `configure()`.
 
 ## Mixin Methods
 
