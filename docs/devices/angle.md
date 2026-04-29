@@ -32,8 +32,9 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 	await angle.setLedColor(0, 255, 80);
 	await angle.setAngleRotationDirection(AngleRotationDirection.CLOCKWISE);
 
-	angle.onPoll = (value) => {
-		trace(`angle=${value}\n`);
+	angle.onSample = function () {
+		const sample = this.sample();
+		trace(`angle=${sample}\n`);
 	};
 }
 ```
@@ -49,6 +50,6 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 | `await device.setAngleRotationDirection(direction)` | Sets rotation direction. Use `AngleRotationDirection.CLOCKWISE` (`0`) or `AngleRotationDirection.COUNTERCLOCKWISE` (`1`). |
 | `await device.getAngleRotationDirection()` | Reads rotation direction as an `AngleRotationDirection` value. |
 
-## Poll Value
+## Sample Value
 
-`onPoll` receives the normalized value from `getAngle12Value()` on every poll.
+`onSample` is dispatched on every poll. `sample()` returns the normalized value from `getAngle12Value()`.

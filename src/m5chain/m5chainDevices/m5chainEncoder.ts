@@ -2,7 +2,7 @@ import CanPoll from "canPoll";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { SampleHandler } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -46,8 +46,9 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanPoll<number>)
 	static ENCODER_AB_DIRECTION = EncoderABDirection;
 	static SAVE_TO_FLASH = SaveToFlash;
 	#lastValue: number | undefined;
-	declare onPoll: PollHandler<number>;
-	declare dispatchOnPoll: (value: number) => void;
+	declare onSample: SampleHandler<number>;
+	declare sample: () => number | undefined;
+	declare dispatchOnSample: (value: number) => void;
 
 	async polling(): Promise<number | undefined> {
 		const current = await this.getEncoderValue();

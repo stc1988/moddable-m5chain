@@ -1,11 +1,12 @@
 import type { M5ChainDevice } from "m5chainDevice";
-import type { DeviceConstructor, DeviceMixin, PollHandler } from "types";
+import type { DeviceConstructor, DeviceMixin, SampleHandler } from "types";
 
 type CanPollMethods<T = unknown> = {
-	onPoll: PollHandler<T>;
-	hasOnPoll(): boolean;
+	onSample: SampleHandler<T>;
+	hasOnSample(): boolean;
 	polling(): Promise<T | undefined>;
-	dispatchOnPoll(value: T): void;
+	sample(): T | undefined;
+	dispatchOnSample(value: T): void;
 };
 
 type CanPollMixin = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
@@ -16,35 +17,45 @@ const CanPoll = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = D
 	Base: TBase,
 ) =>
 	class extends Base {
-		#onPoll: PollHandler<T> = null;
+		#onSample: SampleHandler<T> = null;
+		#sample: T | undefined;
 
-		set onPoll(fn: PollHandler<T>) {
+		set onSample(fn: SampleHandler<T>) {
 			if (fn !== null && typeof fn !== "function") {
-				throw new Error("onPoll must be a function or null");
+				throw new Error("onSample must be a function or null");
 			}
 
-			const wasActive = this.#onPoll !== null;
+			const wasActive = this.#onSample !== null;
 			const nextActive = fn !== null;
-			this.#onPoll = fn;
+			this.#onSample = fn;
 			if (wasActive !== nextActive) {
 				this.bus._notifyPollingStateChanged();
 			}
 		}
 
-		get onPoll(): PollHandler<T> {
-			return this.#onPoll;
+		get onSample(): SampleHandler<T> {
+			return this.#onSample;
 		}
 
-		hasOnPoll() {
-			return this.#onPoll !== null;
+		hasOnSample() {
+			return this.#onSample !== null;
 		}
 
 		async polling(): Promise<T | undefined> {
 			throw new Error("polling is not implemented");
 		}
 
-		dispatchOnPoll(value: T) {
-			this.#onPoll?.(value);
+		sample(): T | undefined {
+			const value = this.#sample;
+			if (value && typeof value === "object") {
+				return { ...value };
+			}
+			return value;
+		}
+
+		dispatchOnSample(value: T) {
+			this.#sample = value;
+			this.#onSample?.call(this);
 		}
 	};
 

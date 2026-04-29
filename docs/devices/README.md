@@ -28,7 +28,8 @@ m5chain.onDeviceListChanged = (devices) => {
 	for (const device of devices) {
 		if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 			const encoder = device as M5ChainEncoder;
-			encoder.onPoll = (delta) => {
+			encoder.onSample = function () {
+				const delta = this.sample();
 				trace(`encoder delta=${delta}\n`);
 			};
 		}

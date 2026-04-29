@@ -5,7 +5,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ## Device Capability Matrix
 
-| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Poll Event (`onPoll`) | API Guide |
+| Device | Type ID | `HasLed` | `HasKey` | `CanPoll` | Sample Event (`onSample`) | API Guide |
 | --- | --- | --- | --- | --- | --- | --- |
 | [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Yes (delta value) | [Encoder API](docs/devices/encoder.md) |
 | [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | Yes (normalized `0.00`-`1.00`) | [Angle API](docs/devices/angle.md) |
@@ -19,7 +19,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
 - Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Poll](docs/features/can-poll.md))
-- Poll loop runs only when at least one device has `onPoll` set
+- Poll loop runs only when at least one device has `onSample` set
 
 ## Setup
 
@@ -95,12 +95,20 @@ device.onPush = async (keyEvent) => {
 `KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their TypeScript types are also exported from the key-capable device modules:
 `m5chainEncoder`, `m5chainKey`, and `m5chainJoyStick`.
 
-### `device.onPoll = (value) => {}`
+### `device.onSample = function () {}`
 
 Available on devices with `CanPoll` (Encoder / Angle / JoyStick / ToF).  
-If any device has `onPoll` set, bus polling starts. It stops when all `onPoll` handlers are `null`.
+If any device has `onSample` set, bus polling starts. It stops when all `onSample` handlers are `null`.
 
-Angle, JoyStick, and ToF dispatch the latest sampled value on every poll. Encoder dispatches the delta from the previous encoder value and skips dispatch while the value is unchanged.
+Use `device.sample()` to read the latest sample. Inside `onSample`, `this` is bound to the device:
+
+```js
+device.onSample = function () {
+	const sample = this.sample();
+};
+```
+
+Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
 
 ## API
 
@@ -131,7 +139,7 @@ Available on: Encoder / Key / JoyStick
 
 See [HasKey API](docs/features/has-key.md).
 
-### Poll Features (`CanPoll`)
+### Sample Features (`CanPoll`)
 
 Available on: Encoder / Angle / JoyStick / ToF
 

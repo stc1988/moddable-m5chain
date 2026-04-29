@@ -1,7 +1,7 @@
 import CanPoll from "canPoll";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { SampleHandler } from "types";
 
 export const AngleRotationDirection = {
 	CLOCKWISE: 0,
@@ -29,8 +29,9 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const;
 	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
-	declare onPoll: PollHandler<number>;
-	declare dispatchOnPoll: (value: number) => void;
+	declare onSample: SampleHandler<number>;
+	declare sample: () => number | undefined;
+	declare dispatchOnSample: (value: number) => void;
 
 	async polling(): Promise<number> {
 		return await this.getAngle12Value();

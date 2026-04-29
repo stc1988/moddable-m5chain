@@ -1,7 +1,7 @@
 import CanPoll from "canPoll";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { SampleHandler } from "types";
 
 export const MeasurementMode = {
 	STOP: 0,
@@ -52,8 +52,9 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	static MEASUREMENT_MODE = MeasurementMode;
 	static MEASUREMENT_STATUS = MeasurementStatus;
 	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;
-	declare onPoll: PollHandler<number>;
-	declare dispatchOnPoll: (value: number) => void;
+	declare onSample: SampleHandler<number>;
+	declare sample: () => number | undefined;
+	declare dispatchOnSample: (value: number) => void;
 
 	async polling(): Promise<number> {
 		return await this.getDistance();
