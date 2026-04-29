@@ -49,7 +49,7 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 
 ### Examples (current)
 
-- `examples/basic/mod.js`
+- `examples/basic/mod.ts`
 - `examples/led/mod.ts`
 
 ### Device Protocol PDFs
