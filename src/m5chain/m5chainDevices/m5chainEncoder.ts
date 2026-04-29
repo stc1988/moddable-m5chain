@@ -1,8 +1,8 @@
 import CanSample from "canSample";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
-import { withDeviceFeatures } from "m5chainDevice";
-import type { SampleHandler } from "types";
+import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -17,6 +17,19 @@ export const SaveToFlash = {
 	ENABLE: 1,
 } as const;
 export type SaveToFlash = (typeof SaveToFlash)[keyof typeof SaveToFlash];
+
+export type EncoderConfiguration = DeviceConfiguration & {
+	encoder?: {
+		abDirection?: EncoderABDirection;
+		saveToFlash?: SaveToFlash;
+	};
+};
+
+export type EncoderConfigurationSnapshot = DeviceConfigurationSnapshot & {
+	encoder: {
+		abDirection: EncoderABDirection;
+	};
+};
 
 function encoderABDirectionToValue(direction: EncoderABDirection): number {
 	if (direction !== EncoderABDirection.CLOCKWISE_INCREASE && direction !== EncoderABDirection.CLOCKWISE_DECREASE) {
@@ -49,6 +62,27 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	declare onSample: SampleHandler<number>;
 	declare sample: () => number | undefined;
 	declare dispatchOnSample: (value: number) => void;
+
+	async configure(options: EncoderConfiguration = {}): Promise<void> {
+		assertKnownConfigurationOptions(options, ["led", "key", "encoder"]);
+		await super.configure(options);
+		if (options.encoder === undefined) return;
+		assertObjectOption("options.encoder", options.encoder);
+		if (options.encoder.abDirection !== undefined) {
+			await this.#setEncoderABDirect(options.encoder.abDirection, options.encoder.saveToFlash ?? SaveToFlash.DISABLE);
+		} else if (options.encoder.saveToFlash !== undefined) {
+			throw new RangeError("options.encoder.saveToFlash requires options.encoder.abDirection.");
+		}
+	}
+
+	async readConfiguration(): Promise<EncoderConfigurationSnapshot> {
+		return {
+			...(await super.readConfiguration()),
+			encoder: {
+				abDirection: await this.#getEncoderABDirect(),
+			},
+		};
+	}
 
 	async readSample(): Promise<number | undefined> {
 		const current = await this.getEncoderValue();
@@ -103,7 +137,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	// saveToFlash
 	// 0: Do not save
 	// 1: Save
-	async setEncoderABDirect(direct: EncoderABDirection, saveToFlash: SaveToFlash = 0): Promise<void> {
+	async #setEncoderABDirect(direct: EncoderABDirection, saveToFlash: SaveToFlash = 0): Promise<void> {
 		const bus = this.bus;
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = encoderABDirectionToValue(direct);
@@ -111,13 +145,13 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.SET_AB_STATUS, cmdBuffer, 2);
 		const result = packet[6];
 		if (result !== 1) {
-			throw new Error("setEncoderABDirect failed.\n");
+			throw new Error("configure encoder AB direction failed.\n");
 		}
 	}
 
 	// 0: Clockwise increase
 	// 1: Clockwise decrease
-	async getEncoderABDirect(): Promise<EncoderABDirection> {
+	async #getEncoderABDirect(): Promise<EncoderABDirection> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_AB_STATUS, bus.cmdBuffer, 0);
 		const direction = packet[6];

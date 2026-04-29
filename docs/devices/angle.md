@@ -5,7 +5,7 @@ M5Stack documentation: [Chain Angle](https://docs.m5stack.com/en/chain/Chain_Ang
 ## TypeScript Exports
 
 ```ts
-import M5ChainAngle, { AngleRotationDirection } from "m5chainAngle";
+import M5ChainAngle, { AngleRotationDirection, type AngleConfiguration, type AngleConfigurationSnapshot } from "m5chainAngle";
 ```
 
 `AngleRotationDirection` can also be used as a TypeScript type.
@@ -14,6 +14,8 @@ import M5ChainAngle, { AngleRotationDirection } from "m5chainAngle";
 | --- | --- |
 | `M5ChainAngle` | Default class export. |
 | `AngleRotationDirection` | Rotation direction values: `CLOCKWISE = 0`, `COUNTERCLOCKWISE = 1`. |
+| `AngleConfiguration` | Type accepted by `configure()`. |
+| `AngleConfigurationSnapshot` | Type returned by `readConfiguration()`. |
 
 ## Capabilities
 
@@ -29,8 +31,10 @@ import M5ChainAngle, { AngleRotationDirection } from "m5chainAngle";
 if (device.type === M5ChainAngle.DEVICE_TYPE) {
 	const angle = device as M5ChainAngle;
 
-	await angle.setLedColor(0, 255, 80);
-	await angle.setAngleRotationDirection(AngleRotationDirection.CLOCKWISE);
+	await angle.configure({
+		led: { color: { r: 0, g: 255, b: 80 } },
+		angle: { rotationDirection: AngleRotationDirection.CLOCKWISE },
+	});
 
 	angle.onSample = function () {
 		const sample = this.sample();
@@ -47,8 +51,14 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 | `await device.getAngle12Deg()` | Reads the angle in degrees across the device's 280-degree range. |
 | `await device.getAngle12Value()` | Reads a normalized value rounded to two decimals. Range: `0.00` to `1.00`. |
 | `await device.getAngle8Adc()` | Reads the 8-bit mapped ADC value. |
-| `await device.setAngleRotationDirection(direction)` | Sets rotation direction. Use `AngleRotationDirection.CLOCKWISE` (`0`) or `AngleRotationDirection.COUNTERCLOCKWISE` (`1`). |
-| `await device.getAngleRotationDirection()` | Reads rotation direction as an `AngleRotationDirection` value. |
+| `await device.configure({ angle })` | Applies angle configuration. |
+| `await device.readConfiguration()` | Reads LED and angle configuration from the device. |
+
+## Configuration
+
+| Option | Description |
+| --- | --- |
+| `angle.rotationDirection` | Sets rotation direction. Use `AngleRotationDirection.CLOCKWISE` (`0`) or `AngleRotationDirection.COUNTERCLOCKWISE` (`1`). |
 
 ## Sample Value
 

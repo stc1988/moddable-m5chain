@@ -116,7 +116,7 @@ function attachEncoder(device) {
 		phase += sample * STEP;
 		phase = ((phase % 1) + 1) % 1;
 		const { r, g, b } = hsvToRGB(phase, 1.0, 0.8);
-		await device.setLedColor(r, g, b);
+		await device.configure({ led: { color: { r, g, b } } });
 	};
 }
 
@@ -126,7 +126,7 @@ function attachAngle(device) {
 		if (sample === undefined) return;
 		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
 		const { r, g, b } = hsvToRGB(sample, 1.0, sample);
-		await device.setLedColor(r, g, b);
+		await device.configure({ led: { color: { r, g, b } } });
 	};
 }
 
@@ -141,13 +141,12 @@ function attachKey(device) {
 			const color = Math.floor(step / 3);
 
 			if (color === 0) {
-				await device.setLedColor(255, 0, 0);
+				await device.configure({ led: { color: { r: 255, g: 0, b: 0 }, brightness } });
 			} else if (color === 1) {
-				await device.setLedColor(0, 255, 0);
+				await device.configure({ led: { color: { r: 0, g: 255, b: 0 }, brightness } });
 			} else {
-				await device.setLedColor(0, 0, 255);
+				await device.configure({ led: { color: { r: 0, g: 0, b: 255 }, brightness } });
 			}
-			await device.setLedBrightness(brightness);
 		}
 	};
 }
@@ -161,7 +160,7 @@ function attachJoyStick(device) {
 		const brightness = norm(-sample.y);
 		const saturation = 1.0;
 		const { r, g, b } = hsvToRGB(hue, saturation, brightness);
-		await device.setLedColor(r, g, b);
+		await device.configure({ led: { color: { r, g, b } } });
 	};
 }
 
@@ -172,6 +171,6 @@ function attachToF(device) {
 		trace(`ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
 		const brightness = Math.max(0.1, Math.min(1, 1 - sample / 2000));
 		const { r, g, b } = hsvToRGB(0.58, 1.0, brightness);
-		await device.setLedColor(r, g, b);
+		await device.configure({ led: { color: { r, g, b } } });
 	};
 }

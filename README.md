@@ -87,7 +87,7 @@ import M5Chain, { KEY_EVENT } from "m5chain";
 
 device.onPush = async (keyEvent) => {
 	if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
-		await device.setLedColor(255, 0, 0);
+		await device.configure({ led: { color: { r: 255, g: 0, b: 0 } } });
 	}
 };
 ```
@@ -124,6 +124,8 @@ Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on ev
 - `device.id`
 - `device.type`
 - `device.uuid` (after `init()`)
+- `await device.configure(options)` applies device and feature settings
+- `await device.readConfiguration()` reads current device and feature settings from the chain device
 - `await device.getUID(uidType = 1)` (`uidType: 0 | 1`)
 - `await device.getBootloaderVersion()`
 - `await device.getFirmwareVersion()`

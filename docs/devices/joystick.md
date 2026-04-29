@@ -9,6 +9,8 @@ import M5ChainJoyStick, {
 	KEY_EVENT,
 	KEY_MODE,
 	KEY_STATUS,
+	type JoystickConfiguration,
+	type JoystickConfigurationSnapshot,
 	type JoystickMappedRange,
 	type JoystickValue,
 	type KeyEvent,
@@ -26,8 +28,10 @@ import M5ChainJoyStick, {
 | `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
 | `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
 | `KeyEvent` | Type of values passed to `onPush`. |
-| `KeyMode` | Type of values accepted by `setKeyMode` and returned by `getKeyMode`. |
+| `KeyMode` | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
 | `KeyStatus` | Type of key status values used internally by key state reads. |
+| `JoystickConfiguration` | Type accepted by `configure()`. |
+| `JoystickConfigurationSnapshot` | Type returned by `readConfiguration()`. |
 | `JoystickValue` | `{ x: number; y: number }`. |
 | `JoystickMappedRange` | `{ xMin, xMax, yMin, yMax }`. |
 
@@ -46,8 +50,10 @@ import M5ChainJoyStick, { KEY_EVENT, KEY_MODE } from "m5chainJoyStick";
 if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 	const joystick = device as M5ChainJoyStick;
 
-	await joystick.setLedColor(0, 180, 255);
-	await joystick.setKeyMode(KEY_MODE.ACTIVE);
+	await joystick.configure({
+		led: { color: { r: 0, g: 180, b: 255 } },
+		key: { mode: KEY_MODE.ACTIVE },
+	});
 
 	joystick.onPush = (keyEvent) => {
 		if (keyEvent === KEY_EVENT.LONG_PRESS) {
@@ -68,10 +74,16 @@ if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 | --- | --- |
 | `await device.getJoystick16Adc()` | Reads raw 16-bit ADC values. Range: `0` to `65535`. |
 | `await device.getJoystick8Adc()` | Reads raw 8-bit ADC values. Range: `0` to `255`. |
-| `await device.getJoystickMappedRange()` | Reads `{ xMin, xMax, yMin, yMax }`. |
-| `await device.setJoystickMappedRange(xMin, xMax, yMin, yMax)` | Sets mapped output ranges. |
+| `await device.configure({ joystick })` | Applies joystick configuration. |
+| `await device.readConfiguration()` | Reads LED, key, and joystick configuration from the device. |
 | `await device.getJoystickMappedInt16Value()` | Reads signed mapped 16-bit values. Range: `-4095` to `4095`. |
 | `await device.getJoystickMappedInt8Value()` | Reads signed mapped 8-bit values. Range: `-128` to `127`. |
+
+## Configuration
+
+| Option | Description |
+| --- | --- |
+| `joystick.mappedRange` | Sets mapped output ranges with `{ xMin, xMax, yMin, yMax }`. |
 
 ## Sample Value
 
