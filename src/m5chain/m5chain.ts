@@ -375,16 +375,16 @@ export default class M5Chain {
 
 	async #pollDevices() {
 		for (const device of this.#deviceList) {
-			if (!device?.hasOnPoll?.() || typeof device.polling !== "function") {
+			if (!device?.hasOnSample?.() || typeof device.readSample !== "function") {
 				continue;
 			}
 
 			try {
-				const value = await device.polling();
+				const value = await device.readSample();
 				this.#pollFailureCount = 0; // 成功でリセット
 
 				if (value !== undefined) {
-					device.dispatchOnPoll?.(value);
+					device.dispatchOnSample?.(value);
 				}
 			} catch (_e) {
 				this.#pollFailureCount++;
@@ -407,7 +407,7 @@ export default class M5Chain {
 		this.#updatePollingState();
 	}
 	#updatePollingState() {
-		const active = this.#deviceList.some((d) => typeof d?.hasOnPoll === "function" && d.hasOnPoll());
+		const active = this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
 
 		if (active && !this.running) {
 			this.#pollLoop();

@@ -1,6 +1,5 @@
 import M5ChainAngle from "m5chainAngle";
 import M5ChainEncoder from "m5chainEncoder";
-import type { JoystickValue } from "m5chainJoyStick";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
@@ -99,14 +98,18 @@ function attachEncoder(device: M5ChainEncoder) {
 		trace(`Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 
-	device.onPoll = (value: number) => {
-		trace(`Encoder Device ID\t: ${device.id}, encode value\t: ${value}\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`Encoder Device ID\t: ${device.id}, encode value\t: ${sample}\n`);
 	};
 }
 
 function attachAngle(device: M5ChainAngle) {
-	device.onPoll = (value: number) => {
-		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${value}\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
 	};
 }
 
@@ -121,13 +124,17 @@ function attachJoyStick(device: M5ChainJoyStick) {
 		trace(`JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 
-	device.onPoll = (position: JoystickValue) => {
-		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${position.x}\ty:${position.y}\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${sample.x}\ty:${sample.y}\n`);
 	};
 }
 
 function attachToF(device: M5ChainToF) {
-	device.onPoll = (distance: number) => {
-		trace(`ToF Device ID	: ${device.id}, distance	: ${distance} mm\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
 	};
 }

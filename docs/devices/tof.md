@@ -25,7 +25,7 @@ These exports can also be used as TypeScript types.
 
 - Common device API
 - LED API
-- Poll API
+- Sample API
 
 ## Usage
 
@@ -39,8 +39,9 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 	await tof.setMeasurementTime(50);
 	await tof.setMeasurementMode(MeasurementMode.CONTINUOUS);
 
-	tof.onPoll = (distance) => {
-		trace(`distance=${distance}mm\n`);
+	tof.onSample = function () {
+		const sample = this.sample();
+		trace(`distance=${sample}mm\n`);
 	};
 }
 ```
@@ -61,6 +62,6 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 | `await device.isMeasurementComplete()` | Returns `true` when completion flag is `MeasurementCompletionFlag.COMPLETE` (`1`). |
 | `await device.triggerMeasurement()` | Starts a measurement by setting status to measuring. |
 
-## Poll Value
+## Sample Value
 
-`onPoll` receives the measured distance in millimeters. It dispatches when the distance changes.
+`onSample` is dispatched on every poll. `sample()` returns the measured distance in millimeters.

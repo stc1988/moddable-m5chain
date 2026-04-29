@@ -36,7 +36,7 @@ import M5ChainJoyStick, {
 - Common device API
 - LED API
 - Key API
-- Poll API
+- Sample API
 
 ## Usage
 
@@ -55,8 +55,9 @@ if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 		}
 	};
 
-	joystick.onPoll = ({ x, y }) => {
-		trace(`joystick x=${x} y=${y}\n`);
+	joystick.onSample = function () {
+		const sample = this.sample();
+		trace(`joystick x=${sample.x} y=${sample.y}\n`);
 	};
 }
 ```
@@ -72,6 +73,6 @@ if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 | `await device.getJoystickMappedInt16Value()` | Reads signed mapped 16-bit values. Range: `-4095` to `4095`. |
 | `await device.getJoystickMappedInt8Value()` | Reads signed mapped 8-bit values. Range: `-128` to `127`. |
 
-## Poll Value
+## Sample Value
 
-`onPoll` receives `{ x, y }` from `getJoystickMappedInt8Value()`. It dispatches when either axis changes.
+`onSample` is dispatched on every poll. `sample()` returns `{ x, y }` from `getJoystickMappedInt8Value()`.

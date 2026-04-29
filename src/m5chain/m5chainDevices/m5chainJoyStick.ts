@@ -1,9 +1,8 @@
-import CanPoll from "canPoll";
-import deepEqual from "deepEqual";
+import CanSample from "canSample";
 import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { SampleHandler } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -19,7 +18,7 @@ export type JoystickMappedRange = {
 	yMax: number;
 };
 
-class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<JoystickValue>) {
+class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>) {
 	static DEVICE_TYPE = 0x0004;
 	static CMD = {
 		...super.CMD,
@@ -30,22 +29,12 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanPoll<Joystic
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	} as const;
-	#lastValue: JoystickValue | undefined;
-	declare onPoll: PollHandler<JoystickValue>;
-	declare dispatchOnPoll: (value: JoystickValue) => void;
+	declare onSample: SampleHandler<JoystickValue>;
+	declare sample: () => JoystickValue | undefined;
+	declare dispatchOnSample: (value: JoystickValue) => void;
 
-	async polling(): Promise<JoystickValue | undefined> {
-		const current = await this.getJoystickMappedInt8Value();
-		if (this.#lastValue === undefined) {
-			this.#lastValue = current;
-			return current;
-		}
-		if (deepEqual(current, this.#lastValue)) {
-			return undefined;
-		}
-
-		this.#lastValue = current;
-		return current;
+	async readSample(): Promise<JoystickValue> {
+		return await this.getJoystickMappedInt8Value();
 	}
 
 	// 0 ~ 65535

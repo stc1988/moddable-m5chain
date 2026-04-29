@@ -4,7 +4,7 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 
 ## Overview
 
-`moddable-m5chain` is a Moddable SDK module for controlling M5Chain devices over a UART bus. It handles scanning, initialization, polling, and event dispatch, then exposes device-specific APIs via feature mixins.
+`moddable-m5chain` is a Moddable SDK module for controlling M5Chain devices over a UART bus. It handles scanning, initialization, serial-bus polling, sample notification, and event dispatch, then exposes device-specific APIs via feature mixins.
 
 ## Key Features
 
@@ -12,30 +12,31 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 - Type-based device instantiation via `createM5ChainDevice`
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` arrives (debounced)
 - Feature composition via `withDeviceFeatures(...)`
-- Poll loop runs only while at least one device has `onPoll` set
+- Poll loop runs only while at least one device has `onSample` set
+- Sample-capable public APIs follow the ECMA-419 Sensor pattern: `onSample` notifies, and `sample()` returns the latest value
 
 ## Repository Structure
 
 ### Core
 
-- `src/m5chain/m5chain.js` (bus communication, scan/re-scan, poll loop, dispatch)
-- `src/m5chain/createM5ChainDevice.js` (device type -> class mapping)
-- `src/m5chain/m5chainDevices/m5chainDevice.js` (base class + feature composition)
-- `src/m5chain/m5chainDevices/m5chainBus.js` (bus-typed device placeholder)
+- `src/m5chain/m5chain.ts` (bus communication, scan/re-scan, poll loop, dispatch)
+- `src/m5chain/createM5ChainDevice.ts` (device type -> class mapping)
+- `src/m5chain/m5chainDevices/m5chainDevice.ts` (base class + feature composition)
+- `src/m5chain/m5chainDevices/m5chainBus.ts` (bus-typed device placeholder)
 
 ### Device Types
 
-- `src/m5chain/m5chainDevices/m5chainEncoder.js`
-- `src/m5chain/m5chainDevices/m5chainAngle.js`
-- `src/m5chain/m5chainDevices/m5chainKey.js`
-- `src/m5chain/m5chainDevices/m5chainJoyStick.js`
-- `src/m5chain/m5chainDevices/m5chainToF.js`
+- `src/m5chain/m5chainDevices/m5chainEncoder.ts`
+- `src/m5chain/m5chainDevices/m5chainAngle.ts`
+- `src/m5chain/m5chainDevices/m5chainKey.ts`
+- `src/m5chain/m5chainDevices/m5chainJoyStick.ts`
+- `src/m5chain/m5chainDevices/m5chainToF.ts`
 
 ### Feature Mixins
 
-- `src/m5chain/deviceFeatures/hasLed.js`
-- `src/m5chain/deviceFeatures/hasKey.js`
-- `src/m5chain/deviceFeatures/canPoll.js`
+- `src/m5chain/deviceFeatures/hasLed.ts`
+- `src/m5chain/deviceFeatures/hasKey.ts`
+- `src/m5chain/deviceFeatures/canSample.ts`
 
 ### Manifests / Config
 
@@ -44,7 +45,7 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 - `src/m5chain/manifest_include.json`
 - `src/m5chain/manifest_chain_base.json`
 - `examples/manifest.json`
-- `examples/main.js`
+- `examples/main.ts`
 
 ### Examples (current)
 
@@ -55,10 +56,10 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 
 | Device | One-line Summary | Protocol PDF |
 | --- | --- | --- |
-| Encoder | Rotary encoder with RGB LED + key + polling support | [M5Stack-Chain-Encoder-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1200/M5Stack-Chain-Encoder-Protocol-EN.pdf) |
-| Angle | Angle sensor with RGB LED + polling support | [M5Stack-Chain-Angle-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1197/M5Stack-Chain-Angle-Protocol-EN.pdf) |
+| Encoder | Rotary encoder with RGB LED + key + sample support | [M5Stack-Chain-Encoder-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1200/M5Stack-Chain-Encoder-Protocol-EN.pdf) |
+| Angle | Angle sensor with RGB LED + sample support | [M5Stack-Chain-Angle-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1197/M5Stack-Chain-Angle-Protocol-EN.pdf) |
 | Key | Single key with RGB LED | [M5Stack-Chain-Key-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1192/M5Stack-Chain-Key-Protocol-EN.pdf) |
-| JoyStick | 2-axis joystick with RGB LED + key + polling support | [M5Stack-Chain-Joystick-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1191/M5Stack-Chain-Joystick-Protocol-EN.pdf) |
+| JoyStick | 2-axis joystick with RGB LED + key + sample support | [M5Stack-Chain-Joystick-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1191/M5Stack-Chain-Joystick-Protocol-EN.pdf) |
 | ToF | Time-of-Flight distance sensor | [M5Stack-Chain-ToF-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1199/M5Stack-Chain-ToF-Protocol-EN.pdf) |
 
 ## Architecture Summary
@@ -71,8 +72,17 @@ Each concrete class composes feature mixins via `withDeviceFeatures(...)`.
 ### Mixins
 
 - `HasLed`: RGB LED API
-- `HasKey`: key polling/config API + key event callback
-- `CanPoll`: `onPoll` hook + polling integration with bus state
+- `HasKey`: key state/config API + key event callback
+- `CanSample`: `onSample` notification + `sample()` accessor + bus sample-read integration
+
+### Sampling API Policy
+
+- Public sample-capable device APIs use sample terminology: `CanSample`, `onSample`, `sample()`, `hasOnSample()`.
+- `onSample` callbacks receive no value argument. Inside the callback, use `this.sample()` to read the latest sample.
+- `sample()` is synchronous and returns the latest cached value. The UART request happens in the internal poll loop through `readSample()`.
+- Angle, JoyStick, and ToF dispatch `onSample` every poll cycle with the latest value.
+- Encoder dispatches `onSample` only when the encoder value changes. Its `sample()` value is the delta from the previous encoder value.
+- Internal bus scheduling may keep poll terminology (`#pollLoop`, `pollingInterval`, logs) because the implementation periodically checks devices over the serial bus.
 
 ### Packet Frame
 
@@ -133,10 +143,10 @@ sequenceDiagram
 sequenceDiagram
   participant M5Chain
   participant Device
-  loop while at least one device.hasOnPoll()
-    M5Chain->>Device: polling()
+  loop while at least one device.hasOnSample()
+    M5Chain->>Device: readSample()
     Device-->>M5Chain: value or undefined
-    M5Chain-->>Device: dispatchOnPoll(value)
+    M5Chain-->>Device: dispatchOnSample(value)
   end
 ```
 

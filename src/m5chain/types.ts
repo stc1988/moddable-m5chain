@@ -35,7 +35,11 @@ export type LedColor = {
 
 export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void;
 
-export type PollHandler<T = unknown> = ((value: T) => void) | null;
+export type SampleProvider<T = unknown> = {
+	sample(): T | undefined;
+};
+
+export type SampleHandler<T = unknown> = ((this: SampleProvider<T>) => void) | null;
 
 export interface ChainBus {
 	cmdBuffer: Uint8Array;
@@ -59,9 +63,9 @@ export interface M5ChainDeviceLike {
 	init(): Promise<void>;
 	onDisconnected?(): void;
 	onDispatchEvent?(buffer: PacketBuffer): void;
-	hasOnPoll?(): boolean;
-	polling?<T = unknown>(): Promise<T | undefined>;
-	dispatchOnPoll?<T = unknown>(value: T): void;
+	hasOnSample?(): boolean;
+	readSample?<T = unknown>(): Promise<T | undefined>;
+	dispatchOnSample?<T = unknown>(value: T): void;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].

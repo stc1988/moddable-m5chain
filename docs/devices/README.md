@@ -10,11 +10,11 @@ Shared mixin APIs are documented separately in [Feature API Guides](../features/
 
 | Device | Class | Module | Capabilities |
 | --- | --- | --- | --- |
-| [Encoder](encoder.md) | `M5ChainEncoder` | `m5chainEncoder` | LED, key, polling |
-| [Angle](angle.md) | `M5ChainAngle` | `m5chainAngle` | LED, polling |
+| [Encoder](encoder.md) | `M5ChainEncoder` | `m5chainEncoder` | LED, key, sampling |
+| [Angle](angle.md) | `M5ChainAngle` | `m5chainAngle` | LED, sampling |
 | [Key](key.md) | `M5ChainKey` | `m5chainKey` | LED, key |
-| [JoyStick](joystick.md) | `M5ChainJoyStick` | `m5chainJoyStick` | LED, key, polling |
-| [ToF](tof.md) | `M5ChainToF` | `m5chainToF` | LED, polling |
+| [JoyStick](joystick.md) | `M5ChainJoyStick` | `m5chainJoyStick` | LED, key, sampling |
+| [ToF](tof.md) | `M5ChainToF` | `m5chainToF` | LED, sampling |
 
 ## Import Pattern
 
@@ -28,7 +28,8 @@ m5chain.onDeviceListChanged = (devices) => {
 	for (const device of devices) {
 		if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 			const encoder = device as M5ChainEncoder;
-			encoder.onPoll = (delta) => {
+			encoder.onSample = function () {
+				const delta = this.sample();
 				trace(`encoder delta=${delta}\n`);
 			};
 		}

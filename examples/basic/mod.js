@@ -60,14 +60,18 @@ function attachEncoder(device) {
 		trace(`Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
 	};
 
-	device.onPoll = (value) => {
-		trace(`Encoder Device ID\t: ${device.id}, encode value\t: ${value}\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`Encoder Device ID\t: ${device.id}, encode value\t: ${sample}\n`);
 	};
 }
 
 function attachAngle(device) {
-	device.onPoll = (value) => {
-		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${value}\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
 	};
 }
 
@@ -82,13 +86,17 @@ function attachJoyStick(device) {
 		trace(`JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEvent}\n`);
 	};
 
-	device.onPoll = (position) => {
-		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${position.x}\ty:${position.y}\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${sample.x}\ty:${sample.y}\n`);
 	};
 }
 
 function attachToF(device) {
-	device.onPoll = (distance) => {
-		trace(`ToF Device ID	: ${device.id}, distance	: ${distance} mm\n`);
+	device.onSample = function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
 	};
 }

@@ -1,7 +1,7 @@
-import CanPoll from "canPoll";
+import CanSample from "canSample";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { SampleHandler } from "types";
 
 export const AngleRotationDirection = {
 	CLOCKWISE: 0,
@@ -19,7 +19,7 @@ function angleRotationDirectionToValue(direction: AngleRotationDirection): numbe
 	return direction;
 }
 
-class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
+class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0002;
 	static CMD = {
 		...super.CMD,
@@ -29,23 +29,12 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanPoll<number>) {
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const;
 	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
-	#lastValue: number | undefined;
-	declare onPoll: PollHandler<number>;
-	declare dispatchOnPoll: (value: number) => void;
+	declare onSample: SampleHandler<number>;
+	declare sample: () => number | undefined;
+	declare dispatchOnSample: (value: number) => void;
 
-	async polling(): Promise<number | undefined> {
-		const current = await this.getAngle12Value();
-		if (this.#lastValue === undefined) {
-			this.#lastValue = current;
-			return current;
-		}
-
-		if (current === this.#lastValue) {
-			return undefined;
-		}
-
-		this.#lastValue = current;
-		return current;
+	async readSample(): Promise<number> {
+		return await this.getAngle12Value();
 	}
 
 	async getAngle12Adc(): Promise<number> {

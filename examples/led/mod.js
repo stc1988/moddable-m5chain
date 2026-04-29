@@ -109,9 +109,11 @@ function attachDevice(device) {
 function attachEncoder(device) {
 	let phase = 0;
 	const STEP = 1 / 36;
-	device.onPoll = async (value) => {
-		trace(`Encoder Device ID\t ${device.id}, encode value\t: ${value}\n`);
-		phase += value * STEP;
+	device.onSample = async function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`Encoder Device ID\t ${device.id}, encode value\t: ${sample}\n`);
+		phase += sample * STEP;
 		phase = ((phase % 1) + 1) % 1;
 		const { r, g, b } = hsvToRGB(phase, 1.0, 0.8);
 		await device.setLedColor(r, g, b);
@@ -119,9 +121,11 @@ function attachEncoder(device) {
 }
 
 function attachAngle(device) {
-	device.onPoll = async (value) => {
-		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${value}\n`);
-		const { r, g, b } = hsvToRGB(value, 1.0, value);
+	device.onSample = async function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
+		const { r, g, b } = hsvToRGB(sample, 1.0, sample);
 		await device.setLedColor(r, g, b);
 	};
 }
@@ -149,10 +153,12 @@ function attachKey(device) {
 }
 
 function attachJoyStick(device) {
-	device.onPoll = async (position) => {
-		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${position.x}\ty:${position.y}\n`);
-		const hue = norm(position.x);
-		const brightness = norm(-position.y);
+	device.onSample = async function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${sample.x}\ty:${sample.y}\n`);
+		const hue = norm(sample.x);
+		const brightness = norm(-sample.y);
 		const saturation = 1.0;
 		const { r, g, b } = hsvToRGB(hue, saturation, brightness);
 		await device.setLedColor(r, g, b);
@@ -160,9 +166,11 @@ function attachJoyStick(device) {
 }
 
 function attachToF(device) {
-	device.onPoll = async (distance) => {
-		trace(`ToF Device ID	: ${device.id}, distance	: ${distance} mm\n`);
-		const brightness = Math.max(0.1, Math.min(1, 1 - distance / 2000));
+	device.onSample = async function () {
+		const sample = this.sample();
+		if (sample === undefined) return;
+		trace(`ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
+		const brightness = Math.max(0.1, Math.min(1, 1 - sample / 2000));
 		const { r, g, b } = hsvToRGB(0.58, 1.0, brightness);
 		await device.setLedColor(r, g, b);
 	};

@@ -1,7 +1,7 @@
-import CanPoll from "canPoll";
+import CanSample from "canSample";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
-import type { PollHandler } from "types";
+import type { SampleHandler } from "types";
 
 export const MeasurementMode = {
 	STOP: 0,
@@ -36,7 +36,7 @@ function measurementStatusToValue(status: MeasurementStatus): number {
 	return status;
 }
 
-class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
+class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0005;
 	static CMD = {
 		...super.CMD,
@@ -52,21 +52,12 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanPoll<number>) {
 	static MEASUREMENT_MODE = MeasurementMode;
 	static MEASUREMENT_STATUS = MeasurementStatus;
 	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;
-	#lastDistance: number | undefined;
-	declare onPoll: PollHandler<number>;
-	declare dispatchOnPoll: (value: number) => void;
+	declare onSample: SampleHandler<number>;
+	declare sample: () => number | undefined;
+	declare dispatchOnSample: (value: number) => void;
 
-	async polling(): Promise<number | undefined> {
-		const current = await this.getDistance();
-		if (this.#lastDistance === undefined) {
-			this.#lastDistance = current;
-			return current;
-		}
-		if (current === this.#lastDistance) {
-			return undefined;
-		}
-		this.#lastDistance = current;
-		return current;
+	async readSample(): Promise<number> {
+		return await this.getDistance();
 	}
 
 	async getDistance(): Promise<number> {

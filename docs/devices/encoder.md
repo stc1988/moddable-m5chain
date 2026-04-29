@@ -28,7 +28,7 @@ These exports can also be used as TypeScript types.
 - Common device API
 - LED API
 - Key API
-- Poll API
+- Sample API
 
 ## Usage
 
@@ -48,7 +48,8 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 		}
 	};
 
-	encoder.onPoll = (delta) => {
+	encoder.onSample = function () {
+		const delta = this.sample();
 		trace(`encoder moved by ${delta}\n`);
 	};
 }
@@ -65,6 +66,6 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 | `await device.setEncoderABDirect(direct, saveToFlash = 0)` | Sets encoder A/B direction. Use `EncoderABDirection.CLOCKWISE_INCREASE` (`0`) or `EncoderABDirection.CLOCKWISE_DECREASE` (`1`). Use `SaveToFlash.ENABLE` (`1`) to persist the setting. |
 | `await device.getEncoderABDirect()` | Reads encoder A/B direction as an `EncoderABDirection` value. |
 
-## Poll Value
+## Sample Value
 
-`onPoll` receives the delta from the previous encoder value. No event is dispatched while the value is unchanged.
+`onSample` is dispatched when the encoder value changes. `sample()` returns the delta from the previous encoder value.
