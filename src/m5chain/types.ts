@@ -70,6 +70,13 @@ export interface ChainBus {
 	lock(): Promise<Unlock>;
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number): void;
 	waitForPacket(cmd: number, options?: WaitForPacketOptions): Promise<WaitForPacketResult>;
+	sendAndWaitForResult(
+		id: number,
+		cmd: number,
+		data: Uint8Array,
+		size: number,
+		options?: WaitForPacketOptions,
+	): Promise<WaitForPacketResult>;
 	sendAndWait(
 		id: number,
 		cmd: number,
@@ -77,6 +84,7 @@ export interface ChainBus {
 		size: number,
 		options?: WaitForPacketOptions,
 	): Promise<PacketBuffer>;
+	_notifyPollingReadFailed(): void;
 	_notifyPollingStateChanged(): void;
 }
 

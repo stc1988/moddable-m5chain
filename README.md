@@ -172,6 +172,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 - `examples/basic`: device discovery, info read, and event subscription
 - `examples/led`: LED control for Encoder/Angle/Key/JoyStick/ToF
+- `examples/hotplug`: re-scan verification after device reconnect, using `uuid`, LED blink, key events, and sampled values
 
 ## Development
 
