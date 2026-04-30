@@ -62,4 +62,6 @@ Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on ev
 
 The bus poll loop starts when at least one connected device has `onSample` set. It stops when all sample handlers are `null`.
 
+If sample polling repeatedly fails, the bus performs a re-scan before updating the device list. This lets the list reflect any devices that remain connected after a removal instead of treating every device as disconnected from the polling failure alone.
+
 `CanSample` notifies the bus only when the active/inactive state changes, so replacing one non-null handler with another does not restart the loop. The bus still uses an internal poll loop to read samples from serial devices at `pollingInterval`.

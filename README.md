@@ -18,6 +18,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 - Packet transport and matching (`sendPacket` / `sendAndWait`)
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
+- Automatic re-scan after repeated sample polling failures
 - Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Sample](docs/features/can-sample.md))
 - Poll loop runs only when at least one device has `onSample` set
 
@@ -73,6 +74,7 @@ await m5chain.start();
 
 - Called after the initial scan completes in `start()`
 - Called again after re-scan when the chain sends `ENUM_PLEASE`
+- Called again after repeated sample polling failures trigger a re-scan
 - `devices` is the current connected device list
 
 ### `device.onPush = (status) => {}`

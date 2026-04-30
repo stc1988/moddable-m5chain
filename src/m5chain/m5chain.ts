@@ -368,16 +368,13 @@ export default class M5Chain {
 		return result;
 	}
 
-	#handlePollingFailure() {
+	async #handlePollingFailure() {
 		this.#pollFailureCount++;
 		this.#log(`polling failed (count=${this.#pollFailureCount})`);
 
 		if (this.#pollFailureCount >= 3) {
-			this.#log("All devices considered disconnected", "WARN");
-
-			this.running = false;
-			this.#deviceList = [];
-			this.#notifyDeviceListChanged();
+			this.#log("polling failed repeatedly; rescanning devices", "WARN");
+			await this.#rescan("polling failure");
 			return true;
 		}
 		return false;
@@ -414,7 +411,7 @@ export default class M5Chain {
 				const value = await device.readSample();
 				if (this.#pollReadFailed) {
 					this.#pollReadFailed = false;
-					if (this.#handlePollingFailure()) return;
+					if (await this.#handlePollingFailure()) return;
 					continue;
 				}
 
@@ -424,7 +421,7 @@ export default class M5Chain {
 					device.dispatchOnSample?.(value);
 				}
 			} catch (_e) {
-				if (this.#handlePollingFailure()) return;
+				if (await this.#handlePollingFailure()) return;
 			}
 		}
 	}
@@ -513,19 +510,31 @@ export default class M5Chain {
 		this.#enumRunning = true;
 		this.#log(`handleEnumPlease`);
 
+		await this.#rescan("ENUM_PLEASE");
+
+		this.#enumRunning = false;
+	}
+
+	async #rescan(reason: string) {
+		this.#log(`rescan requested: ${reason}`);
+
 		const oldDevices = [...this.#deviceList];
 		for (const d of oldDevices) {
 			d.onDisconnected?.();
 		}
 
 		this.running = false;
+		this.#pollFailureCount = 0;
+		this.#pollReadFailed = false;
 
 		await this.#scan();
 
+		if (this.#deviceList.length === 0) {
+			this.#log("All devices disconnected after rescan", "WARN");
+		}
+
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
-
-		this.#enumRunning = false;
 	}
 
 	#notifyDeviceListChanged() {
