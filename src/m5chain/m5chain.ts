@@ -501,11 +501,24 @@ export default class M5Chain {
 		return deviceType;
 	}
 
+	async #readDeviceType(id: number): Promise<number | undefined> {
+		const packet = await this.sendAndWaitForResult(id, M5Chain.CMD.GET_DEVICE_TYPE, this.cmdBuffer, 0);
+		if (!(packet instanceof Uint8Array)) return undefined;
+		return (packet[7] << 8) | packet[6];
+	}
+
 	async getDeviceNum(): Promise<number> {
 		this.cmdBuffer[0] = 0x00;
 		const packet = await this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.cmdBuffer, 1);
 		const deviceNum = packet[6];
 		return deviceNum;
+	}
+
+	async #readDeviceNum(): Promise<number | undefined> {
+		this.cmdBuffer[0] = 0x00;
+		const packet = await this.sendAndWaitForResult(0xff, M5Chain.CMD.ENUM, this.cmdBuffer, 1);
+		if (!(packet instanceof Uint8Array)) return undefined;
+		return packet[6];
 	}
 
 	async isDeviceConnected(): Promise<boolean> {
@@ -527,8 +540,13 @@ export default class M5Chain {
 		this.#deviceList = [];
 		try {
 			if (await this.isDeviceConnected()) {
-				const deviceNum = await this.getDeviceNum();
-				const deviceList = await this.getDeviceList(deviceNum);
+				const deviceNum = await this.#readDeviceNum();
+				if (deviceNum === undefined) {
+					this.#log("scan found no enumerable devices");
+					return this.#deviceList;
+				}
+
+				const deviceList = await this.#readDeviceList(deviceNum);
 				for (let i = 0; i < deviceList.length; i++) {
 					const device = createM5ChainDevice(this, {
 						id: i + 1,
@@ -547,6 +565,16 @@ export default class M5Chain {
 			this.#deviceList = [];
 		}
 		return this.#deviceList;
+	}
+
+	async #readDeviceList(deviceNum: number): Promise<number[]> {
+		const deviceList: number[] = [];
+		for (let i = 0; i < deviceNum; i++) {
+			const deviceType = await this.#readDeviceType(i + 1);
+			if (deviceType === undefined) break;
+			deviceList.push(deviceType);
+		}
+		return deviceList;
 	}
 
 	async getDeviceList(deviceNum: number): Promise<number[]> {
