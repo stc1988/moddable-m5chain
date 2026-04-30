@@ -54,6 +54,7 @@ export default class M5Chain {
 	#enumRunning = false;
 	#receiveMatch: PacketMatch | null = null;
 	#pollFailureCount = 0;
+	#pollReadFailed = false;
 	#sendCmd: number | null = null;
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
@@ -325,13 +326,13 @@ export default class M5Chain {
 		});
 	}
 
-	async sendAndWait(
+	async sendAndWaitForResult(
 		id: number,
 		cmd: number,
 		data: Uint8Array,
 		size: number,
 		options: WaitForPacketOptions | undefined = undefined,
-	): Promise<PacketBuffer> {
+	): Promise<WaitForPacketResult> {
 		const baseMatch = options?.match;
 		const match = (buffer: PacketBuffer, bytesReadable: number) => {
 			// Always match both id and cmd to avoid resolving the wrong in-flight request.
@@ -344,16 +345,46 @@ export default class M5Chain {
 			this.#sendId = id;
 			this.sendPacket(id, cmd, data, size);
 			const result = await this.waitForPacket(cmd, { ...(options ?? {}), match });
-			if (!(result instanceof Uint8Array) && result.__m5chain === "timeout") {
-				throw new Error(
-					`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd.toString(16).toUpperCase().padStart(2, "0")})`,
-				);
-			}
-			if (!(result instanceof Uint8Array) && result.__m5chain === "abort") {
-				throw new Error(`waitForPacket aborted (${result.reason})`);
-			}
 			return result;
 		});
+	}
+
+	async sendAndWait(
+		id: number,
+		cmd: number,
+		data: Uint8Array,
+		size: number,
+		options: WaitForPacketOptions | undefined = undefined,
+	): Promise<PacketBuffer> {
+		const result = await this.sendAndWaitForResult(id, cmd, data, size, options);
+		if (!(result instanceof Uint8Array) && result.__m5chain === "timeout") {
+			throw new Error(
+				`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd.toString(16).toUpperCase().padStart(2, "0")})`,
+			);
+		}
+		if (!(result instanceof Uint8Array) && result.__m5chain === "abort") {
+			throw new Error(`waitForPacket aborted (${result.reason})`);
+		}
+		return result;
+	}
+
+	#handlePollingFailure() {
+		this.#pollFailureCount++;
+		this.#log(`polling failed (count=${this.#pollFailureCount})`);
+
+		if (this.#pollFailureCount >= 3) {
+			this.#log("All devices considered disconnected", "WARN");
+
+			this.running = false;
+			this.#deviceList = [];
+			this.#notifyDeviceListChanged();
+			return true;
+		}
+		return false;
+	}
+
+	_notifyPollingReadFailed() {
+		this.#pollReadFailed = true;
 	}
 
 	async start() {
@@ -381,23 +412,19 @@ export default class M5Chain {
 
 			try {
 				const value = await device.readSample();
+				if (this.#pollReadFailed) {
+					this.#pollReadFailed = false;
+					if (this.#handlePollingFailure()) return;
+					continue;
+				}
+
 				this.#pollFailureCount = 0; // 成功でリセット
 
 				if (value !== undefined) {
 					device.dispatchOnSample?.(value);
 				}
 			} catch (_e) {
-				this.#pollFailureCount++;
-				this.#log(`polling failed (count=${this.#pollFailureCount})`);
-
-				if (this.#pollFailureCount >= 3) {
-					this.#log("All devices considered disconnected", "WARN");
-
-					this.running = false;
-					this.#deviceList = [];
-					this.#notifyDeviceListChanged();
-					return;
-				}
+				if (this.#handlePollingFailure()) return;
 			}
 		}
 	}

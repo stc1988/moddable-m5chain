@@ -64,8 +64,16 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 		};
 	}
 
-	async readSample(): Promise<number> {
-		return await this.getAngle12Value();
+	async readSample(): Promise<number | undefined> {
+		const bus = this.bus;
+		const packet = await bus.sendAndWaitForResult(this.id, M5ChainAngle.CMD.GET_12ADC, bus.cmdBuffer, 0);
+		if (!(packet instanceof Uint8Array)) {
+			bus._notifyPollingReadFailed();
+			return undefined;
+		}
+		const adc = (packet[7] << 8) | packet[6];
+		const value = (adc & ADC_12BIT_MAX) / ADC_12BIT_MAX;
+		return Math.round(value * 100) / 100;
 	}
 
 	async getAngle12Adc(): Promise<number> {

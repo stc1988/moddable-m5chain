@@ -93,8 +93,14 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		};
 	}
 
-	async readSample(): Promise<number> {
-		return await this.getDistance();
+	async readSample(): Promise<number | undefined> {
+		const bus = this.bus;
+		const packet = await bus.sendAndWaitForResult(this.id, M5ChainToF.CMD.GET_DISTANCE, bus.cmdBuffer, 0);
+		if (!(packet instanceof Uint8Array)) {
+			bus._notifyPollingReadFailed();
+			return undefined;
+		}
+		return (packet[7] << 8) | packet[6];
 	}
 
 	async getDistance(): Promise<number> {

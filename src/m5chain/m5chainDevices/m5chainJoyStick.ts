@@ -66,8 +66,22 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		};
 	}
 
-	async readSample(): Promise<JoystickValue> {
-		return await this.getJoystickMappedInt8Value();
+	async readSample(): Promise<JoystickValue | undefined> {
+		const bus = this.bus;
+		const packet = await bus.sendAndWaitForResult(
+			this.id,
+			M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_INT8_VALUE,
+			bus.cmdBuffer,
+			0,
+		);
+		if (!(packet instanceof Uint8Array)) {
+			bus._notifyPollingReadFailed();
+			return undefined;
+		}
+		return {
+			x: (packet[6] << 24) >> 24,
+			y: (packet[7] << 24) >> 24,
+		};
 	}
 
 	// 0 ~ 65535
