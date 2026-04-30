@@ -180,3 +180,4 @@ When asking for changes, the following expectations apply:
 - After modifying this repository, verify that Moddable builds pass with:
   - `mcconfig -d -m -p esp32/m5atom_matrix -t build ./examples/manifest.json`
   - `mcrun -d -m -p esp32/m5atom_matrix -t build ./examples/basic/manifest.json`
+- Whenever a change produces a git diff, run difit after verification and commit so the user can review the resulting HEAD diff. If difit returns review comments, address them before reporting completion.
