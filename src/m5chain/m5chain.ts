@@ -17,6 +17,7 @@ type M5ChainOptions = {
 	receive?: number;
 	debug?: boolean;
 	pollingInterval?: number;
+	presenceCheckInterval?: number;
 };
 
 declare const device: {
@@ -40,6 +41,7 @@ export default class M5Chain {
 	onDeviceListChanged?: DeviceListChangeHandler;
 	debug: boolean;
 	pollingInterval: number;
+	presenceCheckInterval: number;
 	running = false;
 
 	#serial;
@@ -55,6 +57,8 @@ export default class M5Chain {
 	#receiveMatch: PacketMatch | null = null;
 	#pollFailureCount = 0;
 	#pollReadFailed = false;
+	#presenceFailureCount = 0;
+	#presenceRunning = false;
 	#sendCmd: number | null = null;
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
@@ -66,6 +70,7 @@ export default class M5Chain {
 		const self = this;
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
+		this.presenceCheckInterval = options.presenceCheckInterval ?? 500;
 		this.#serial = new Serial({
 			transmit: options?.transmit ?? device.I2C.default.data,
 			receive: options?.receive ?? device.I2C.default.clock,
@@ -391,6 +396,7 @@ export default class M5Chain {
 		await this.#scan();
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
+		this.#updatePresenceMonitorState();
 	}
 
 	async #pollLoop() {
@@ -429,9 +435,14 @@ export default class M5Chain {
 	// internal (not for app)
 	_notifyPollingStateChanged() {
 		this.#updatePollingState();
+		this.#updatePresenceMonitorState();
 	}
+	#hasActiveSampleHandlers() {
+		return this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
+	}
+
 	#updatePollingState() {
-		const active = this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
+		const active = this.#hasActiveSampleHandlers();
 
 		if (active && !this.running) {
 			this.#pollLoop();
@@ -440,6 +451,48 @@ export default class M5Chain {
 		if (!active && this.running) {
 			this.running = false;
 		}
+	}
+
+	#updatePresenceMonitorState() {
+		const active = this.#deviceList.length > 0 && !this.#hasActiveSampleHandlers();
+
+		if (active && !this.#presenceRunning) {
+			void this.#presenceMonitorLoop();
+		}
+
+		if (!active && this.#presenceRunning) {
+			this.#presenceRunning = false;
+		}
+	}
+
+	async #presenceMonitorLoop() {
+		this.#presenceRunning = true;
+
+		while (this.#presenceRunning) {
+			Timer.delay(this.presenceCheckInterval);
+			if (!this.#presenceRunning) break;
+			if (this.#deviceList.length === 0 || this.#hasActiveSampleHandlers()) break;
+
+			const connected = await this.isDeviceConnected();
+			if (!this.#presenceRunning) break;
+			if (this.#deviceList.length === 0 || this.#hasActiveSampleHandlers()) break;
+
+			if (connected) {
+				this.#presenceFailureCount = 0;
+				continue;
+			}
+
+			this.#presenceFailureCount++;
+			this.#log(`presence heartbeat failed (count=${this.#presenceFailureCount})`);
+
+			if (this.#presenceFailureCount >= 3) {
+				this.#log("presence heartbeat failed repeatedly; rescanning devices", "WARN");
+				await this.#rescan("presence heartbeat failure");
+				return;
+			}
+		}
+
+		this.#presenceRunning = false;
 	}
 
 	async getDeviceType(id: number): Promise<number> {
@@ -526,6 +579,8 @@ export default class M5Chain {
 		this.running = false;
 		this.#pollFailureCount = 0;
 		this.#pollReadFailed = false;
+		this.#presenceFailureCount = 0;
+		this.#presenceRunning = false;
 
 		await this.#scan();
 
@@ -535,6 +590,7 @@ export default class M5Chain {
 
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
+		this.#updatePresenceMonitorState();
 	}
 
 	#notifyDeviceListChanged() {

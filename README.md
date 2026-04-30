@@ -57,6 +57,7 @@ const m5chain = new M5Chain({
 	receive: config.m5chain.receive,
 	debug: false,
 	pollingInterval: 30, // ms
+	presenceCheckInterval: 500, // ms
 });
 
 m5chain.onDeviceListChanged = (devices) => {
@@ -75,6 +76,7 @@ await m5chain.start();
 - Called after the initial scan completes in `start()`
 - Called again after re-scan when the chain sends `ENUM_PLEASE`
 - Called again after repeated sample polling failures trigger a re-scan
+- Called again after repeated heartbeat failures trigger a re-scan while sample polling is inactive
 - `devices` is the current connected device list
 
 ### `device.onPush = (status) => {}`
@@ -117,7 +119,7 @@ Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on ev
 
 ### M5Chain
 
-- `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30 })`
+- `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30, presenceCheckInterval = 500 })`
 - `await m5chain.start()`
 - `m5chain.devices` current device array
 

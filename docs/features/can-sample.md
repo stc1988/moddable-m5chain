@@ -64,4 +64,6 @@ The bus poll loop starts when at least one connected device has `onSample` set. 
 
 If sample polling repeatedly fails, the bus performs a re-scan before updating the device list. This lets the list reflect any devices that remain connected after a removal instead of treating every device as disconnected from the polling failure alone.
 
+When no sample handlers are active, the bus uses a lower-frequency heartbeat check instead. Repeated heartbeat failures also trigger a re-scan, so removing every device can be detected even when sample polling is stopped.
+
 `CanSample` notifies the bus only when the active/inactive state changes, so replacing one non-null handler with another does not restart the loop. The bus still uses an internal poll loop to read samples from serial devices at `pollingInterval`.
