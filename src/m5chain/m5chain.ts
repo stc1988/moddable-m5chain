@@ -53,6 +53,7 @@ export default class M5Chain {
 	#receiveTimeoutId: ReturnType<typeof Timer.set> | null = null;
 	#enumPending = false;
 	#enumTimer: ReturnType<typeof Timer.set> | null = null;
+	#enumReason = "ENUM_PLEASE";
 	#enumRunning = false;
 	#receiveMatch: PacketMatch | null = null;
 	#pollFailureCount = 0;
@@ -283,10 +284,16 @@ export default class M5Chain {
 		this.#clearPendingWait();
 	}
 
-	#scheduleEnum() {
-		if (this.#enumPending) return;
+	#scheduleEnum(reason = "ENUM_PLEASE") {
+		if (this.#enumPending) {
+			if (reason === "ENUM_PLEASE") {
+				this.#enumReason = reason;
+			}
+			return;
+		}
 
 		this.#enumPending = true;
+		this.#enumReason = reason;
 
 		if (this.#enumTimer) {
 			Timer.clear(this.#enumTimer);
@@ -295,7 +302,9 @@ export default class M5Chain {
 		this.#enumTimer = Timer.set(() => {
 			this.#enumPending = false;
 			this.#enumTimer = null;
-			void this.#handleEnumPlease();
+			const reason = this.#enumReason;
+			this.#enumReason = "ENUM_PLEASE";
+			void this.#handleScheduledRescan(reason);
 		}, 500);
 	}
 
@@ -373,13 +382,14 @@ export default class M5Chain {
 		return result;
 	}
 
-	async #handlePollingFailure() {
+	#handlePollingFailure() {
 		this.#pollFailureCount++;
 		this.#log(`polling failed (count=${this.#pollFailureCount})`);
 
 		if (this.#pollFailureCount >= 3) {
 			this.#log("polling failed repeatedly; rescanning devices", "WARN");
-			await this.#rescan("polling failure");
+			this.running = false;
+			this.#scheduleEnum("polling failure");
 			return true;
 		}
 		return false;
@@ -417,7 +427,7 @@ export default class M5Chain {
 				const value = await device.readSample();
 				if (this.#pollReadFailed) {
 					this.#pollReadFailed = false;
-					if (await this.#handlePollingFailure()) return;
+					if (this.#handlePollingFailure()) return;
 					continue;
 				}
 
@@ -427,7 +437,7 @@ export default class M5Chain {
 					device.dispatchOnSample?.(value);
 				}
 			} catch (_e) {
-				if (await this.#handlePollingFailure()) return;
+				if (this.#handlePollingFailure()) return;
 			}
 		}
 	}
@@ -586,12 +596,14 @@ export default class M5Chain {
 		return deviceList;
 	}
 
-	async #handleEnumPlease() {
+	async #handleScheduledRescan(reason: string) {
 		if (this.#enumRunning) return;
 		this.#enumRunning = true;
-		this.#log(`handleEnumPlease`);
+		if (reason === "ENUM_PLEASE") {
+			this.#log(`handleEnumPlease`);
+		}
 
-		await this.#rescan("ENUM_PLEASE");
+		await this.#rescan(reason);
 
 		this.#enumRunning = false;
 	}
