@@ -68,6 +68,8 @@ function norm(v) {
 }
 
 export async function main() {
+	trace("[m5chain example] led\n");
+
 	// if config is not defined in manifest file, use device.I2C.default.data and clock.
 	const m5chain = new M5Chain({
 		transmit: config.m5chain.transmit,

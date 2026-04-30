@@ -432,12 +432,17 @@ export default class M5Chain {
 	}
 
 	async isDeviceConnected(): Promise<boolean> {
-		try {
-			await this.sendAndWait(0xff, M5Chain.CMD.HEARTBEAT, this.cmdBuffer, 0, { timeoutMs: 300 });
-			return true;
-		} catch {
-			return false;
-		}
+		const id = 0xff;
+		const cmd = M5Chain.CMD.HEARTBEAT;
+		const result = await this.withLock(async () => {
+			this.#sendId = id;
+			this.sendPacket(id, cmd, this.cmdBuffer, 0);
+			return await this.waitForPacket(cmd, {
+				timeoutMs: 300,
+				match: (buffer) => buffer[4] === id && buffer[5] === cmd,
+			});
+		});
+		return result instanceof Uint8Array;
 	}
 
 	async #scan() {
