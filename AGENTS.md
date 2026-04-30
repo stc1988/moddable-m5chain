@@ -51,7 +51,6 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 
 - `examples/basic/mod.js`
 - `examples/led/mod.js`
-- `examples/hotplug/mod.js`
 
 ### Device Protocol PDFs
 
