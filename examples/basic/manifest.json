@@ -6,6 +6,6 @@
 		"../../src/m5chain/manifest_chain_base.json"
 	],
 	"modules": {
-		"*": ["./basic"]
+		"*": ["./mod"]
 	}
 }
