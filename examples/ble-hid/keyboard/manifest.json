@@ -1,8 +1,8 @@
 {
 	"include": [
 		"$(MODDABLE)/examples/manifest_base.json",
-		"../../src/m5chain/manifest_module.json",
-		"../../src/m5chain/manifest_chain_base.json",
+		"../../../src/m5chain/manifest_module.json",
+		"../../../src/m5chain/manifest_chain_base.json",
 		"$(MODDABLE)/modules/io/ble/server/manifest.json"
 	],
 	"defines": {
