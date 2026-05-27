@@ -180,3 +180,8 @@ When asking for changes, the following expectations apply:
 - After modifying this repository, verify that Moddable builds pass with:
   - `mcconfig -d -m -p esp32/m5atom_matrix -t build ./examples/manifest.json`
   - `mcrun -d -m -p esp32/m5atom_matrix -t build ./examples/basic/manifest.json`
+- To verify runtime behavior with a debugger, run `mcconfig` with `-dl`, for example:
+  - `mcconfig -dl -m -p esp32/m5atom_matrix -t build ./examples/manifest.json`
+- The `-dl` option starts `xsdb`, a debugger that can be used similarly to `gdb`. Use the `help` command inside `xsdb` for command details.
+- Use `xsdb` to confirm the app starts without errors and emits the expected logs.
+- When verification is complete, exit `xsdb` with `quit`.
