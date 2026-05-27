@@ -315,6 +315,7 @@ class BLEKeyboard {
 			logLabel: "[ble-keyboard/core] input report",
 			descriptors: [
 				{
+					// Report Reference: report ID 0, input report type.
 					uuid: "2908",
 					value: Uint8Array.of(0, 1),
 				},
@@ -332,50 +333,60 @@ class BLEKeyboard {
 				ioCapabilities: "none",
 			},
 			services: [
+				// Generic Access Service: exposes the GAP device name and HID keyboard appearance.
 				{
 					uuid: "1800",
 					characteristics: [
 						{
+							// Device Name: name shown by scanners that read GAP 2A00.
 							uuid: "2a00",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString(deviceName),
 						},
 						{
+							// Appearance: 0x03C1 identifies this peripheral as a keyboard.
 							uuid: "2a01",
 							properties: GATTServer.properties.read,
 							value: Uint8Array.of(0xc1, 0x03),
 						},
 					],
 				},
+				// Device Information Service: static manufacturer/model/firmware metadata.
 				{
 					uuid: "180a",
 					characteristics: [
 						{
+							// Manufacturer Name String.
 							uuid: "2a29",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString(MANUFACTURER_NAME),
 						},
 						{
+							// Model Number String.
 							uuid: "2a24",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString(MODEL_NUMBER),
 						},
 						{
+							// Firmware Revision String.
 							uuid: "2a26",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString("1.0.0"),
 						},
 						{
+							// PnP ID: vendor/product metadata for hosts that inspect Device Information.
 							uuid: "2a50",
 							properties: GATTServer.properties.read,
 							value: Uint8Array.of(0x02, 0xff, 0xff, 0x01, 0x00, 0x01, 0x00),
 						},
 					],
 				},
+				// Battery Service: lets hosts read the current battery percentage.
 				{
 					uuid: "180f",
 					characteristics: [
 						{
+							// Battery Level: single byte percentage, 0-100.
 							uuid: "2a19",
 							properties: GATTServer.properties.read,
 							onRead() {
@@ -384,20 +395,24 @@ class BLEKeyboard {
 						},
 					],
 				},
+				// HID Service: keyboard report map, input/output reports, boot protocol, and control point.
 				{
 					uuid: "1812",
 					characteristics: [
 						{
+							// HID Information: HID version, country code, and flags.
 							uuid: "2a4a",
 							properties: GATTServer.properties.read,
 							value: Uint8Array.of(0x11, 0x01, 0x00, 0x03),
 						},
 						{
+							// Report Map: HID descriptor that defines the keyboard report layout.
 							uuid: "2a4b",
 							properties: GATTServer.properties.read,
 							value: keyboardReportMap,
 						},
 						{
+							// HID Control Point: host suspend/resume signal.
 							uuid: "2a4c",
 							properties: GATTServer.properties.writeWithOutResponse,
 							onWrite() {
@@ -405,6 +420,7 @@ class BLEKeyboard {
 							},
 						},
 						{
+							// Protocol Mode: switches between report protocol and boot protocol.
 							uuid: "2a4e",
 							properties: GATTServer.properties.read | GATTServer.properties.writeWithOutResponse,
 							onRead() {
@@ -414,8 +430,10 @@ class BLEKeyboard {
 								keyboard.#protocolMode[0] = new Uint8Array(buffer)[0] ? 1 : 0;
 							},
 						},
+						// Keyboard Input Report: encrypted notify/read characteristic for key presses.
 						keyboardInputReport,
 						{
+							// Keyboard Output Report: receives LED state such as Caps Lock from the host.
 							uuid: "2a4d",
 							properties: GATTServer.properties.read | GATTServer.properties.writeWithOutResponse,
 							onRead() {
@@ -426,13 +444,16 @@ class BLEKeyboard {
 							},
 							descriptors: [
 								{
+									// Report Reference: report ID 0, output report type.
 									uuid: "2908",
 									value: Uint8Array.of(0, 2),
 								},
 							],
 						},
+						// Boot Keyboard Input Report: BIOS/boot-compatible keyboard input path.
 						bootKeyboardInputReport,
 						{
+							// Boot Keyboard Output Report: boot-protocol LED state from the host.
 							uuid: "2a32",
 							properties: GATTServer.properties.read | GATTServer.properties.writeWithOutResponse,
 							onRead() {
@@ -473,6 +494,7 @@ class BLEKeyboard {
 
 	#startAdvertising(server: KeyboardServer, deviceName: string) {
 		server.startAdvertising({
+			// Advertising payload: discoverable BLE-only keyboard with service UUIDs, appearance, and local name.
 			flags: AD_FLAG_GENERAL_DISCOVERABLE | AD_FLAG_BLE_ONLY,
 			services: ["1812", "180f", "180a"],
 			[AD_TYPE_APPEARANCE]: KEYBOARD_APPEARANCE,
