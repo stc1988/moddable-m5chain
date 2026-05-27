@@ -188,3 +188,6 @@ When asking for changes, the following expectations apply:
 - If `mcconfig -dl` reports `#xsbug-log missing modules! Did you npm install?`, install the Moddable log tool dependencies with:
   - `pushd $MODDABLE/tools/xsbug-log && npm install && popd`
 - When verification is complete, exit `xsdb` with `quit`.
+- Do not leave debugger/logging processes running in the background. After using `mcconfig -dl`, `xsbug-log`, `serial2xsbug`, or `xsdb`, confirm that no related process is still listening on the xsbug port, for example:
+  - `lsof -nP -iTCP:5002 -sTCP:LISTEN`
+- If a leftover `xsbug-log`, `serial2xsbug`, or `xsdb` process remains, terminate it before reporting completion. Background debugger processes make the current hardware/debug state hard to understand for the next operator.
