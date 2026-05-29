@@ -36,9 +36,11 @@ type KeyboardDescriptor = {
 
 type KeyboardServer = {
 	startAdvertising(scan: object, response?: object): void;
+	stopAdvertising(): void;
 };
 
 type BLEKeyboardOptions = {
+	autoAdvertise?: boolean;
 	deviceName?: string;
 	releaseDelayMs?: number;
 	batteryLevel?: number;
@@ -391,7 +393,11 @@ class BLEKeyboard {
 	static PROTOCOL_MODE = PROTOCOL_MODE;
 
 	#connections: KeyboardConnection[] = [];
+	#advertising = false;
+	#advertisingRequested: boolean;
+	#deviceName: string;
 	#releaseDelayMs: number;
+	#server?: KeyboardServer;
 	#protocolMode = Uint8Array.of(PROTOCOL_MODE.REPORT);
 	#outputReport = Uint8Array.of(0);
 	#activeTextReport?: QueuedTextReport;
@@ -404,6 +410,8 @@ class BLEKeyboard {
 	constructor(options: BLEKeyboardOptions = {}) {
 		const deviceName = options.deviceName ?? DEFAULT_DEVICE_NAME;
 		const batteryLevel = options.batteryLevel ?? DEFAULT_BATTERY_LEVEL;
+		this.#advertisingRequested = options.autoAdvertise ?? true;
+		this.#deviceName = deviceName;
 		this.#releaseDelayMs = options.releaseDelayMs ?? DEFAULT_RELEASE_DELAY_MS;
 
 		const keyboard = this;
@@ -567,10 +575,14 @@ class BLEKeyboard {
 			],
 			onReady() {
 				trace("[ble-keyboard/core] ready\n");
-				keyboard.#startAdvertising(this, deviceName);
+				keyboard.#server = this;
+				if (keyboard.#advertisingRequested) {
+					keyboard.startAdvertising();
+				}
 			},
 			onConnect(connection: KeyboardConnection) {
 				trace("[ble-keyboard/core] connected\n");
+				keyboard.#advertising = false;
 				connection.subscribedReports = [];
 				keyboard.#connections.push(connection);
 				keyboard.#emitConnectionChanged();
@@ -582,8 +594,8 @@ class BLEKeyboard {
 				if (!keyboard.hasSubscribedHost()) {
 					keyboard.#clearTextQueue(false);
 				}
-				if (keyboard.#connections.length === 0) {
-					keyboard.#startAdvertising(this, deviceName);
+				if (keyboard.#connections.length === 0 && keyboard.#advertisingRequested) {
+					keyboard.startAdvertising();
 				}
 				keyboard.#emitConnectionChanged();
 			},
@@ -596,14 +608,34 @@ class BLEKeyboard {
 		});
 	}
 
-	#startAdvertising(server: KeyboardServer, deviceName: string) {
+	startAdvertising(): boolean {
+		this.#advertisingRequested = true;
+		const server = this.#server;
+		if (!server) return false;
+
 		server.startAdvertising({
 			// Advertising payload: discoverable BLE-only keyboard with service UUIDs, appearance, and local name.
 			flags: AD_FLAG_GENERAL_DISCOVERABLE | AD_FLAG_BLE_ONLY,
 			services: ["1812", "180f", "180a"],
 			[AD_TYPE_APPEARANCE]: KEYBOARD_APPEARANCE,
-			name: deviceName,
+			name: this.#deviceName,
 		});
+		this.#advertising = true;
+		return true;
+	}
+
+	stopAdvertising(): boolean {
+		this.#advertisingRequested = false;
+		const server = this.#server;
+		if (!server) return false;
+
+		server.stopAdvertising();
+		this.#advertising = false;
+		return true;
+	}
+
+	isAdvertising(): boolean {
+		return this.#advertising;
 	}
 
 	notifyKey(options: KeyOptions): boolean {

@@ -40,6 +40,18 @@ const keyboard = new BLEKeyboard({
 });
 ```
 
+By default, `BLEKeyboard` starts advertising when its BLE server becomes ready and restarts advertising after the last host disconnects. Set `autoAdvertise: false` when the app should decide when the keyboard is discoverable:
+
+```ts
+const keyboard = new BLEKeyboard({
+	deviceName: "M5Chain Keyboard",
+	autoAdvertise: false,
+});
+
+keyboard.startAdvertising();
+keyboard.stopAdvertising();
+```
+
 The current example sends Enter whenever the M5Chain Key reports an active key event:
 
 ```ts
@@ -263,6 +275,7 @@ Common values:
 
 | Option | Default | Description |
 | --- | --- | --- |
+| `autoAdvertise` | `true` | Starts advertising automatically when the BLE server is ready and restarts after the last disconnect. Set to `false` to advertise only when `startAdvertising()` is called. |
 | `deviceName` | `"BLE Keyboard"` | Bluetooth device name shown to hosts. |
 | `releaseDelayMs` | `20` | Delay before automatic release reports from `notify*` methods. |
 | `batteryLevel` | `100` | Battery Service percentage reported to hosts. |
@@ -271,6 +284,9 @@ Common values:
 
 | API | Description |
 | --- | --- |
+| `startAdvertising()` | Starts BLE advertising, or records that advertising should begin once the BLE server is ready. Returns whether advertising started immediately. |
+| `stopAdvertising()` | Stops BLE advertising and disables automatic restart after disconnect. Returns whether advertising stopped immediately. |
+| `isAdvertising()` | Returns whether this helper currently expects the BLE server to be advertising. |
 | `notifyKey(options)` | Sends a character, one key code, or multiple key codes based on `options`. |
 | `notifyCharacter(character, modifiers?)` | Sends one printable/control character and automatically releases it. |
 | `notifyKeyCode(keyCode, modifiers?)` | Sends one key code and automatically releases it. |

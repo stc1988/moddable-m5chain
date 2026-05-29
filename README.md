@@ -178,7 +178,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 ### BLE HID keyboard controls
 
-`examples/ble-hid/keyboard/bleKeyboard.ts` exposes a small keyboard peripheral helper. It supports single keys, modifier combinations, text typing, connection state, up to six simultaneous normal keys in one HID report, manual press/release, and host LED indicators such as Caps Lock. See [BLE HID Keyboard Example](docs/examples/ble-hid-keyboard.md) for the full API.
+`examples/ble-hid/keyboard/bleKeyboard.ts` exposes a small keyboard peripheral helper. It supports single keys, modifier combinations, text typing, connection state, up to six simultaneous normal keys in one HID report, manual press/release, host LED indicators such as Caps Lock, and manual BLE advertising control. See [BLE HID Keyboard Example](docs/examples/ble-hid-keyboard.md) for the full API.
 
 ```ts
 keyboard.notifyKey({
@@ -191,6 +191,9 @@ keyboard.typeText("hello\n");
 
 keyboard.pressKeyCodes([BLEKeyboard.KEY_CODE.DELETE], BLEKeyboard.MODIFIER.LEFT_CONTROL | BLEKeyboard.MODIFIER.LEFT_ALT);
 keyboard.releaseAll();
+
+keyboard.stopAdvertising();
+keyboard.startAdvertising();
 
 keyboard.onIndicatorsChanged = (indicators) => {
 	trace(`caps lock=${(indicators & BLEKeyboard.INDICATOR.CAPS_LOCK) !== 0}\n`);
