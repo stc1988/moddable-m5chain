@@ -14,13 +14,18 @@ const ASCII_A = 0x61;
 const ASCII_1 = 0x31;
 
 type KeyboardCharacteristic = object;
+type ProtocolMode = (typeof PROTOCOL_MODE)[keyof typeof PROTOCOL_MODE];
+
+type KeyboardInputReportCharacteristic = KeyboardCharacteristic & {
+	protocolMode: ProtocolMode;
+};
 
 type KeyboardConnection = {
 	close(): void;
 	notify(characteristic: unknown, value: ArrayBuffer, callback?: (error?: Error) => void): void;
 	replyToPasskey(action: "input" | "compareNumber" | "outOfBand", value: number | boolean | ArrayBuffer): void;
 	readonly maxinumWrite: number;
-	subscribedReports?: KeyboardCharacteristic[];
+	subscribedReports?: KeyboardInputReportCharacteristic[];
 	releaseTimer?: ReturnType<typeof Timer.set>;
 };
 
@@ -46,7 +51,29 @@ type KeyOptions = {
 	modifiers?: Modifier;
 };
 
+type TypeTextOptions = {
+	intervalMs?: number;
+	modifiers?: Modifier;
+	onComplete?: (sent: boolean) => void;
+};
+
+type ConnectionState = {
+	connected: boolean;
+	connectionCount: number;
+	protocolMode: ProtocolMode;
+	subscribed: boolean;
+	subscribedReportCount: number;
+};
+
+type ConnectionHandler = ((state: ConnectionState) => void) | null;
 type IndicatorHandler = ((indicators: number) => void) | null;
+type NotifyErrorHandler = ((error: Error) => void) | null;
+
+type QueuedTextReport = {
+	intervalMs: number;
+	onComplete?: (sent: boolean) => void;
+	report: Uint8Array;
+};
 
 const MODIFIER = {
 	LEFT_CONTROL: 0x01,
@@ -60,6 +87,11 @@ const MODIFIER = {
 } as const;
 
 type Modifier = (typeof MODIFIER)[keyof typeof MODIFIER] | number;
+
+const PROTOCOL_MODE = {
+	BOOT: 0,
+	REPORT: 1,
+} as const;
 
 const KEY_CODE = {
 	A: 0x04,
@@ -240,7 +272,6 @@ const keyboardReportMap = Uint8Array.of(
 );
 
 const emptyKeyboardReport = Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0);
-const emptyKeyboardReportBuffer = emptyKeyboardReport.buffer as ArrayBuffer;
 
 function shiftedCharacter(character: string) {
 	switch (character) {
@@ -357,12 +388,18 @@ class BLEKeyboard {
 	static KEY_CODE = KEY_CODE;
 	static MODIFIER = MODIFIER;
 	static INDICATOR = INDICATOR;
+	static PROTOCOL_MODE = PROTOCOL_MODE;
 
 	#connections: KeyboardConnection[] = [];
 	#releaseDelayMs: number;
-	#protocolMode = Uint8Array.of(1);
+	#protocolMode = Uint8Array.of(PROTOCOL_MODE.REPORT);
 	#outputReport = Uint8Array.of(0);
+	#activeTextReport?: QueuedTextReport;
+	#textQueue: QueuedTextReport[] = [];
+	#textTimer?: ReturnType<typeof Timer.set>;
+	onConnectionChanged: ConnectionHandler = null;
 	onIndicatorsChanged: IndicatorHandler = null;
+	onNotifyError: NotifyErrorHandler = null;
 
 	constructor(options: BLEKeyboardOptions = {}) {
 		const deviceName = options.deviceName ?? DEFAULT_DEVICE_NAME;
@@ -373,6 +410,7 @@ class BLEKeyboard {
 		const keyboardInputReport = this.#createKeyboardInputReport({
 			uuid: "2a4d",
 			logLabel: "[ble-keyboard/core] input report",
+			protocolMode: PROTOCOL_MODE.REPORT,
 			descriptors: [
 				{
 					// Report Reference: report ID 0, input report type.
@@ -384,6 +422,7 @@ class BLEKeyboard {
 		const bootKeyboardInputReport = this.#createKeyboardInputReport({
 			uuid: "2a22",
 			logLabel: "[ble-keyboard/core] boot input report",
+			protocolMode: PROTOCOL_MODE.BOOT,
 		});
 
 		new GATTServer({
@@ -487,7 +526,7 @@ class BLEKeyboard {
 								return keyboard.#protocolMode;
 							},
 							onWrite(buffer: ArrayBuffer) {
-								keyboard.#protocolMode[0] = new Uint8Array(buffer)[0] ? 1 : 0;
+								keyboard.#setProtocolMode(new Uint8Array(buffer)[0] ? PROTOCOL_MODE.REPORT : PROTOCOL_MODE.BOOT);
 							},
 						},
 						// Keyboard Input Report: encrypted notify/read characteristic for key presses.
@@ -534,14 +573,19 @@ class BLEKeyboard {
 				trace("[ble-keyboard/core] connected\n");
 				connection.subscribedReports = [];
 				keyboard.#connections.push(connection);
+				keyboard.#emitConnectionChanged();
 			},
 			onDisconnect(connection: KeyboardConnection) {
 				trace("[ble-keyboard/core] disconnected\n");
 				keyboard.#clearReleaseTimer(connection);
 				keyboard.#connections = keyboard.#connections.filter((item) => item !== connection);
+				if (!keyboard.hasSubscribedHost()) {
+					keyboard.#clearTextQueue(false);
+				}
 				if (keyboard.#connections.length === 0) {
 					keyboard.#startAdvertising(this, deviceName);
 				}
+				keyboard.#emitConnectionChanged();
 			},
 			onSecured(_connection, state) {
 				trace(`[ble-keyboard/core] secured encrypted=${state.encrypted} bonded=${state.bonded}\n`);
@@ -587,20 +631,39 @@ class BLEKeyboard {
 		const report = this.#createKeyReport(keyCodes, modifiers);
 		const notified = this.#sendReport(report);
 		if (!notified) return false;
+		this.#releaseSubscribedConnections();
+		return notified;
+	}
 
-		for (const connection of this.#connections) {
-			const reports = connection.subscribedReports ?? [];
-			if (reports.length === 0) continue;
+	typeText(text: string, options: TypeTextOptions = {}): boolean {
+		if (!this.hasSubscribedHost()) return false;
 
-			connection.releaseTimer = Timer.set(() => {
-				for (const subscribedReport of reports) {
-					connection.notify(subscribedReport, emptyKeyboardReportBuffer);
-				}
-				delete connection.releaseTimer;
-			}, this.#releaseDelayMs);
+		const reports: QueuedTextReport[] = [];
+		const modifiers = options.modifiers ?? 0;
+		const intervalMs = options.intervalMs ?? this.#releaseDelayMs;
+		if (intervalMs < 0) {
+			throw new RangeError("intervalMs must be 0 or greater.");
+		}
+		for (let i = 0; i < text.length; i++) {
+			const info = keyInfoForCharacter(text[i]);
+			if (!info) return false;
+			reports.push({
+				intervalMs,
+				report: this.#createKeyReport([info.keyCode], info.modifiers | modifiers),
+			});
 		}
 
-		return notified;
+		if (reports.length === 0) {
+			options.onComplete?.(true);
+			return true;
+		}
+
+		reports[reports.length - 1].onComplete = options.onComplete;
+		this.#textQueue.push(...reports);
+		if (!this.#textTimer) {
+			this.#sendNextTextReport();
+		}
+		return true;
 	}
 
 	pressKeyCode(keyCode: KeyCode | number, modifiers = 0): boolean {
@@ -612,7 +675,33 @@ class BLEKeyboard {
 	}
 
 	releaseAll(): boolean {
+		this.#clearTextQueue(false);
 		return this.#sendReport(emptyKeyboardReport);
+	}
+
+	isConnected(): boolean {
+		return this.#connections.length > 0;
+	}
+
+	hasSubscribedHost(): boolean {
+		for (const connection of this.#connections) {
+			if ((connection.subscribedReports?.length ?? 0) > 0) return true;
+		}
+		return false;
+	}
+
+	getConnectionState(): ConnectionState {
+		let subscribedReportCount = 0;
+		for (const connection of this.#connections) {
+			subscribedReportCount += connection.subscribedReports?.length ?? 0;
+		}
+		return {
+			connected: this.isConnected(),
+			connectionCount: this.#connections.length,
+			protocolMode: this.#protocolMode[0] as ProtocolMode,
+			subscribed: subscribedReportCount > 0,
+			subscribedReportCount,
+		};
 	}
 
 	getIndicators(): Indicator {
@@ -636,29 +725,110 @@ class BLEKeyboard {
 	}
 
 	#sendReport(report: Uint8Array): boolean {
-		const reportBuffer = report.buffer as ArrayBuffer;
 		let notified = false;
-
 		for (const connection of this.#connections) {
-			const reports = connection.subscribedReports ?? [];
-			if (reports.length === 0) continue;
-
-			this.#clearReleaseTimer(connection);
-
-			for (const subscribedReport of reports) {
-				connection.notify(subscribedReport, reportBuffer);
+			if (this.#sendReportToConnection(connection, report)) {
 				notified = true;
 			}
+		}
+		return notified;
+	}
 
-			connection.releaseTimer = Timer.set(() => {
-				for (const subscribedReport of reports) {
-					connection.notify(subscribedReport, emptyKeyboardReportBuffer);
-				}
-				delete connection.releaseTimer;
-			}, this.#releaseDelayMs);
+	#sendReportToConnection(connection: KeyboardConnection, report: Uint8Array, clearReleaseTimer = true): boolean {
+		const reportBuffer = report.buffer as ArrayBuffer;
+		const reports = this.#subscribedReportsForConnection(connection);
+		if (reports.length === 0) return false;
+
+		if (clearReleaseTimer) {
+			this.#clearReleaseTimer(connection);
+		}
+
+		let notified = false;
+		for (const subscribedReport of reports) {
+			this.#notify(connection, subscribedReport, reportBuffer);
+			notified = true;
 		}
 
 		return notified;
+	}
+
+	#scheduleRelease(connection: KeyboardConnection) {
+		connection.releaseTimer = Timer.set(() => {
+			this.#sendReportToConnection(connection, emptyKeyboardReport, false);
+			delete connection.releaseTimer;
+		}, this.#releaseDelayMs);
+	}
+
+	#sendNextTextReport() {
+		const item = this.#textQueue.shift();
+		if (!item) {
+			this.#activeTextReport = undefined;
+			this.#textTimer = undefined;
+			return;
+		}
+
+		this.#activeTextReport = item;
+		const sent = this.#sendReport(item.report);
+		if (!sent) {
+			this.#activeTextReport = undefined;
+			this.#clearTextQueue(false);
+			item.onComplete?.(false);
+			return;
+		}
+
+		this.#textTimer = Timer.set(() => {
+			this.#sendReport(emptyKeyboardReport);
+			item.onComplete?.(true);
+			this.#activeTextReport = undefined;
+			this.#textTimer = Timer.set(() => {
+				this.#sendNextTextReport();
+			}, item.intervalMs);
+		}, this.#releaseDelayMs);
+	}
+
+	#clearTextQueue(sent: boolean) {
+		if (this.#textTimer) {
+			Timer.clear(this.#textTimer);
+			this.#textTimer = undefined;
+		}
+		this.#activeTextReport?.onComplete?.(sent);
+		this.#activeTextReport = undefined;
+		for (const item of this.#textQueue) {
+			item.onComplete?.(sent);
+		}
+		this.#textQueue.length = 0;
+	}
+
+	#subscribedReportsForConnection(connection: KeyboardConnection): KeyboardInputReportCharacteristic[] {
+		const reports = connection.subscribedReports ?? [];
+		const protocolMode = this.#protocolMode[0] as ProtocolMode;
+		return reports.filter((report: KeyboardInputReportCharacteristic) => report.protocolMode === protocolMode);
+	}
+
+	#notify(connection: KeyboardConnection, characteristic: KeyboardInputReportCharacteristic, value: ArrayBuffer) {
+		connection.notify(characteristic, value, (error?: Error) => {
+			if (!error) return;
+			trace(`[ble-keyboard/core] notify failed: ${error.message}\n`);
+			this.onNotifyError?.(error);
+		});
+	}
+
+	#setProtocolMode(protocolMode: ProtocolMode) {
+		if (this.#protocolMode[0] === protocolMode) return;
+		this.releaseAll();
+		this.#protocolMode[0] = protocolMode;
+		this.#emitConnectionChanged();
+	}
+
+	#emitConnectionChanged() {
+		this.onConnectionChanged?.(this.getConnectionState());
+	}
+
+	#releaseSubscribedConnections() {
+		for (const connection of this.#connections) {
+			if (this.#subscribedReportsForConnection(connection).length === 0) continue;
+			this.#scheduleRelease(connection);
+		}
 	}
 
 	#setOutputReport(buffer: ArrayBuffer) {
@@ -668,10 +838,16 @@ class BLEKeyboard {
 		this.onIndicatorsChanged?.(nextIndicators);
 	}
 
-	#createKeyboardInputReport(options: { uuid: string; logLabel: string; descriptors?: KeyboardDescriptor[] }) {
+	#createKeyboardInputReport(options: {
+		uuid: string;
+		logLabel: string;
+		protocolMode: ProtocolMode;
+		descriptors?: KeyboardDescriptor[];
+	}) {
 		const keyboard = this;
 		return {
 			uuid: options.uuid,
+			protocolMode: options.protocolMode,
 			properties: GATTServer.properties.readEncrypted | GATTServer.properties.subscribeEncrypted,
 			onRead() {
 				return emptyKeyboardReport;
@@ -679,17 +855,22 @@ class BLEKeyboard {
 			onSubscribe(connection: KeyboardConnection) {
 				keyboard.#addSubscribedReport(connection, this);
 				trace(`${options.logLabel} subscribed\n`);
+				keyboard.#emitConnectionChanged();
 			},
 			onUnsubscribe(characteristicOrConnection: KeyboardCharacteristic, connection?: KeyboardConnection) {
 				const targetConnection = connection ?? (characteristicOrConnection as KeyboardConnection);
 				keyboard.#removeSubscribedReport(targetConnection, this);
 				trace(`${options.logLabel} unsubscribed\n`);
+				if (!keyboard.hasSubscribedHost()) {
+					keyboard.#clearTextQueue(false);
+				}
+				keyboard.#emitConnectionChanged();
 			},
 			descriptors: options.descriptors,
 		};
 	}
 
-	#addSubscribedReport(connection: KeyboardConnection, characteristic: KeyboardCharacteristic) {
+	#addSubscribedReport(connection: KeyboardConnection, characteristic: KeyboardInputReportCharacteristic) {
 		connection.subscribedReports ??= [];
 		if (connection.subscribedReports.indexOf(characteristic) < 0) {
 			connection.subscribedReports.push(characteristic);
@@ -699,7 +880,7 @@ class BLEKeyboard {
 	#removeSubscribedReport(connection: KeyboardConnection, characteristic: KeyboardCharacteristic) {
 		if (!connection.subscribedReports) return;
 		connection.subscribedReports = connection.subscribedReports.filter(
-			(item: KeyboardCharacteristic) => item !== characteristic,
+			(item: KeyboardInputReportCharacteristic) => item !== characteristic,
 		);
 	}
 
@@ -715,9 +896,13 @@ export {
 	INDICATOR,
 	KEY_CODE,
 	MODIFIER,
+	PROTOCOL_MODE,
 	type BLEKeyboardOptions,
+	type ConnectionState,
 	type Indicator,
 	type KeyCode,
 	type KeyOptions,
 	type Modifier,
+	type ProtocolMode,
+	type TypeTextOptions,
 };
