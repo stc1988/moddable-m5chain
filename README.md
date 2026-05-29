@@ -172,13 +172,13 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 - `examples/basic`: device discovery, info read, and event subscription
 - `examples/led`: LED control for Encoder/Angle/Key/JoyStick/ToF
-- `examples/ble-hid/keyboard`: BLE HID keyboard example that sends Enter from M5Chain Key events
+- `examples/ble-hid/keyboard`: BLE HID keyboard example that sends Enter from M5Chain Key events ([docs](docs/examples/ble-hid-keyboard.md))
 - `examples/ble-hid/mediaControl`: BLE HID media control example that sends Play/Pause, Next Track, and Previous Track from M5Chain Key events
 - `examples/hotplug`: re-scan verification after device reconnect, using `uuid`, LED blink, key events, and sampled values
 
 ### BLE HID keyboard controls
 
-`examples/ble-hid/keyboard/bleKeyboard.ts` exposes a small keyboard peripheral helper. It supports single keys, modifier combinations, up to six simultaneous normal keys in one HID report, manual press/release, and host LED indicators such as Caps Lock.
+`examples/ble-hid/keyboard/bleKeyboard.ts` exposes a small keyboard peripheral helper. It supports single keys, modifier combinations, up to six simultaneous normal keys in one HID report, manual press/release, and host LED indicators such as Caps Lock. See [BLE HID Keyboard Example](docs/examples/ble-hid-keyboard.md) for the full API.
 
 ```ts
 keyboard.notifyKey({
