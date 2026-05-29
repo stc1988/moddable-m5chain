@@ -173,7 +173,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 - `examples/basic`: device discovery, info read, and event subscription
 - `examples/led`: LED control for Encoder/Angle/Key/JoyStick/ToF
 - `examples/ble-hid/keyboard`: BLE HID keyboard example that sends Enter from M5Chain Key events ([docs](docs/examples/ble-hid-keyboard.md))
-- `examples/ble-hid/mediaControl`: BLE HID media control example that sends Play/Pause, Next Track, and Previous Track from M5Chain Key events
+- `examples/ble-hid/mediaControl`: BLE HID media control example that sends Play/Pause, Next Track, and Previous Track from M5Chain Key events ([docs](docs/examples/ble-hid-media-control.md))
 - `examples/hotplug`: re-scan verification after device reconnect, using `uuid`, LED blink, key events, and sampled values
 
 ### BLE HID keyboard controls
@@ -195,6 +195,16 @@ keyboard.releaseAll();
 keyboard.onIndicatorsChanged = (indicators) => {
 	trace(`caps lock=${(indicators & BLEKeyboard.INDICATOR.CAPS_LOCK) !== 0}\n`);
 };
+```
+
+### BLE HID media controls
+
+`examples/ble-hid/mediaControl/bleMediaControl.ts` exposes a small media control peripheral helper. It sends HID Consumer Control usages such as Play/Pause, Next Track, Previous Track, Volume Up, Volume Down, and Mute. See [BLE HID Media Control Example](docs/examples/ble-hid-media-control.md) for the full API.
+
+```ts
+mediaControl.notifyUsage(BLEMediaControl.USAGE.PLAY_PAUSE);
+mediaControl.notifyUsage(BLEMediaControl.USAGE.SCAN_NEXT_TRACK);
+mediaControl.notifyUsage(BLEMediaControl.USAGE.VOLUME_UP);
 ```
 
 ## Development
