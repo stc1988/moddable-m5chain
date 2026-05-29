@@ -87,6 +87,7 @@ const MODIFIER = {
 	RIGHT_ALT: 0x40,
 	RIGHT_GUI: 0x80,
 } as const;
+Object.freeze(MODIFIER);
 
 type Modifier = (typeof MODIFIER)[keyof typeof MODIFIER] | number;
 
@@ -94,6 +95,7 @@ const PROTOCOL_MODE = {
 	BOOT: 0,
 	REPORT: 1,
 } as const;
+Object.freeze(PROTOCOL_MODE);
 
 const KEY_CODE = {
 	A: 0x04,
@@ -194,6 +196,7 @@ const KEY_CODE = {
 	NON_US_BACKSLASH: 0x64,
 	APPLICATION: 0x65,
 } as const;
+Object.freeze(KEY_CODE);
 
 type KeyCode = (typeof KEY_CODE)[keyof typeof KEY_CODE];
 
@@ -204,6 +207,7 @@ const INDICATOR = {
 	COMPOSE: 0x08,
 	KANA: 0x10,
 } as const;
+Object.freeze(INDICATOR);
 
 type Indicator = (typeof INDICATOR)[keyof typeof INDICATOR] | number;
 
@@ -922,6 +926,8 @@ class BLEKeyboard {
 		delete connection.releaseTimer;
 	}
 }
+Object.freeze(BLEKeyboard.prototype);
+Object.freeze(BLEKeyboard);
 
 export {
 	BLEKeyboard,

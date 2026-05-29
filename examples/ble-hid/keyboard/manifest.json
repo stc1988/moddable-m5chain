@@ -13,6 +13,7 @@
 	"modules": {
 		"*": ["./*"]
 	},
+	"preload": ["bleKeyboard"],
 	"creation": {
 		"static": 0,
 		"chunk": {
