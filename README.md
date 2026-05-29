@@ -176,6 +176,26 @@ README intentionally keeps only the setup, event model, and shared API surface s
 - `examples/ble-hid/mediaControl`: BLE HID media control example that sends Play/Pause, Next Track, and Previous Track from M5Chain Key events
 - `examples/hotplug`: re-scan verification after device reconnect, using `uuid`, LED blink, key events, and sampled values
 
+### BLE HID keyboard controls
+
+`examples/ble-hid/keyboard/bleKeyboard.ts` exposes a small keyboard peripheral helper. It supports single keys, modifier combinations, up to six simultaneous normal keys in one HID report, manual press/release, and host LED indicators such as Caps Lock.
+
+```ts
+keyboard.notifyKey({
+	keyCode: BLEKeyboard.KEY_CODE.A,
+	modifiers: BLEKeyboard.MODIFIER.LEFT_SHIFT,
+});
+
+keyboard.notifyKeyCodes([BLEKeyboard.KEY_CODE.A, BLEKeyboard.KEY_CODE.B]);
+
+keyboard.pressKeyCodes([BLEKeyboard.KEY_CODE.DELETE], BLEKeyboard.MODIFIER.LEFT_CONTROL | BLEKeyboard.MODIFIER.LEFT_ALT);
+keyboard.releaseAll();
+
+keyboard.onIndicatorsChanged = (indicators) => {
+	trace(`caps lock=${(indicators & BLEKeyboard.INDICATOR.CAPS_LOCK) !== 0}\n`);
+};
+```
+
 ## Development
 
 Format and lint:

@@ -41,9 +41,12 @@ type BLEKeyboardOptions = {
 
 type KeyOptions = {
 	keyCode?: KeyCode | number;
+	keyCodes?: (KeyCode | number)[];
 	character?: string;
 	modifiers?: Modifier;
 };
+
+type IndicatorHandler = ((indicators: number) => void) | null;
 
 const MODIFIER = {
 	LEFT_CONTROL: 0x01,
@@ -111,9 +114,64 @@ const KEY_CODE = {
 	COMMA: 0x36,
 	PERIOD: 0x37,
 	FORWARD_SLASH: 0x38,
+	CAPS_LOCK: 0x39,
+	F1: 0x3a,
+	F2: 0x3b,
+	F3: 0x3c,
+	F4: 0x3d,
+	F5: 0x3e,
+	F6: 0x3f,
+	F7: 0x40,
+	F8: 0x41,
+	F9: 0x42,
+	F10: 0x43,
+	F11: 0x44,
+	F12: 0x45,
+	PRINT_SCREEN: 0x46,
+	SCROLL_LOCK: 0x47,
+	PAUSE: 0x48,
+	INSERT: 0x49,
+	HOME: 0x4a,
+	PAGE_UP: 0x4b,
+	DELETE: 0x4c,
+	END: 0x4d,
+	PAGE_DOWN: 0x4e,
+	RIGHT_ARROW: 0x4f,
+	LEFT_ARROW: 0x50,
+	DOWN_ARROW: 0x51,
+	UP_ARROW: 0x52,
+	NUM_LOCK: 0x53,
+	KEYPAD_FORWARD_SLASH: 0x54,
+	KEYPAD_ASTERISK: 0x55,
+	KEYPAD_MINUS: 0x56,
+	KEYPAD_PLUS: 0x57,
+	KEYPAD_ENTER: 0x58,
+	KEYPAD_1: 0x59,
+	KEYPAD_2: 0x5a,
+	KEYPAD_3: 0x5b,
+	KEYPAD_4: 0x5c,
+	KEYPAD_5: 0x5d,
+	KEYPAD_6: 0x5e,
+	KEYPAD_7: 0x5f,
+	KEYPAD_8: 0x60,
+	KEYPAD_9: 0x61,
+	KEYPAD_0: 0x62,
+	KEYPAD_PERIOD: 0x63,
+	NON_US_BACKSLASH: 0x64,
+	APPLICATION: 0x65,
 } as const;
 
 type KeyCode = (typeof KEY_CODE)[keyof typeof KEY_CODE];
+
+const INDICATOR = {
+	NUM_LOCK: 0x01,
+	CAPS_LOCK: 0x02,
+	SCROLL_LOCK: 0x04,
+	COMPOSE: 0x08,
+	KANA: 0x10,
+} as const;
+
+type Indicator = (typeof INDICATOR)[keyof typeof INDICATOR] | number;
 
 const keyboardReportMap = Uint8Array.of(
 	0x05,
@@ -183,7 +241,6 @@ const keyboardReportMap = Uint8Array.of(
 
 const emptyKeyboardReport = Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0);
 const emptyKeyboardReportBuffer = emptyKeyboardReport.buffer as ArrayBuffer;
-const outputReport = Uint8Array.of(0);
 
 function shiftedCharacter(character: string) {
 	switch (character) {
@@ -299,10 +356,13 @@ function keyInfoForCharacter(character: string): { keyCode: number; modifiers: n
 class BLEKeyboard {
 	static KEY_CODE = KEY_CODE;
 	static MODIFIER = MODIFIER;
+	static INDICATOR = INDICATOR;
 
 	#connections: KeyboardConnection[] = [];
 	#releaseDelayMs: number;
 	#protocolMode = Uint8Array.of(1);
+	#outputReport = Uint8Array.of(0);
+	onIndicatorsChanged: IndicatorHandler = null;
 
 	constructor(options: BLEKeyboardOptions = {}) {
 		const deviceName = options.deviceName ?? DEFAULT_DEVICE_NAME;
@@ -437,10 +497,10 @@ class BLEKeyboard {
 							uuid: "2a4d",
 							properties: GATTServer.properties.read | GATTServer.properties.writeWithOutResponse,
 							onRead() {
-								return outputReport;
+								return keyboard.#outputReport;
 							},
 							onWrite(buffer: ArrayBuffer) {
-								outputReport[0] = new Uint8Array(buffer)[0] ?? 0;
+								keyboard.#setOutputReport(buffer);
 							},
 							descriptors: [
 								{
@@ -457,10 +517,10 @@ class BLEKeyboard {
 							uuid: "2a32",
 							properties: GATTServer.properties.read | GATTServer.properties.writeWithOutResponse,
 							onRead() {
-								return outputReport;
+								return keyboard.#outputReport;
 							},
 							onWrite(buffer: ArrayBuffer) {
-								outputReport[0] = new Uint8Array(buffer)[0] ?? 0;
+								keyboard.#setOutputReport(buffer);
 							},
 						},
 					],
@@ -506,6 +566,9 @@ class BLEKeyboard {
 		if (options.character !== undefined) {
 			return this.notifyCharacter(options.character, options.modifiers);
 		}
+		if (options.keyCodes !== undefined) {
+			return this.notifyKeyCodes(options.keyCodes, options.modifiers);
+		}
 		if (options.keyCode === undefined) return false;
 		return this.notifyKeyCode(options.keyCode, options.modifiers);
 	}
@@ -517,7 +580,62 @@ class BLEKeyboard {
 	}
 
 	notifyKeyCode(keyCode: KeyCode | number, modifiers = 0): boolean {
-		const report = Uint8Array.of(modifiers & 0xff, 0, keyCode, 0, 0, 0, 0, 0);
+		return this.notifyKeyCodes([keyCode], modifiers);
+	}
+
+	notifyKeyCodes(keyCodes: (KeyCode | number)[], modifiers = 0): boolean {
+		const report = this.#createKeyReport(keyCodes, modifiers);
+		const notified = this.#sendReport(report);
+		if (!notified) return false;
+
+		for (const connection of this.#connections) {
+			const reports = connection.subscribedReports ?? [];
+			if (reports.length === 0) continue;
+
+			connection.releaseTimer = Timer.set(() => {
+				for (const subscribedReport of reports) {
+					connection.notify(subscribedReport, emptyKeyboardReportBuffer);
+				}
+				delete connection.releaseTimer;
+			}, this.#releaseDelayMs);
+		}
+
+		return notified;
+	}
+
+	pressKeyCode(keyCode: KeyCode | number, modifiers = 0): boolean {
+		return this.pressKeyCodes([keyCode], modifiers);
+	}
+
+	pressKeyCodes(keyCodes: (KeyCode | number)[], modifiers = 0): boolean {
+		return this.#sendReport(this.#createKeyReport(keyCodes, modifiers));
+	}
+
+	releaseAll(): boolean {
+		return this.#sendReport(emptyKeyboardReport);
+	}
+
+	getIndicators(): Indicator {
+		return this.#outputReport[0];
+	}
+
+	hasIndicator(indicator: Indicator): boolean {
+		return (this.#outputReport[0] & indicator) !== 0;
+	}
+
+	#createKeyReport(keyCodes: (KeyCode | number)[], modifiers: number): Uint8Array {
+		if (keyCodes.length > 6) {
+			throw new RangeError("A keyboard HID report can contain at most 6 key codes.");
+		}
+
+		const report = Uint8Array.of(modifiers & 0xff, 0, 0, 0, 0, 0, 0, 0);
+		for (let i = 0; i < keyCodes.length; i++) {
+			report[i + 2] = keyCodes[i] & 0xff;
+		}
+		return report;
+	}
+
+	#sendReport(report: Uint8Array): boolean {
 		const reportBuffer = report.buffer as ArrayBuffer;
 		let notified = false;
 
@@ -541,6 +659,13 @@ class BLEKeyboard {
 		}
 
 		return notified;
+	}
+
+	#setOutputReport(buffer: ArrayBuffer) {
+		const nextIndicators = new Uint8Array(buffer)[0] ?? 0;
+		if (this.#outputReport[0] === nextIndicators) return;
+		this.#outputReport[0] = nextIndicators;
+		this.onIndicatorsChanged?.(nextIndicators);
 	}
 
 	#createKeyboardInputReport(options: { uuid: string; logLabel: string; descriptors?: KeyboardDescriptor[] }) {
@@ -585,4 +710,14 @@ class BLEKeyboard {
 	}
 }
 
-export { BLEKeyboard, KEY_CODE, MODIFIER, type BLEKeyboardOptions, type KeyCode, type KeyOptions, type Modifier };
+export {
+	BLEKeyboard,
+	INDICATOR,
+	KEY_CODE,
+	MODIFIER,
+	type BLEKeyboardOptions,
+	type Indicator,
+	type KeyCode,
+	type KeyOptions,
+	type Modifier,
+};
