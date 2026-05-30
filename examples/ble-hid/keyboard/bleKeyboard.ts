@@ -219,6 +219,8 @@ const keyboardReportMap = Uint8Array.of(
 	0x06, // Usage (Keyboard)
 	0xa1,
 	0x01, // Collection (Application)
+	0x85,
+	0x01, // Report ID (1)
 	0x05,
 	0x07, // Usage Page (Keyboard)
 	0x19,
@@ -240,7 +242,7 @@ const keyboardReportMap = Uint8Array.of(
 	0x75,
 	0x08, // Report Size (8)
 	0x81,
-	0x01, // Input (Constant)
+	0x03, // Input (Constant, Variable)
 	0x95,
 	0x05, // Report Count (5)
 	0x75,
@@ -258,7 +260,7 @@ const keyboardReportMap = Uint8Array.of(
 	0x75,
 	0x03, // Report Size (3)
 	0x91,
-	0x01, // Output (Constant)
+	0x03, // Output (Constant, Variable)
 	0x95,
 	0x06, // Report Count (6)
 	0x75,
@@ -426,9 +428,9 @@ class BLEKeyboard {
 			protocolMode: PROTOCOL_MODE.REPORT,
 			descriptors: [
 				{
-					// Report Reference: report ID 0, input report type.
+					// Report Reference: report ID 1, input report type.
 					uuid: "2908",
-					value: Uint8Array.of(0, 1),
+					value: Uint8Array.of(1, 1),
 				},
 			],
 		});
@@ -557,9 +559,9 @@ class BLEKeyboard {
 							},
 							descriptors: [
 								{
-									// Report Reference: report ID 0, output report type.
+									// Report Reference: report ID 1, output report type.
 									uuid: "2908",
-									value: Uint8Array.of(0, 2),
+									value: Uint8Array.of(1, 2),
 								},
 							],
 						},

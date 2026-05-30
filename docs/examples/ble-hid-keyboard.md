@@ -234,7 +234,7 @@ The HID service exposes both Report Protocol and Boot Protocol input reports. Ho
 | Protocol mode | Value | Report |
 | --- | --- | --- |
 | `BLEKeyboard.PROTOCOL_MODE.BOOT` | `0` | Boot Keyboard Input Report (`2a22`) |
-| `BLEKeyboard.PROTOCOL_MODE.REPORT` | `1` | Keyboard Input Report (`2a4d`) |
+| `BLEKeyboard.PROTOCOL_MODE.REPORT` | `1` | Keyboard Input Report (`2a4d`, Report ID `1`) |
 
 Changing protocol mode sends a release report for the old mode and clears any queued `typeText()` work.
 
