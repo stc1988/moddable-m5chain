@@ -16,7 +16,8 @@ const ASCII_1 = 0x31;
 type KeyboardCharacteristic = object;
 type ProtocolMode = (typeof PROTOCOL_MODE)[keyof typeof PROTOCOL_MODE];
 
-type KeyboardInputReportCharacteristic = KeyboardCharacteristic & {
+type KeyboardInputReportSubscription = {
+	characteristic: KeyboardCharacteristic;
 	protocolMode: ProtocolMode;
 };
 
@@ -25,7 +26,7 @@ type KeyboardConnection = {
 	notify(characteristic: unknown, value: ArrayBuffer, callback?: (error?: Error) => void): void;
 	replyToPasskey(action: "input" | "compareNumber" | "outOfBand", value: number | boolean | ArrayBuffer): void;
 	readonly maxinumWrite: number;
-	subscribedReports?: KeyboardInputReportCharacteristic[];
+	subscribedReports?: KeyboardInputReportSubscription[];
 	releaseTimer?: ReturnType<typeof Timer.set>;
 };
 
@@ -835,13 +836,15 @@ class BLEKeyboard {
 		this.#textQueue.length = 0;
 	}
 
-	#subscribedReportsForConnection(connection: KeyboardConnection): KeyboardInputReportCharacteristic[] {
+	#subscribedReportsForConnection(connection: KeyboardConnection): KeyboardCharacteristic[] {
 		const reports = connection.subscribedReports ?? [];
 		const protocolMode = this.#protocolMode[0] as ProtocolMode;
-		return reports.filter((report: KeyboardInputReportCharacteristic) => report.protocolMode === protocolMode);
+		return reports
+			.filter((report: KeyboardInputReportSubscription) => report.protocolMode === protocolMode)
+			.map((report: KeyboardInputReportSubscription) => report.characteristic);
 	}
 
-	#notify(connection: KeyboardConnection, characteristic: KeyboardInputReportCharacteristic, value: ArrayBuffer) {
+	#notify(connection: KeyboardConnection, characteristic: KeyboardCharacteristic, value: ArrayBuffer) {
 		connection.notify(characteristic, value, (error?: Error) => {
 			if (!error) return;
 			trace(`[ble-keyboard/core] notify failed: ${error.message}\n`);
@@ -889,7 +892,7 @@ class BLEKeyboard {
 				return emptyKeyboardReport;
 			},
 			onSubscribe(connection: KeyboardConnection) {
-				keyboard.#addSubscribedReport(connection, this);
+				keyboard.#addSubscribedReport(connection, this, options.protocolMode);
 				trace(`${options.logLabel} subscribed\n`);
 				keyboard.#emitConnectionChanged();
 			},
@@ -906,17 +909,22 @@ class BLEKeyboard {
 		};
 	}
 
-	#addSubscribedReport(connection: KeyboardConnection, characteristic: KeyboardInputReportCharacteristic) {
+	#addSubscribedReport(
+		connection: KeyboardConnection,
+		characteristic: KeyboardCharacteristic,
+		protocolMode: ProtocolMode,
+	) {
 		connection.subscribedReports ??= [];
-		if (connection.subscribedReports.indexOf(characteristic) < 0) {
-			connection.subscribedReports.push(characteristic);
+		if (connection.subscribedReports.some((report) => report.characteristic === characteristic)) {
+			return;
 		}
+		connection.subscribedReports.push({ characteristic, protocolMode });
 	}
 
 	#removeSubscribedReport(connection: KeyboardConnection, characteristic: KeyboardCharacteristic) {
 		if (!connection.subscribedReports) return;
 		connection.subscribedReports = connection.subscribedReports.filter(
-			(item: KeyboardInputReportCharacteristic) => item !== characteristic,
+			(item: KeyboardInputReportSubscription) => item.characteristic !== characteristic,
 		);
 	}
 
