@@ -198,50 +198,60 @@ class BLEMediaControl {
 				ioCapabilities: "none",
 			},
 			services: [
+				// Generic Access Service: exposes the GAP device name and HID keyboard appearance.
 				{
 					uuid: "1800",
 					characteristics: [
 						{
+							// Device Name: name shown by scanners that read GAP 2A00.
 							uuid: "2a00",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString(deviceName),
 						},
 						{
+							// Appearance: 0x03C1 identifies this peripheral as a keyboard/media-key HID device.
 							uuid: "2a01",
 							properties: GATTServer.properties.read,
 							value: KEYBOARD_APPEARANCE,
 						},
 					],
 				},
+				// Device Information Service: static manufacturer/model/firmware metadata.
 				{
 					uuid: "180a",
 					characteristics: [
 						{
+							// Manufacturer Name String.
 							uuid: "2a29",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString(MANUFACTURER_NAME),
 						},
 						{
+							// Model Number String.
 							uuid: "2a24",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString(MODEL_NUMBER),
 						},
 						{
+							// Firmware Revision String.
 							uuid: "2a26",
 							properties: GATTServer.properties.read,
 							value: ArrayBuffer.fromString("1.0.0"),
 						},
 						{
+							// PnP ID: vendor/product metadata for hosts that inspect Device Information.
 							uuid: "2a50",
 							properties: GATTServer.properties.read,
 							value: Uint8Array.of(0x02, 0xff, 0xff, 0x01, 0x00, 0x01, 0x00),
 						},
 					],
 				},
+				// Battery Service: lets hosts read the current battery percentage.
 				{
 					uuid: "180f",
 					characteristics: [
 						{
+							// Battery Level: single byte percentage, 0-100.
 							uuid: "2a19",
 							properties: GATTServer.properties.read,
 							onRead() {
@@ -250,20 +260,24 @@ class BLEMediaControl {
 						},
 					],
 				},
+				// HID Service: report map, keyboard/media input reports, output report, and control point.
 				{
 					uuid: "1812",
 					characteristics: [
 						{
+							// HID Information: HID version, country code, and flags.
 							uuid: "2a4a",
 							properties: GATTServer.properties.read,
 							value: Uint8Array.of(0x0b, 0x01, 0x00, 0x15),
 						},
 						{
+							// Report Map: HID descriptor that defines keyboard and media-control reports.
 							uuid: "2a4b",
 							properties: GATTServer.properties.read,
 							value: mediaControlReportMap,
 						},
 						{
+							// HID Control Point: host suspend/resume signal.
 							uuid: "2a4c",
 							properties: GATTServer.properties.readEncrypted | GATTServer.properties.writeEncrypted,
 							onRead() {
@@ -274,6 +288,7 @@ class BLEMediaControl {
 							},
 						},
 						{
+							// Protocol Mode: switches between report protocol and boot protocol.
 							uuid: "2a4e",
 							properties: GATTServer.properties.read | GATTServer.properties.writeWithOutResponse,
 							onRead() {
@@ -283,8 +298,10 @@ class BLEMediaControl {
 								mediaControl.#protocolMode[0] = new Uint8Array(buffer)[0] ? 1 : 0;
 							},
 						},
+						// Keyboard Input Report: encrypted notify/read characteristic for keyboard-compatible reports.
 						keyboardInputReport,
 						{
+							// Keyboard Output Report: receives LED state such as Caps Lock from the host.
 							uuid: "2a4d",
 							properties: GATTServer.properties.read | GATTServer.properties.writeWithOutResponse,
 							onRead() {
@@ -295,11 +312,13 @@ class BLEMediaControl {
 							},
 							descriptors: [
 								{
+									// Report Reference: report ID 1, output report type.
 									uuid: "2908",
 									value: Uint8Array.of(1, 2),
 								},
 							],
 						},
+						// Media Input Report: encrypted notify/read characteristic for Consumer Control usages.
 						mediaInputReport,
 					],
 				},
@@ -334,11 +353,13 @@ class BLEMediaControl {
 	#startAdvertising(server: MediaControlServer, deviceName: string) {
 		server.startAdvertising(
 			{
+				// Advertising payload: discoverable BLE-only HID device with service UUID and appearance.
 				flags: AD_FLAG_GENERAL_DISCOVERABLE | AD_FLAG_BLE_ONLY,
 				services: ["1812"],
 				[AD_TYPE_APPEARANCE]: KEYBOARD_APPEARANCE,
 			},
 			{
+				// Scan response: keep the local name out of the 31-byte advertising packet.
 				name: deviceName,
 			},
 		);
@@ -397,6 +418,7 @@ class BLEMediaControl {
 			},
 			descriptors: [
 				{
+					// Report Reference: input report type for the configured report ID.
 					uuid: "2908",
 					value: Uint8Array.of(options.reportId, 1),
 				},
