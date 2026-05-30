@@ -202,7 +202,7 @@ keyboard.onIndicatorsChanged = (indicators) => {
 
 ### BLE HID media controls
 
-`examples/ble-hid/mediaControl/bleMediaControl.ts` exposes a small media control peripheral helper. It sends HID Consumer Control usages such as Play/Pause, Next Track, Previous Track, Volume Up, Volume Down, and Mute. See [BLE HID Media Control Example](docs/examples/ble-hid-media-control.md) for the full API.
+`examples/ble-hid/mediaControl/mediaControl.ts` exposes a small media control peripheral helper. It sends HID Consumer Control usages such as Play/Pause, Next Track, Previous Track, Volume Up, Volume Down, and Mute. See [BLE HID Media Control Example](docs/examples/ble-hid-media-control.md) for the full API.
 
 ```ts
 mediaControl.notifyUsage(BLEMediaControl.USAGE.PLAY_PAUSE);

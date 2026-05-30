@@ -9,7 +9,7 @@ Use this example for media keys. Volume, play/pause, next track, previous track,
 | File | Purpose |
 | --- | --- |
 | `examples/ble-hid/mediaControl/main.ts` | Wires `M5Chain`, `M5ChainKey`, and `BLEMediaControl` together. |
-| `examples/ble-hid/mediaControl/bleMediaControl.ts` | BLE HID media control peripheral helper. |
+| `examples/ble-hid/mediaControl/mediaControl.ts` | BLE HID media control peripheral helper. |
 | `examples/ble-hid/mediaControl/manifest.json` | Moddable build manifest for the media control example. |
 
 ## Build
@@ -28,10 +28,10 @@ mcconfig -dl -m -p esp32/m5atom_matrix ./examples/ble-hid/mediaControl/manifest.
 
 ## Basic Usage
 
-Import `BLEMediaControl` from `bleMediaControl` inside the media control example manifest:
+Import `BLEMediaControl` from `mediaControl` inside the media control example manifest:
 
 ```ts
-import { BLEMediaControl } from "bleMediaControl";
+import { BLEMediaControl } from "mediaControl";
 ```
 
 Create a media control peripheral:

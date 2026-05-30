@@ -1,4 +1,4 @@
-import { BLEMediaControl, type ConsumerControlUsage } from "bleMediaControl";
+import { BLEMediaControl, type ConsumerControlUsage } from "mediaControl";
 import M5ChainKey, { KEY_EVENT, KEY_MODE, type KeyEvent } from "m5chainKey";
 import M5Chain from "m5chain";
 
