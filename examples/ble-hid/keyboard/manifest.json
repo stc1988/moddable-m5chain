@@ -14,7 +14,7 @@
 	"modules": {
 		"*": ["./*"]
 	},
-	"preload": ["bleKeyboard"],
+	"preload": ["keyboard"],
 	"creation": {
 		"static": 0,
 		"chunk": {

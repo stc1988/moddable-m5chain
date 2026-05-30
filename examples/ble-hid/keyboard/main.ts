@@ -1,4 +1,4 @@
-import { BLEKeyboard } from "bleKeyboard";
+import { BLEKeyboard } from "keyboard";
 import M5ChainKey, { KEY_MODE, type KeyEvent } from "m5chainKey";
 import M5Chain from "m5chain";
 

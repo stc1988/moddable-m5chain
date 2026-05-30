@@ -7,7 +7,7 @@
 | File | Purpose |
 | --- | --- |
 | `examples/ble-hid/keyboard/main.ts` | Wires `M5Chain`, `M5ChainKey`, and `BLEKeyboard` together. |
-| `examples/ble-hid/keyboard/bleKeyboard.ts` | BLE HID keyboard peripheral helper. |
+| `examples/ble-hid/keyboard/keyboard.ts` | BLE HID keyboard peripheral helper. |
 | `examples/ble-hid/keyboard/manifest.json` | Moddable build manifest for the keyboard example. |
 
 ## Build
@@ -26,10 +26,10 @@ mcconfig -dl -m -p esp32/m5atom_matrix ./examples/ble-hid/keyboard/manifest.json
 
 ## Basic Usage
 
-Import `BLEKeyboard` from `bleKeyboard` inside the keyboard example manifest:
+Import `BLEKeyboard` from `keyboard` inside the keyboard example manifest:
 
 ```ts
-import { BLEKeyboard } from "bleKeyboard";
+import { BLEKeyboard } from "keyboard";
 ```
 
 Create a keyboard peripheral:
