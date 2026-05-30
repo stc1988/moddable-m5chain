@@ -1,18 +1,5 @@
 {
 	"modules": {
 		"*": ["./*", "./m5chainDevices/*", "./deviceFeatures/*"]
-	},
-	"preload": [
-		"m5chain",
-		"createM5ChainDevice",
-		"m5chainAngle",
-		"m5chainEncoder",
-		"m5chainDevice",
-		"m5chainJoyStick",
-		"m5chainKey",
-		"m5chainToF",
-		"canSample",
-		"hasLed",
-		"hasKey"
-	]
+	}
 }

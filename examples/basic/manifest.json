@@ -3,7 +3,8 @@
 		"$(MODDABLE)/examples/manifest_mod.json",
 		"$(MODDABLE)/examples/manifest_typings.json",
 		"../../src/m5chain/manifest_module.json",
-		"../../src/m5chain/manifest_chain_base.json"
+		"../../src/m5chain/manifest_chain_base.json",
+		"$(MODDABLE)/modules/data/url/manifest.json"
 	],
 	"modules": {
 		"*": ["./mod"]

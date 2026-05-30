@@ -5,7 +5,7 @@ import M5Chain from "m5chain";
 import config from "mc/config";
 
 const keyboard = new BLEKeyboard({
-	deviceName: "M5Chain Enter",
+	deviceName: "ChainKeyboard",
 });
 
 export async function main() {

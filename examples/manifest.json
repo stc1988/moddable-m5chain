@@ -2,6 +2,7 @@
 	"include": [
 		"$(MODDABLE)/examples/manifest_base.json",
 		"$(MODULES)/base/modules/manifest.json",
+		"$(MODDABLE)/modules/io/ble/server/manifest.json",
 		"../src/m5chain/manifest_include.json"
 	],
 	"defines": {

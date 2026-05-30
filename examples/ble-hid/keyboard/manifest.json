@@ -1,6 +1,7 @@
 {
 	"include": [
 		"$(MODDABLE)/examples/manifest_base.json",
+		"$(MODDABLE)/modules/io/manifest.json",
 		"../../../src/m5chain/manifest_module.json",
 		"../../../src/m5chain/manifest_chain_base.json",
 		"$(MODDABLE)/modules/io/ble/server/manifest.json"
