@@ -195,7 +195,7 @@ const state = keyboard.getConnectionState();
 
 ## Pairing and Bonding
 
-The example starts the BLE peripheral with bonding enabled and `ioCapabilities: "none"`, so hosts can pair without a passkey. For development, if a host stops reconnecting cleanly after firmware or HID descriptor changes, remove or forget the Bluetooth keyboard from the host OS and pair it again.
+The example starts the BLE peripheral with bonding enabled, immediate security initiation, and `ioCapabilities: "none"`, so hosts can pair without a passkey. Immediate security initiation helps hosts such as macOS proceed from a raw BLE connection into HID pairing before they subscribe to keyboard reports. For development, if a host stops reconnecting cleanly after firmware or HID descriptor changes, remove or forget the Bluetooth keyboard from the host OS and pair it again.
 
 ## Host LED Indicators
 

@@ -442,6 +442,7 @@ class BLEKeyboard {
 			mtu: 128,
 			security: {
 				bond: true,
+				immediate: true,
 				ioCapabilities: "none",
 			},
 			services: [
