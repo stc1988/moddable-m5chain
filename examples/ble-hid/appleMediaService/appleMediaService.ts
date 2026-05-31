@@ -1,5 +1,6 @@
 import { GAPClient, GATTClient } from "embedded:io/bluetoothle/central";
 import { GATTServer } from "embedded:io/bluetoothle/peripheral";
+import Timer from "timer";
 
 const AMS_SERVICE_UUID = "89d3502b-0f36-433a-8ef4-c502ad55f8dc";
 const REMOTE_COMMAND_CHARACTERISTIC_UUID = "9b3c81d8-57b1-4a8a-b8df-0e56f7ca51c2";
@@ -145,6 +146,7 @@ class AMSAuthenticator {
 	#delegate: AMSAuthenticatorDelegate;
 	#deviceName: string;
 	#server: GATTServer;
+	#scanTimer?: ReturnType<typeof Timer.set>;
 
 	constructor(delegate: AMSAuthenticatorDelegate, options: AppleMediaServiceOptions = {}) {
 		this.#delegate = delegate;
@@ -163,16 +165,13 @@ class AMSAuthenticator {
 			onConnect() {
 				trace("[apple-media-service/auth] connected\n");
 				this.stopAdvertising();
+				// Avoid GATTServer.onSecured on ESP32: Moddable 8.1.1 can deliver it with an invalid connection handle.
+				authenticator.#scheduleScan();
 			},
 			onDisconnect() {
 				trace("[apple-media-service/auth] disconnected\n");
+				authenticator.#clearScanTimer();
 				authenticator.#startAdvertising(this);
-			},
-			onSecured(_connection, state) {
-				trace(
-					`[apple-media-service/auth] secured encrypted=${state.encrypted} authenticated=${state.authenticated} bonded=${state.bonded}\n`,
-				);
-				authenticator.#delegate.onAuthenticated();
 			},
 			onWarning(message) {
 				trace(`[apple-media-service/auth] BLE warning: ${message}\n`);
@@ -181,6 +180,7 @@ class AMSAuthenticator {
 	}
 
 	close() {
+		this.#clearScanTimer();
 		this.#server.close?.();
 	}
 
@@ -194,6 +194,20 @@ class AMSAuthenticator {
 				name: this.#deviceName,
 			},
 		);
+	}
+
+	#scheduleScan() {
+		this.#clearScanTimer();
+		this.#scanTimer = Timer.set(() => {
+			this.#scanTimer = undefined;
+			this.#delegate.onAuthenticated();
+		}, 1500);
+	}
+
+	#clearScanTimer() {
+		if (!this.#scanTimer) return;
+		Timer.clear(this.#scanTimer);
+		this.#scanTimer = undefined;
 	}
 }
 Object.freeze(AMSAuthenticator.prototype);
