@@ -6,9 +6,10 @@ The app starts a `GATTServer` with:
 
 - `security.bond: true`
 - `security.immediate: true`
-- Battery Service UUID in the advertising payload
+- Generic Access, Heart Rate, and Battery services
+- Heart Rate and Battery Service UUIDs in the advertising payload
 - an encrypted Battery Level read characteristic
-- complete local name `SecCrash` in the advertising payload
+- complete local name `SecCrashHRM` in the advertising payload
 - an `onSecured` callback
 
 On ESP32, pairing can crash before the JavaScript `onSecured` callback is called.
@@ -19,7 +20,7 @@ On ESP32, pairing can crash before the JavaScript `onSecured` callback is called
 mcconfig -dl -m -p esp32/m5atom_matrix ./examples/ble-hid/onSecuredCrash/manifest.json
 ```
 
-Use a BLE scanner such as nRF Connect or LightBlue to connect to `SecCrash`.
+Use a BLE scanner such as nRF Connect or LightBlue to connect to `SecCrashHRM`.
 
 If pairing does not start immediately on connect, read the Battery Level characteristic. It is encrypted and should trigger pairing.
 
