@@ -1,30 +1,13 @@
 import { GATTServer } from "embedded:io/bluetoothle/peripheral";
 
-const AD_TYPE_SOLICIT_UUID128 = 0x15;
-const AMS_SOLICIT_UUID128 = Uint8Array.of(
-	0xdc,
-	0xf8,
-	0x55,
-	0xad,
-	0x02,
-	0xc5,
-	0xf4,
-	0x8e,
-	0x3a,
-	0x43,
-	0x36,
-	0x0f,
-	0x2b,
-	0x50,
-	0xd3,
-	0x89,
-);
+const BATTERY_SERVICE_UUID = "180f";
+const BATTERY_LEVEL_CHARACTERISTIC_UUID = "2a19";
 
 function startAdvertising(server: GATTServer) {
 	server.startAdvertising({
 		flags: 6,
 		name: "SecCrash",
-		[AD_TYPE_SOLICIT_UUID128]: AMS_SOLICIT_UUID128,
+		services: [BATTERY_SERVICE_UUID],
 	});
 }
 
@@ -35,10 +18,25 @@ export async function main() {
 		security: {
 			bond: true,
 			ioCapabilities: "none",
+			immediate: true,
 		},
-		services: [],
+		services: [
+			{
+				uuid: BATTERY_SERVICE_UUID,
+				characteristics: [
+					{
+						uuid: BATTERY_LEVEL_CHARACTERISTIC_UUID,
+						properties: GATTServer.properties.readEncrypted,
+						onRead() {
+							trace("[on-secured-crash] battery level read\n");
+							return Uint8Array.of(100);
+						},
+					},
+				],
+			},
+		],
 		onReady() {
-			trace("[on-secured-crash] ready; advertising AMS solicitation\n");
+			trace("[on-secured-crash] ready; advertising Battery Service\n");
 			startAdvertising(this);
 		},
 		onConnect() {

@@ -5,12 +5,13 @@ This is a minimal reproduction for an ESP32 crash in `embedded:io/bluetoothle/pe
 The app starts a `GATTServer` with:
 
 - `security.bond: true`
-- no GATT services
-- Apple Media Service UUID solicitation in the advertising payload
+- `security.immediate: true`
+- Battery Service UUID in the advertising payload
+- an encrypted Battery Level read characteristic
 - complete local name `SecCrash` in the advertising payload
 - an `onSecured` callback
 
-On ESP32, pairing from an iOS device can crash before the JavaScript `onSecured` callback is called.
+On ESP32, pairing can crash before the JavaScript `onSecured` callback is called.
 
 ## Run
 
@@ -18,9 +19,9 @@ On ESP32, pairing from an iOS device can crash before the JavaScript `onSecured`
 mcconfig -dl -m -p esp32/m5atom_matrix ./examples/ble-hid/onSecuredCrash/manifest.json
 ```
 
-Keep an iOS device nearby with Bluetooth enabled. The AMS solicitation should cause iOS to connect to the peripheral.
+Use a BLE scanner such as nRF Connect or LightBlue to connect to `SecCrash`.
 
-The device advertises as `SecCrash`. Use a BLE scanner such as nRF Connect or LightBlue to confirm it is advertising; it may not appear in the normal iOS Bluetooth Settings device list because it is a BLE peripheral, not a classic Bluetooth accessory.
+If pairing does not start immediately on connect, read the Battery Level characteristic. It is encrypted and should trigger pairing.
 
 ## Expected
 
