@@ -21,15 +21,11 @@ const AMS_SOLICIT_UUID128 = Uint8Array.of(
 );
 
 function startAdvertising(server: GATTServer) {
-	server.startAdvertising(
-		{
-			flags: 6,
-			[AD_TYPE_SOLICIT_UUID128]: AMS_SOLICIT_UUID128,
-		},
-		{
-			name: "Secured Crash",
-		},
-	);
+	server.startAdvertising({
+		flags: 6,
+		name: "SecCrash",
+		[AD_TYPE_SOLICIT_UUID128]: AMS_SOLICIT_UUID128,
+	});
 }
 
 export async function main() {

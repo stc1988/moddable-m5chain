@@ -7,6 +7,7 @@ The app starts a `GATTServer` with:
 - `security.bond: true`
 - no GATT services
 - Apple Media Service UUID solicitation in the advertising payload
+- complete local name `SecCrash` in the advertising payload
 - an `onSecured` callback
 
 On ESP32, pairing from an iOS device can crash before the JavaScript `onSecured` callback is called.
@@ -18,6 +19,8 @@ mcconfig -dl -m -p esp32/m5atom_matrix ./examples/ble-hid/onSecuredCrash/manifes
 ```
 
 Keep an iOS device nearby with Bluetooth enabled. The AMS solicitation should cause iOS to connect to the peripheral.
+
+The device advertises as `SecCrash`. Use a BLE scanner such as nRF Connect or LightBlue to confirm it is advertising; it may not appear in the normal iOS Bluetooth Settings device list because it is a BLE peripheral, not a classic Bluetooth accessory.
 
 ## Expected
 
