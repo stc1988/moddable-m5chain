@@ -187,7 +187,7 @@ class AMSAuthenticator {
 	#startAdvertising(server: GATTServer) {
 		server.startAdvertising(
 			{
-				flags: GATTServer.advertise.generalDiscoverable | GATTServer.advertise.bleOnly,
+				flags: 6,
 				[AD_TYPE_SOLICIT_UUID128]: AMS_SOLICIT_UUID128,
 			},
 			{
