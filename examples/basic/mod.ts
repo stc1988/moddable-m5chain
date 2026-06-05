@@ -6,8 +6,6 @@ import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
 import M5Chain, { KEY_EVENT, type KeyEvent } from "m5chain";
 
-import config from "mod/config";
-
 type M5ChainExampleDevice = M5ChainEncoder | M5ChainAngle | M5ChainKey | M5ChainJoyStick | M5ChainToF;
 
 const CONNECTED_LED_OFF_DELAY_MS = 1500;
@@ -39,17 +37,12 @@ function hasLed(device: M5ChainExampleDevice): device is LedDevice {
 }
 
 export async function main() {
-	trace("[m5chain example] basic\n");
+	trace("[examples/basic] start\n");
 
-	// if config is not defined in manifest file, use device.I2C.default.data and clock.
-	const m5chain = new M5Chain({
-		transmit: config.m5chain.transmit,
-		receive: config.m5chain.receive,
-		debug: false,
-	});
+	const m5chain = new M5Chain();
 
 	m5chain.onDeviceListChanged = async (devices) => {
-		trace("device list changed\n");
+		trace("[examples/basic] device list changed\n");
 
 		const exampleDevices: DeviceWithInfo[] = [];
 		for (const device of devices) {
@@ -74,7 +67,7 @@ async function fetchDeviceInfo(device: DeviceWithInfo) {
 	const bootloaderVersion = await device.getBootloaderVersion();
 	const firmwareVersion = await device.getFirmwareVersion();
 	trace(
-		`Device ID: ${device.id}, Type: ${device.type.toString(16)}, UID: ${device.uuid}, Bootloader Version: ${bootloaderVersion}, Firmware Version: ${firmwareVersion}\n`,
+		`[examples/basic] Device ID: ${device.id}, Type: ${device.type.toString(16)}, UID: ${device.uuid}, Bootloader Version: ${bootloaderVersion}, Firmware Version: ${firmwareVersion}\n`,
 	);
 }
 
@@ -93,7 +86,7 @@ async function turnOnConnectedLed(device: LedDevice) {
 	try {
 		await device.setLedColor(0, 32, 0);
 	} catch (error) {
-		trace(`Device ID: ${device.id}, connected LED failed: ${errorMessage(error)}\n`);
+		trace(`[examples/basic] Device ID: ${device.id}, connected LED failed: ${errorMessage(error)}\n`);
 	}
 }
 
@@ -101,7 +94,7 @@ async function turnOffConnectedLed(device: LedDevice) {
 	try {
 		await device.setLedColor(0, 0, 0);
 	} catch (error) {
-		trace(`Device ID: ${device.id}, connected LED off failed: ${errorMessage(error)}\n`);
+		trace(`[examples/basic] Device ID: ${device.id}, connected LED off failed: ${errorMessage(error)}\n`);
 	}
 }
 
@@ -146,13 +139,13 @@ function keyEventName(keyEvent: KeyEvent): string {
 
 function attachEncoder(device: M5ChainEncoder) {
 	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
+		trace(`[examples/basic] Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 
 	device.onSample = function () {
 		const sample = this.sample();
 		if (sample === undefined) return;
-		trace(`Encoder Device ID\t: ${device.id}, encode value\t: ${sample}\n`);
+		trace(`[examples/basic] Encoder Device ID\t: ${device.id}, encode value\t: ${sample}\n`);
 	};
 }
 
@@ -160,25 +153,25 @@ function attachAngle(device: M5ChainAngle) {
 	device.onSample = function () {
 		const sample = this.sample();
 		if (sample === undefined) return;
-		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
+		trace(`[examples/basic] Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
 	};
 }
 
 function attachKey(device: M5ChainKey) {
 	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`Key Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
+		trace(`[examples/basic] Key Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 }
 
 function attachJoyStick(device: M5ChainJoyStick) {
 	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
+		trace(`[examples/basic] JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
 	};
 
 	device.onSample = function () {
 		const sample = this.sample();
 		if (sample === undefined) return;
-		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${sample.x}\ty:${sample.y}\n`);
+		trace(`[examples/basic] JoyStick Device ID\t: ${device.id}, value\t: x:${sample.x}\ty:${sample.y}\n`);
 	};
 }
 
@@ -186,6 +179,6 @@ function attachToF(device: M5ChainToF) {
 	device.onSample = function () {
 		const sample = this.sample();
 		if (sample === undefined) return;
-		trace(`ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
+		trace(`[examples/basic] ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
 	};
 }

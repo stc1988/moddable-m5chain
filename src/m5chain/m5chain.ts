@@ -1,6 +1,7 @@
 import createM5ChainDevice from "createM5ChainDevice";
 import Serial from "embedded:io/serial";
 import Timer from "timer";
+import config from "mc/config"
 import type {
 	DeviceListChangeHandler,
 	M5ChainDeviceLike,
@@ -67,8 +68,8 @@ export default class M5Chain {
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
 		this.#serial = new Serial({
-			transmit: options?.transmit ?? device.I2C.default.data,
-			receive: options?.receive ?? device.I2C.default.clock,
+			transmit: options?.transmit ?? config.m5chain?.transmit ?? device.I2C.default.data,
+			receive: options?.receive ?? config.m5chain?.receive ?? device.I2C.default.clock,
 			baud: 115200,
 			format: "buffer",
 			port: 1,

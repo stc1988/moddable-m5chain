@@ -5,8 +5,6 @@ import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
 import M5Chain from "m5chain";
 
-import config from "mod/config";
-
 function hsvToRGB(h, s, v) {
 	h = Math.max(0, Math.min(1, h));
 	s = Math.max(0, Math.min(1, s));
@@ -70,12 +68,7 @@ function norm(v) {
 export async function main() {
 	trace("[m5chain example] led\n");
 
-	// if config is not defined in manifest file, use device.I2C.default.data and clock.
-	const m5chain = new M5Chain({
-		transmit: config.m5chain.transmit,
-		receive: config.m5chain.receive,
-		debug: false,
-	});
+	const m5chain = new M5Chain();
 
 	m5chain.onDeviceListChanged = async (devices) => {
 		trace("device list changed\n");
