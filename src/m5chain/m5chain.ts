@@ -1,7 +1,7 @@
 import createM5ChainDevice from "createM5ChainDevice";
 import Serial from "embedded:io/serial";
 import Timer from "timer";
-import config from "mc/config"
+import config from "mc/config";
 import type {
 	DeviceListChangeHandler,
 	M5ChainDeviceLike,
