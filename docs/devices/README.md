@@ -15,6 +15,7 @@ Shared mixin APIs are documented separately in [Feature API Guides](../features/
 | [Key](key.md) | `M5ChainKey` | `m5chainKey` | LED, key |
 | [JoyStick](joystick.md) | `M5ChainJoyStick` | `m5chainJoyStick` | LED, key, sampling |
 | [ToF](tof.md) | `M5ChainToF` | `m5chainToF` | LED, sampling |
+| Unknown | `M5ChainUnknownDevice` | `m5chainUnknownDevice` | Common device information |
 
 ## Import Pattern
 

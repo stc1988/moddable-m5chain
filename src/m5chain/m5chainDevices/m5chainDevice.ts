@@ -26,6 +26,7 @@ class M5ChainDevice {
 	#bus: ChainBus;
 	#id: number;
 	#uuid: string | undefined;
+	readonly known: boolean = true;
 
 	constructor(bus: ChainBus, options: DeviceFactoryOptions) {
 		this.#bus = bus;

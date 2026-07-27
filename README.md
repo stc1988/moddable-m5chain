@@ -131,12 +131,16 @@ failures without disconnecting other responsive devices.
 
 - `device.id`
 - `device.type`
+- `device.known` (`false` for device types not yet supported by this library)
 - `device.uuid` (after `init()`)
 - `await device.configure(options)` applies device and feature settings
 - `await device.readConfiguration()` reads current device and feature settings from the chain device
 - `await device.getUID(uidType = 1)` (`uidType: 0 | 1`)
 - `await device.getBootloaderVersion()`
 - `await device.getFirmwareVersion()`
+
+Unknown device types remain in the device list as `M5ChainUnknownDevice`. They expose the common device API, allowing
+applications to keep using recognized devices on the same chain and to report unsupported type IDs.
 
 ### LED Features (`HasLed`)
 

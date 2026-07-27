@@ -99,6 +99,7 @@ export interface ChainBus {
 export interface M5ChainDeviceLike {
 	id: number;
 	type: number;
+	known: boolean;
 	uuid?: string;
 	init(): Promise<void>;
 	configure?(options?: DeviceConfiguration): Promise<void>;

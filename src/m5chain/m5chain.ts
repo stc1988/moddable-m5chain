@@ -544,11 +544,16 @@ export default class M5Chain {
 						id: i + 1,
 						type: deviceList[i],
 					});
-					await device.init();
-					this.#deviceList.push(device);
-					this.#log(
-						`found device id=${device.id ?? "?"}, type=0x${(device.type ?? 0).toString(16).toUpperCase()} uuid=${device.uuid}`,
-					);
+					try {
+						await device.init();
+						this.#deviceList.push(device);
+						this.#log(
+							`found ${device.known ? "known" : "unknown"} device id=${device.id ?? "?"}, type=0x${(device.type ?? 0).toString(16).toUpperCase()} uuid=${device.uuid}`,
+						);
+					} catch (error: unknown) {
+						const message = error instanceof Error ? error.message : String(error);
+						this.#log(`device initialization failed for id=${device.id}: ${message}`, "WARN");
+					}
 				}
 			}
 		} catch (e: unknown) {

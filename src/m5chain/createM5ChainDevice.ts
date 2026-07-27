@@ -3,6 +3,7 @@ import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
+import M5ChainUnknownDevice from "m5chainUnknownDevice";
 import type { ChainBus, DeviceFactoryOptions, M5ChainDeviceLike } from "types";
 
 type DeviceClass = {
@@ -15,7 +16,7 @@ export default function createM5ChainDevice(m5chain: ChainBus, options: DeviceFa
 	const DeviceCtor = (DEVICE_CLASSES as unknown as DeviceClass[]).find((cls) => cls.DEVICE_TYPE === options.type);
 
 	if (!DeviceCtor) {
-		throw new Error(`Unknown device type: ${options.type}`);
+		return new M5ChainUnknownDevice(m5chain, options);
 	}
 
 	return new DeviceCtor(m5chain, options);
