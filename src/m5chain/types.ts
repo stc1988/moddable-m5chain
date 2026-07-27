@@ -57,7 +57,18 @@ export type DeviceConfigurationSnapshot = {
 	};
 };
 
-export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void;
+export type DeviceListChangeHandler<TDevice extends M5ChainDeviceLike = M5ChainDeviceLike> = (
+	devices: readonly TDevice[],
+) => void | Promise<void>;
+
+export type M5ChainErrorSource = "deviceDisconnected" | "deviceEvent" | "deviceListChanged" | "sample";
+
+export type M5ChainErrorContext = {
+	source: M5ChainErrorSource;
+	device?: M5ChainDeviceLike;
+};
+
+export type M5ChainErrorHandler = (error: unknown, context: M5ChainErrorContext) => void | Promise<void>;
 
 export type SampleProvider<T = unknown> = {
 	sample(): T | undefined;
@@ -67,6 +78,7 @@ export type SampleHandler<T = unknown> = ((this: SampleProvider<T>) => void) | n
 
 export interface ChainBus {
 	cmdBuffer: Uint8Array;
+	readonly maxPayloadSize: number;
 	lock(): Promise<Unlock>;
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number): void;
 	waitForPacket(cmd: number, options?: WaitForPacketOptions): Promise<WaitForPacketResult>;
@@ -84,22 +96,25 @@ export interface ChainBus {
 		size: number,
 		options?: WaitForPacketOptions,
 	): Promise<PacketBuffer>;
-	_notifyPollingReadFailed(): void;
 	_notifyPollingStateChanged(): void;
 }
 
 export interface M5ChainDeviceLike {
 	id: number;
 	type: number;
+	kind: string;
+	known: boolean;
+	connected: boolean;
 	uuid?: string;
 	init(): Promise<void>;
 	configure?(options?: DeviceConfiguration): Promise<void>;
 	readConfiguration?(): Promise<DeviceConfigurationSnapshot>;
+	_markDisconnected?(): void;
 	onDisconnected?(): void;
-	onDispatchEvent?(buffer: PacketBuffer): void;
+	onDispatchEvent?(buffer: PacketBuffer): unknown;
 	hasOnSample?(): boolean;
 	readSample?<T = unknown>(): Promise<T | undefined>;
-	dispatchOnSample?<T = unknown>(value: T): void;
+	dispatchOnSample?<T = unknown>(value: T): unknown;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].

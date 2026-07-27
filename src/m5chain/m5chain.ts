@@ -1,19 +1,24 @@
 import createM5ChainDevice from "createM5ChainDevice";
+import type { M5ChainDevice } from "deviceUnion";
+import PollingState from "pollingState";
 import Serial from "embedded:io/serial";
-import Timer from "timer";
 import config from "mc/config";
+import Timer from "timer";
 import type {
 	DeviceListChangeHandler,
-	M5ChainDeviceLike,
+	M5ChainErrorContext,
+	M5ChainErrorHandler,
 	PacketBuffer,
 	PacketMatch,
 	WaitForPacketOptions,
 	WaitForPacketResult,
 } from "types";
 
+export type { M5ChainDevice } from "deviceUnion";
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
+export type { M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
 
-type M5ChainOptions = {
+export type M5ChainOptions = {
 	transmit?: number;
 	receive?: number;
 	debug?: boolean;
@@ -38,10 +43,12 @@ export default class M5Chain {
 		RESET: 0xff /**< Reset command. */,
 	} as const;
 
-	onDeviceListChanged?: DeviceListChangeHandler;
+	onDeviceListChanged?: DeviceListChangeHandler<M5ChainDevice>;
+	onError?: M5ChainErrorHandler;
 	debug: boolean;
 	pollingInterval: number;
 	running = false;
+	readonly maxPayloadSize: number;
 
 	#serial;
 	#mutex: Promise<unknown> = Promise.resolve();
@@ -54,17 +61,20 @@ export default class M5Chain {
 	#enumTimer: ReturnType<typeof Timer.set> | null = null;
 	#enumRunning = false;
 	#receiveMatch: PacketMatch | null = null;
-	#pollFailureCount = 0;
-	#pollReadFailed = false;
+	#pollFailureCounts = new Map<number, number>();
+	#pollState = new PollingState();
+	#pollTask: Promise<void> | null = null;
 	#sendCmd: number | null = null;
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
 	#rxLength = 0;
-	#deviceList: M5ChainDeviceLike[] = [];
+	#deviceList: M5ChainDevice[] = [];
 	#started = false;
+	#closed = false;
 
 	constructor(options: M5ChainOptions = {}) {
 		const self = this;
+		this.maxPayloadSize = this.#sendBuffer.length - 9;
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
 		this.#serial = new Serial({
@@ -160,9 +170,12 @@ export default class M5Chain {
 					}
 
 					if (packetCmd === 0xe0) {
-						const device = self.#deviceList[packetId - 1];
+						const device = self.#deviceList.find((candidate) => candidate.id === packetId);
 						if (device) {
-							device.onDispatchEvent?.(frame);
+							self.#invokeUserCallback(() => device.onDispatchEvent?.(frame), {
+								source: "deviceEvent",
+								device,
+							});
 						} else {
 							self.#log(`Unknown device ID: ${packetId}`);
 						}
@@ -186,6 +199,38 @@ export default class M5Chain {
 	}
 	#log(message: string, level = "INFO") {
 		trace(`[m5chain][${level}] ${message}\n`);
+	}
+	#reportUserCallbackError(error: unknown, context: M5ChainErrorContext) {
+		if (this.onError) {
+			try {
+				const result = this.onError(error, context);
+				if (result && typeof (result as PromiseLike<void>).then === "function") {
+					void Promise.resolve(result).catch((onErrorFailure: unknown) => {
+						const message = onErrorFailure instanceof Error ? onErrorFailure.message : String(onErrorFailure);
+						this.#log(`onError callback failed: ${message}`, "WARN");
+					});
+				}
+				return;
+			} catch (onErrorFailure: unknown) {
+				const message = onErrorFailure instanceof Error ? onErrorFailure.message : String(onErrorFailure);
+				this.#log(`onError callback failed: ${message}`, "WARN");
+			}
+		}
+
+		const message = error instanceof Error ? error.message : String(error);
+		this.#log(`${context.source} callback failed: ${message}`, "WARN");
+	}
+	#invokeUserCallback(callback: () => unknown, context: M5ChainErrorContext) {
+		try {
+			const result = callback();
+			if (result && typeof (result as PromiseLike<unknown>).then === "function") {
+				void Promise.resolve(result).catch((error: unknown) => {
+					this.#reportUserCallbackError(error, context);
+				});
+			}
+		} catch (error: unknown) {
+			this.#reportUserCallbackError(error, context);
+		}
 	}
 	async lock() {
 		let unlock: (() => void) | undefined;
@@ -229,6 +274,16 @@ export default class M5Chain {
 	}
 
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number) {
+		if (this.#closed) {
+			throw new Error("M5Chain is closed.");
+		}
+		if (!Number.isInteger(size) || size < 0 || size > this.maxPayloadSize) {
+			throw new RangeError(`packet data size must be between 0 and ${this.maxPayloadSize} bytes.`);
+		}
+		if (data.length < size) {
+			throw new RangeError(`packet data contains ${data.length} bytes, but ${size} bytes were requested.`);
+		}
+
 		const cmdSize = size + 3;
 		const sendBufferSize = size + 9;
 
@@ -369,39 +424,104 @@ export default class M5Chain {
 		return result;
 	}
 
-	#handlePollingFailure() {
-		this.#pollFailureCount++;
-		this.#log(`polling failed (count=${this.#pollFailureCount})`);
+	#handlePollingFailure(device: M5ChainDevice, error?: unknown) {
+		const failureCount = (this.#pollFailureCounts.get(device.id) ?? 0) + 1;
+		this.#pollFailureCounts.set(device.id, failureCount);
+		const detail = error === undefined ? "" : `: ${error instanceof Error ? error.message : String(error)}`;
+		this.#log(`polling failed for device id=${device.id} (count=${failureCount})${detail}`, "WARN");
 
-		if (this.#pollFailureCount >= 3) {
-			this.#log("All devices considered disconnected", "WARN");
-
-			this.running = false;
-			this.#deviceList = [];
+		if (failureCount >= 3) {
+			this.#log(`Device id=${device.id} considered disconnected`, "WARN");
+			this.#pollFailureCounts.delete(device.id);
+			this.#deviceList = this.#deviceList.filter((candidate) => candidate !== device);
+			device._markDisconnected?.();
+			this.#invokeUserCallback(() => device.onDisconnected?.(), {
+				source: "deviceDisconnected",
+				device,
+			});
 			this.#notifyDeviceListChanged();
+			this.#updatePollingState();
 			return true;
 		}
 		return false;
 	}
 
-	_notifyPollingReadFailed() {
-		this.#pollReadFailed = true;
-	}
-
 	async start() {
+		if (this.#closed) {
+			throw new Error("M5Chain is closed.");
+		}
 		if (this.#started) return;
 		this.#started = true;
 
 		await this.#scan();
+		if (!this.#started) return;
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
 	}
 
+	async stop() {
+		if (!this.#started && !this.#pollTask && this.#deviceList.length === 0) return;
+
+		this.#started = false;
+		this.#stopPolling();
+		this.#abortPendingWait("M5Chain stopped");
+
+		const pollTask = this.#pollTask;
+		if (pollTask) {
+			try {
+				await pollTask;
+			} catch (error: unknown) {
+				const message = error instanceof Error ? error.message : String(error);
+				this.#log(`poll loop stopped with an error: ${message}`, "WARN");
+			}
+		}
+
+		if (this.#enumTimer) {
+			Timer.clear(this.#enumTimer);
+			this.#enumTimer = null;
+		}
+		this.#enumPending = false;
+
+		const oldDevices = [...this.#deviceList];
+		this.#deviceList = [];
+		this.#pollFailureCounts.clear();
+		for (const device of oldDevices) {
+			device._markDisconnected?.();
+			this.#invokeUserCallback(() => device.onDisconnected?.(), {
+				source: "deviceDisconnected",
+				device,
+			});
+		}
+		this.#notifyDeviceListChanged();
+	}
+
+	async close() {
+		if (this.#closed) return;
+		this.#closed = true;
+		await this.stop();
+		this.#serial.close();
+		this.#rxLength = 0;
+	}
+
+	get closed(): boolean {
+		return this.#closed;
+	}
+
 	async #pollLoop() {
-		this.running = true;
-		while (this.running) {
-			await this.#pollDevices();
-			Timer.delay(this.pollingInterval);
+		try {
+			while (this.#pollState.requested) {
+				await this.#pollDevices();
+				if (this.#pollState.requested) {
+					Timer.delay(this.pollingInterval);
+				}
+			}
+		} finally {
+			this.running = false;
+			this.#pollTask = null;
+			this.#pollState.finished();
+			if (this.#hasActiveSampleHandler()) {
+				this.#startPolling();
+			}
 		}
 	}
 
@@ -413,19 +533,16 @@ export default class M5Chain {
 
 			try {
 				const value = await device.readSample();
-				if (this.#pollReadFailed) {
-					this.#pollReadFailed = false;
-					if (this.#handlePollingFailure()) return;
-					continue;
-				}
-
-				this.#pollFailureCount = 0; // 成功でリセット
+				this.#pollFailureCounts.delete(device.id);
 
 				if (value !== undefined) {
-					device.dispatchOnSample?.(value);
+					this.#invokeUserCallback(() => device.dispatchOnSample?.(value), {
+						source: "sample",
+						device,
+					});
 				}
-			} catch (_e) {
-				if (this.#handlePollingFailure()) return;
+			} catch (error: unknown) {
+				if (this.#handlePollingFailure(device, error)) return;
 			}
 		}
 	}
@@ -434,15 +551,25 @@ export default class M5Chain {
 	_notifyPollingStateChanged() {
 		this.#updatePollingState();
 	}
+	#hasActiveSampleHandler() {
+		return this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
+	}
+	#startPolling() {
+		if (!this.#started || this.#closed) return;
+		if (!this.#pollState.start()) return;
+
+		this.running = true;
+		this.#pollTask = this.#pollLoop();
+	}
+	#stopPolling() {
+		this.#pollState.stop();
+		this.running = false;
+	}
 	#updatePollingState() {
-		const active = this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
-
-		if (active && !this.running) {
-			this.#pollLoop();
-		}
-
-		if (!active && this.running) {
-			this.running = false;
+		if (this.#hasActiveSampleHandler()) {
+			this.#startPolling();
+		} else {
+			this.#stopPolling();
 		}
 	}
 
@@ -476,6 +603,7 @@ export default class M5Chain {
 	async #scan() {
 		this.#log("scan start");
 		this.#deviceList = [];
+		this.#pollFailureCounts.clear();
 		try {
 			if (await this.isDeviceConnected()) {
 				const deviceNum = await this.getDeviceNum();
@@ -485,11 +613,16 @@ export default class M5Chain {
 						id: i + 1,
 						type: deviceList[i],
 					});
-					await device.init();
-					this.#deviceList.push(device);
-					this.#log(
-						`found device id=${device.id ?? "?"}, type=0x${(device.type ?? 0).toString(16).toUpperCase()} uuid=${device.uuid}`,
-					);
+					try {
+						await device.init();
+						this.#deviceList.push(device);
+						this.#log(
+							`found ${device.known ? "known" : "unknown"} device id=${device.id ?? "?"}, type=0x${(device.type ?? 0).toString(16).toUpperCase()} uuid=${device.uuid}`,
+						);
+					} catch (error: unknown) {
+						const message = error instanceof Error ? error.message : String(error);
+						this.#log(`device initialization failed for id=${device.id}: ${message}`, "WARN");
+					}
 				}
 			}
 		} catch (e: unknown) {
@@ -516,12 +649,20 @@ export default class M5Chain {
 
 		const oldDevices = [...this.#deviceList];
 		for (const d of oldDevices) {
-			d.onDisconnected?.();
+			d._markDisconnected?.();
+			this.#invokeUserCallback(() => d.onDisconnected?.(), {
+				source: "deviceDisconnected",
+				device: d,
+			});
 		}
 
-		this.running = false;
+		this.#stopPolling();
 
 		await this.#scan();
+		if (!this.#started || this.#closed) {
+			this.#enumRunning = false;
+			return;
+		}
 
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
@@ -530,10 +671,13 @@ export default class M5Chain {
 	}
 
 	#notifyDeviceListChanged() {
-		this.onDeviceListChanged?.(this.#deviceList);
+		const devices = [...this.#deviceList];
+		this.#invokeUserCallback(() => this.onDeviceListChanged?.(devices), {
+			source: "deviceListChanged",
+		});
 	}
 
-	get devices(): M5ChainDeviceLike[] {
-		return this.#deviceList;
+	get devices(): readonly M5ChainDevice[] {
+		return [...this.#deviceList];
 	}
 }

@@ -45,6 +45,9 @@ LED color and brightness are output state, not device configuration. They are in
 | `await device.setLedBrightness(brightness, saveToFlash = false)` | Sets brightness. `brightness` must be from `0` to `1`; `saveToFlash` must be a boolean. |
 | `await device.getLedBrightness()` | Reads brightness as a `0` to `1` number. |
 
+`setLedColors()` and `getLedColors()` reject requests that cannot fit in one transport packet. With the default
+transport buffer, the maximum is 81 colors per call.
+
 ## Implementation Notes
 
 `HasLed` contributes RGB command IDs under `CMD.RGB`. It expects the composed device class to provide `id`, `bus`, and the base command contract from `M5ChainDevice`.

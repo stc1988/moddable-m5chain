@@ -17,7 +17,7 @@ const KEY_EVENT = {
 
 type KeyEvent = (typeof KEY_EVENT)[keyof typeof KEY_EVENT];
 
-type KeyHandler = ((keyEvent: KeyEvent) => void) | null;
+type KeyHandler = ((keyEvent: KeyEvent) => void | Promise<void>) | null;
 
 const KEY_MODE = {
 	PASSIVE: 0,
@@ -153,7 +153,7 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 
 		onDispatchEvent(buffer: PacketBuffer) {
 			const keyEvent = keyEventFromValue(buffer[6]);
-			this.onPush?.(keyEvent);
+			return this.onPush?.(keyEvent);
 		}
 
 		async isKeyPressed(): Promise<boolean> {

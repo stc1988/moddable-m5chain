@@ -15,20 +15,19 @@ Shared mixin APIs are documented separately in [Feature API Guides](../features/
 | [Key](key.md) | `M5ChainKey` | `m5chainKey` | LED, key |
 | [JoyStick](joystick.md) | `M5ChainJoyStick` | `m5chainJoyStick` | LED, key, sampling |
 | [ToF](tof.md) | `M5ChainToF` | `m5chainToF` | LED, sampling |
+| Unknown | `M5ChainUnknownDevice` | `m5chainUnknownDevice` | Common device information |
 
 ## Import Pattern
 
-Most applications discover devices through `M5Chain` and use runtime checks by `device.type`.
+Most applications discover devices through `M5Chain` and narrow the exported device union with `device.kind`.
 
 ```ts
 import M5Chain from "m5chain";
-import M5ChainEncoder from "m5chainEncoder";
 
 m5chain.onDeviceListChanged = (devices) => {
 	for (const device of devices) {
-		if (device.type === M5ChainEncoder.DEVICE_TYPE) {
-			const encoder = device as M5ChainEncoder;
-			encoder.onSample = function () {
+		if (device.kind === "encoder") {
+			device.onSample = function () {
 				const delta = this.sample();
 				trace(`encoder delta=${delta}\n`);
 			};

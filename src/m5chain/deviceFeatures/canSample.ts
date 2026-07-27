@@ -6,7 +6,7 @@ type CanSampleMethods<T = unknown> = {
 	hasOnSample(): boolean;
 	readSample(): Promise<T | undefined>;
 	sample(): T | undefined;
-	dispatchOnSample(value: T): void;
+	dispatchOnSample(value: T): unknown;
 };
 
 type CanSampleMixin = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> = DeviceConstructor<M5ChainDevice>>(
@@ -55,7 +55,7 @@ const CanSample = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> =
 
 		dispatchOnSample(value: T) {
 			this.#sample = value;
-			this.#onSample?.call(this);
+			return this.#onSample?.call(this);
 		}
 	};
 

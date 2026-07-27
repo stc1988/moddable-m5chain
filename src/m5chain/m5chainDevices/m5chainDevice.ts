@@ -24,8 +24,11 @@ class M5ChainDevice {
 	} as const;
 
 	#bus: ChainBus;
+	#connected = true;
 	#id: number;
 	#uuid: string | undefined;
+	readonly kind: string = "device";
+	readonly known: boolean = true;
 
 	constructor(bus: ChainBus, options: DeviceFactoryOptions) {
 		this.#bus = bus;
@@ -33,7 +36,14 @@ class M5ChainDevice {
 	}
 
 	get bus(): ChainBus {
+		if (!this.#connected) {
+			throw new Error(`M5Chain device id=${this.id} is disconnected.`);
+		}
 		return this.#bus;
+	}
+
+	get connected(): boolean {
+		return this.#connected;
 	}
 
 	get id(): number {
@@ -51,6 +61,12 @@ class M5ChainDevice {
 	async init() {
 		this.#uuid = await this.getUID();
 	}
+
+	_markDisconnected() {
+		this.#connected = false;
+	}
+
+	onDisconnected() {}
 
 	async configure(options: DeviceConfiguration = {}): Promise<void> {
 		assertObjectOption("options", options);
@@ -120,4 +136,4 @@ function withDeviceFeatures(
 	}, M5ChainDevice as AnyDeviceConstructor);
 }
 
-export { M5ChainDevice, assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures };
+export { assertKnownConfigurationOptions, assertObjectOption, M5ChainDevice, withDeviceFeatures };

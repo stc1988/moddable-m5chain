@@ -3,11 +3,14 @@
 	"version": "1.0.0",
 	"license": "MIT",
 	"scripts": {
-		"format": "biome format --write .",
-		"lint": "biome lint --write ."
+		"format": "biome format --write README.md docs examples src tests biome.json package.json package-lock.json tsconfig.json",
+		"lint": "biome check README.md docs examples src tests biome.json package.json package-lock.json tsconfig.json",
+		"test": "node --no-warnings --experimental-strip-types --test tests/*.test.mjs",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.13",
-		"@moddable/typings": "^8.2.1"
+		"@biomejs/biome": "2.5.5",
+		"@moddable/typings": "^8.3.1",
+		"typescript": "^7.0.2"
 	}
 }

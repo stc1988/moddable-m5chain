@@ -75,6 +75,11 @@ await m5chain.start();
 - Called again after re-scan when the chain sends `ENUM_PLEASE`
 - `devices` is the current connected device list
 
+### `m5chain.onError = (error, context) => {}`
+
+Reports synchronous exceptions and rejected promises from application callbacks without treating them as UART or device
+failures. `context.source` identifies the callback kind; device-specific callbacks also provide `context.device`.
+
 ### `device.onPush = (status) => {}`
 
 Available on devices with `HasKey` (Encoder / Key / JoyStick).
@@ -111,24 +116,39 @@ device.onSample = function () {
 
 Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
 
+Polling failures are tracked per device. A device is removed from the current list after three consecutive sample-read
+failures without disconnecting other responsive devices.
+
 ## API
 
 ### M5Chain
 
 - `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30 })`
 - `await m5chain.start()`
-- `m5chain.devices` current device array
+- `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
+- `await m5chain.close()` stops the chain and closes UART permanently
+- `m5chain.closed`
+- `m5chain.devices` read-only snapshot of the current device array
 
 ### Common Device API (`M5ChainDevice`)
 
 - `device.id`
 - `device.type`
+- `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, or `unknown`)
+- `device.known` (`false` for device types not yet supported by this library)
+- `device.connected`
 - `device.uuid` (after `init()`)
 - `await device.configure(options)` applies device and feature settings
 - `await device.readConfiguration()` reads current device and feature settings from the chain device
 - `await device.getUID(uidType = 1)` (`uidType: 0 | 1`)
 - `await device.getBootloaderVersion()`
 - `await device.getFirmwareVersion()`
+
+Unknown device types remain in the device list as `M5ChainUnknownDevice`. They expose the common device API, allowing
+applications to keep using recognized devices on the same chain and to report unsupported type IDs.
+
+The `M5ChainDevice` union and `M5ChainOptions` types are exported from `m5chain`. TypeScript applications can switch on
+`device.kind` to access device-specific APIs without a type assertion.
 
 ### LED Features (`HasLed`)
 
@@ -174,18 +194,6 @@ README intentionally keeps only the setup, event model, and shared API surface s
 - `examples/led`: LED control for Encoder/Angle/Key/JoyStick/ToF
 - `examples/ble-hid/keyboard`: BLE HID keyboard example that sends Enter from M5Chain Key events ([docs](docs/examples/ble-hid-keyboard.md))
 - `examples/ble-hid/mediaControl`: BLE HID media control example that sends Play/Pause, Next Track, and Previous Track from M5Chain Key events ([docs](docs/examples/ble-hid-media-control.md))
-- `examples/ble-hid/appleMediaService`: Apple Media Service client example that monitors iOS playback and sends remote commands from M5Chain Key events ([docs](docs/examples/apple-media-service.md))
-- `examples/hotplug`: re-scan verification after device reconnect, using `uuid`, LED blink, key events, and sampled values
-
-### Apple Media Service controls
-
-`examples/ble-hid/appleMediaService/appleMediaService.ts` ports Moddable's Apple Media Service client/authenticator flow using `embedded:io/bluetoothle/peripheral` for AMS solicitation advertising and `embedded:io/bluetoothle/central` for AMS scanning, subscriptions, and remote commands.
-
-```ts
-appleMediaService.remoteCommand(AppleMediaService.REMOTE_COMMAND_ID.TOGGLE_PLAY_PAUSE);
-appleMediaService.remoteCommand(AppleMediaService.REMOTE_COMMAND_ID.NEXT_TRACK);
-appleMediaService.remoteCommand(AppleMediaService.REMOTE_COMMAND_ID.PREVIOUS_TRACK);
-```
 
 ### BLE HID keyboard controls
 

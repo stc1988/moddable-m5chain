@@ -57,6 +57,11 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			if (!Array.isArray(colors)) {
 				throw new RangeError("colors must be an array.");
 			}
+			const bus = this.bus;
+			const maxColors = Math.floor((bus.maxPayloadSize - 2) / 3);
+			if (num > maxColors) {
+				throw new RangeError(`num must not exceed ${maxColors} colors per packet.`);
+			}
 			if (colors.length < num) {
 				throw new RangeError(`colors must contain at least ${num} entries.`);
 			}
@@ -65,7 +70,6 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 				assertIntegerInRange(`colors[${i}].g`, colors[i].g, 0, 255);
 				assertIntegerInRange(`colors[${i}].b`, colors[i].b, 0, 255);
 			}
-			const bus = this.bus;
 			const cmdBuffer = bus.cmdBuffer;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
 			cmdBuffer[0] = index;
@@ -86,6 +90,10 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			assertIntegerInRange("index", index, 0, 255);
 			assertIntegerInRange("num", num, 0, 255);
 			const bus = this.bus;
+			const maxColors = Math.floor((bus.maxPayloadSize - 2) / 3);
+			if (num > maxColors) {
+				throw new RangeError(`num must not exceed ${maxColors} colors per packet.`);
+			}
 			const cmdBuffer = bus.cmdBuffer;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
 			cmdBuffer[0] = index;

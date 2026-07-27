@@ -27,6 +27,7 @@
 		"m5chainJoyStick",
 		"m5chainKey",
 		"m5chainToF",
+		"m5chainUnknownDevice",
 		"canSample",
 		"hasLed",
 		"hasKey"
