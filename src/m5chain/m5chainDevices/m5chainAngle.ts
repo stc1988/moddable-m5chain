@@ -33,6 +33,7 @@ function angleRotationDirectionToValue(direction: AngleRotationDirection): numbe
 
 class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0002;
+	readonly kind = "angle" as const;
 	static CMD = {
 		...super.CMD,
 		GET_12ADC: 0x30 /**< Command to get the latest 12-bit ADC value */,

@@ -125,12 +125,13 @@ failures without disconnecting other responsive devices.
 
 - `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30 })`
 - `await m5chain.start()`
-- `m5chain.devices` current device array
+- `m5chain.devices` read-only snapshot of the current device array
 
 ### Common Device API (`M5ChainDevice`)
 
 - `device.id`
 - `device.type`
+- `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, or `unknown`)
 - `device.known` (`false` for device types not yet supported by this library)
 - `device.uuid` (after `init()`)
 - `await device.configure(options)` applies device and feature settings
@@ -141,6 +142,9 @@ failures without disconnecting other responsive devices.
 
 Unknown device types remain in the device list as `M5ChainUnknownDevice`. They expose the common device API, allowing
 applications to keep using recognized devices on the same chain and to report unsupported type IDs.
+
+The `M5ChainDevice` union and `M5ChainOptions` types are exported from `m5chain`. TypeScript applications can switch on
+`device.kind` to access device-specific APIs without a type assertion.
 
 ### LED Features (`HasLed`)
 

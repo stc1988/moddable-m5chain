@@ -57,7 +57,9 @@ export type DeviceConfigurationSnapshot = {
 	};
 };
 
-export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void | Promise<void>;
+export type DeviceListChangeHandler<TDevice extends M5ChainDeviceLike = M5ChainDeviceLike> = (
+	devices: readonly TDevice[],
+) => void | Promise<void>;
 
 export type M5ChainErrorSource = "deviceDisconnected" | "deviceEvent" | "deviceListChanged" | "sample";
 
@@ -99,6 +101,7 @@ export interface ChainBus {
 export interface M5ChainDeviceLike {
 	id: number;
 	type: number;
+	kind: string;
 	known: boolean;
 	uuid?: string;
 	init(): Promise<void>;

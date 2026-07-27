@@ -47,6 +47,7 @@ function saveToFlashToValue(saveToFlash: SaveToFlash): number {
 
 class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>) {
 	static DEVICE_TYPE = 0x0001;
+	readonly kind = "encoder" as const;
 	static CMD = {
 		...super.CMD,
 		GET_VALUE: 0x10 /**< Get encoder value. */,

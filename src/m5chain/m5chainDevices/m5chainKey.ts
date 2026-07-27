@@ -7,6 +7,7 @@ export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyS
 
 class M5ChainKey extends withDeviceFeatures(HasLed, HasKey) {
 	static DEVICE_TYPE = 0x0003;
+	readonly kind = "key" as const;
 
 	async configure(options: DeviceConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["key"]);

@@ -2,6 +2,7 @@ import { M5ChainDevice } from "m5chainDevice";
 import type { ChainBus, DeviceFactoryOptions } from "types";
 
 class M5ChainUnknownDevice extends M5ChainDevice {
+	readonly kind = "unknown" as const;
 	readonly known = false;
 	#type: number;
 

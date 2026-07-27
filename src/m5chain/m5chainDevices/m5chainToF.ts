@@ -52,6 +52,7 @@ function measurementStatusToValue(status: MeasurementStatus): number {
 
 class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0005;
+	readonly kind = "tof" as const;
 	static CMD = {
 		...super.CMD,
 		GET_DISTANCE: 0x50 /**< Get the measured distance in millimeters. */,

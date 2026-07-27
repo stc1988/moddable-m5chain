@@ -32,6 +32,7 @@ export type JoystickConfigurationSnapshot = DeviceConfigurationSnapshot & {
 
 class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>) {
 	static DEVICE_TYPE = 0x0004;
+	readonly kind = "joystick" as const;
 	static CMD = {
 		...super.CMD,
 		GET_16ADC: 0x30 /**< Command to get 16-bit ADC values */,

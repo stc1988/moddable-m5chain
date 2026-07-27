@@ -1,10 +1,10 @@
 import createM5ChainDevice from "createM5ChainDevice";
+import type { M5ChainDevice } from "deviceUnion";
 import Serial from "embedded:io/serial";
 import Timer from "timer";
 import config from "mc/config";
 import type {
 	DeviceListChangeHandler,
-	M5ChainDeviceLike,
 	M5ChainErrorContext,
 	M5ChainErrorHandler,
 	PacketBuffer,
@@ -14,9 +14,10 @@ import type {
 } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
+export type { M5ChainDevice } from "deviceUnion";
 export type { M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
 
-type M5ChainOptions = {
+export type M5ChainOptions = {
 	transmit?: number;
 	receive?: number;
 	debug?: boolean;
@@ -41,7 +42,7 @@ export default class M5Chain {
 		RESET: 0xff /**< Reset command. */,
 	} as const;
 
-	onDeviceListChanged?: DeviceListChangeHandler;
+	onDeviceListChanged?: DeviceListChangeHandler<M5ChainDevice>;
 	onError?: M5ChainErrorHandler;
 	debug: boolean;
 	pollingInterval: number;
@@ -65,7 +66,7 @@ export default class M5Chain {
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
 	#rxLength = 0;
-	#deviceList: M5ChainDeviceLike[] = [];
+	#deviceList: M5ChainDevice[] = [];
 	#started = false;
 
 	constructor(options: M5ChainOptions = {}) {
@@ -409,7 +410,7 @@ export default class M5Chain {
 		return result;
 	}
 
-	#handlePollingFailure(device: M5ChainDeviceLike, error?: unknown) {
+	#handlePollingFailure(device: M5ChainDevice, error?: unknown) {
 		const failureCount = (this.#pollFailureCounts.get(device.id) ?? 0) + 1;
 		this.#pollFailureCounts.set(device.id, failureCount);
 		const detail = error === undefined ? "" : `: ${error instanceof Error ? error.message : String(error)}`;
@@ -597,12 +598,13 @@ export default class M5Chain {
 	}
 
 	#notifyDeviceListChanged() {
-		this.#invokeUserCallback(() => this.onDeviceListChanged?.(this.#deviceList), {
+		const devices = [...this.#deviceList];
+		this.#invokeUserCallback(() => this.onDeviceListChanged?.(devices), {
 			source: "deviceListChanged",
 		});
 	}
 
-	get devices(): M5ChainDeviceLike[] {
-		return this.#deviceList;
+	get devices(): readonly M5ChainDevice[] {
+		return [...this.#deviceList];
 	}
 }
