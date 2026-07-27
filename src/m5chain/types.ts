@@ -59,7 +59,7 @@ export type DeviceConfigurationSnapshot = {
 
 export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void | Promise<void>;
 
-export type M5ChainErrorSource = "deviceEvent" | "deviceListChanged" | "sample";
+export type M5ChainErrorSource = "deviceDisconnected" | "deviceEvent" | "deviceListChanged" | "sample";
 
 export type M5ChainErrorContext = {
 	source: M5ChainErrorSource;
@@ -93,7 +93,6 @@ export interface ChainBus {
 		size: number,
 		options?: WaitForPacketOptions,
 	): Promise<PacketBuffer>;
-	_notifyPollingReadFailed(): void;
 	_notifyPollingStateChanged(): void;
 }
 

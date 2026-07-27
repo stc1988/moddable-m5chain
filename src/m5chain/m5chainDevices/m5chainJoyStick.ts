@@ -75,8 +75,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 			0,
 		);
 		if (!(packet instanceof Uint8Array)) {
-			bus._notifyPollingReadFailed();
-			return undefined;
+			throw new Error(`JoyStick sample read failed: ${packet.__m5chain}`);
 		}
 		return {
 			x: (packet[6] << 24) >> 24,

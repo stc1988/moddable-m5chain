@@ -68,8 +68,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(this.id, M5ChainAngle.CMD.GET_12ADC, bus.cmdBuffer, 0);
 		if (!(packet instanceof Uint8Array)) {
-			bus._notifyPollingReadFailed();
-			return undefined;
+			throw new Error(`Angle sample read failed: ${packet.__m5chain}`);
 		}
 		const adc = (packet[7] << 8) | packet[6];
 		const value = (adc & ADC_12BIT_MAX) / ADC_12BIT_MAX;

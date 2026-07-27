@@ -58,8 +58,7 @@ export default class M5Chain {
 	#enumTimer: ReturnType<typeof Timer.set> | null = null;
 	#enumRunning = false;
 	#receiveMatch: PacketMatch | null = null;
-	#pollFailureCount = 0;
-	#pollReadFailed = false;
+	#pollFailureCounts = new Map<number, number>();
 	#pollRequested = false;
 	#pollTask: Promise<void> | null = null;
 	#sendCmd: number | null = null;
@@ -410,23 +409,25 @@ export default class M5Chain {
 		return result;
 	}
 
-	#handlePollingFailure() {
-		this.#pollFailureCount++;
-		this.#log(`polling failed (count=${this.#pollFailureCount})`);
+	#handlePollingFailure(device: M5ChainDeviceLike, error?: unknown) {
+		const failureCount = (this.#pollFailureCounts.get(device.id) ?? 0) + 1;
+		this.#pollFailureCounts.set(device.id, failureCount);
+		const detail = error === undefined ? "" : `: ${error instanceof Error ? error.message : String(error)}`;
+		this.#log(`polling failed for device id=${device.id} (count=${failureCount})${detail}`, "WARN");
 
-		if (this.#pollFailureCount >= 3) {
-			this.#log("All devices considered disconnected", "WARN");
-
-			this.#stopPolling();
-			this.#deviceList = [];
+		if (failureCount >= 3) {
+			this.#log(`Device id=${device.id} considered disconnected`, "WARN");
+			this.#pollFailureCounts.delete(device.id);
+			this.#deviceList = this.#deviceList.filter((candidate) => candidate !== device);
+			this.#invokeUserCallback(() => device.onDisconnected?.(), {
+				source: "deviceDisconnected",
+				device,
+			});
 			this.#notifyDeviceListChanged();
+			this.#updatePollingState();
 			return true;
 		}
 		return false;
-	}
-
-	_notifyPollingReadFailed() {
-		this.#pollReadFailed = true;
 	}
 
 	async start() {
@@ -463,13 +464,7 @@ export default class M5Chain {
 
 			try {
 				const value = await device.readSample();
-				if (this.#pollReadFailed) {
-					this.#pollReadFailed = false;
-					if (this.#handlePollingFailure()) return;
-					continue;
-				}
-
-				this.#pollFailureCount = 0; // 成功でリセット
+				this.#pollFailureCounts.delete(device.id);
 
 				if (value !== undefined) {
 					this.#invokeUserCallback(() => device.dispatchOnSample?.(value), {
@@ -477,8 +472,8 @@ export default class M5Chain {
 						device,
 					});
 				}
-			} catch (_e) {
-				if (this.#handlePollingFailure()) return;
+			} catch (error: unknown) {
+				if (this.#handlePollingFailure(device, error)) return;
 			}
 		}
 	}
@@ -539,6 +534,7 @@ export default class M5Chain {
 	async #scan() {
 		this.#log("scan start");
 		this.#deviceList = [];
+		this.#pollFailureCounts.clear();
 		try {
 			if (await this.isDeviceConnected()) {
 				const deviceNum = await this.getDeviceNum();
@@ -579,7 +575,10 @@ export default class M5Chain {
 
 		const oldDevices = [...this.#deviceList];
 		for (const d of oldDevices) {
-			d.onDisconnected?.();
+			this.#invokeUserCallback(() => d.onDisconnected?.(), {
+				source: "deviceDisconnected",
+				device: d,
+			});
 		}
 
 		this.#stopPolling();

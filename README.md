@@ -78,8 +78,7 @@ await m5chain.start();
 ### `m5chain.onError = (error, context) => {}`
 
 Reports synchronous exceptions and rejected promises from application callbacks without treating them as UART or device
-failures. `context.source` is `deviceEvent`, `deviceListChanged`, or `sample`; device-specific callbacks also provide
-`context.device`.
+failures. `context.source` identifies the callback kind; device-specific callbacks also provide `context.device`.
 
 ### `device.onPush = (status) => {}`
 
@@ -116,6 +115,9 @@ device.onSample = function () {
 ```
 
 Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
+
+Polling failures are tracked per device. A device is removed from the current list after three consecutive sample-read
+failures without disconnecting other responsive devices.
 
 ## API
 

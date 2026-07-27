@@ -97,8 +97,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(this.id, M5ChainToF.CMD.GET_DISTANCE, bus.cmdBuffer, 0);
 		if (!(packet instanceof Uint8Array)) {
-			bus._notifyPollingReadFailed();
-			return undefined;
+			throw new Error(`ToF sample read failed: ${packet.__m5chain}`);
 		}
 		return (packet[7] << 8) | packet[6];
 	}

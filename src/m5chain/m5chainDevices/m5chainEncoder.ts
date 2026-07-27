@@ -88,8 +88,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(this.id, M5ChainEncoder.CMD.GET_VALUE, bus.cmdBuffer, 0);
 		if (!(packet instanceof Uint8Array)) {
-			bus._notifyPollingReadFailed();
-			return undefined;
+			throw new Error(`Encoder sample read failed: ${packet.__m5chain}`);
 		}
 		const value = (packet[7] << 8) | packet[6];
 		const current = (value << 16) >> 16;
