@@ -56,6 +56,8 @@ export default class M5Chain {
 	#receiveMatch: PacketMatch | null = null;
 	#pollFailureCount = 0;
 	#pollReadFailed = false;
+	#pollRequested = false;
+	#pollTask: Promise<void> | null = null;
 	#sendCmd: number | null = null;
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
@@ -376,7 +378,7 @@ export default class M5Chain {
 		if (this.#pollFailureCount >= 3) {
 			this.#log("All devices considered disconnected", "WARN");
 
-			this.running = false;
+			this.#stopPolling();
 			this.#deviceList = [];
 			this.#notifyDeviceListChanged();
 			return true;
@@ -398,10 +400,19 @@ export default class M5Chain {
 	}
 
 	async #pollLoop() {
-		this.running = true;
-		while (this.running) {
-			await this.#pollDevices();
-			Timer.delay(this.pollingInterval);
+		try {
+			while (this.#pollRequested) {
+				await this.#pollDevices();
+				if (this.#pollRequested) {
+					Timer.delay(this.pollingInterval);
+				}
+			}
+		} finally {
+			this.running = false;
+			this.#pollTask = null;
+			if (this.#hasActiveSampleHandler()) {
+				this.#startPolling();
+			}
 		}
 	}
 
@@ -434,15 +445,25 @@ export default class M5Chain {
 	_notifyPollingStateChanged() {
 		this.#updatePollingState();
 	}
+	#hasActiveSampleHandler() {
+		return this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
+	}
+	#startPolling() {
+		this.#pollRequested = true;
+		if (this.#pollTask) return;
+
+		this.running = true;
+		this.#pollTask = this.#pollLoop();
+	}
+	#stopPolling() {
+		this.#pollRequested = false;
+		this.running = false;
+	}
 	#updatePollingState() {
-		const active = this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
-
-		if (active && !this.running) {
-			this.#pollLoop();
-		}
-
-		if (!active && this.running) {
-			this.running = false;
+		if (this.#hasActiveSampleHandler()) {
+			this.#startPolling();
+		} else {
+			this.#stopPolling();
 		}
 	}
 
@@ -519,7 +540,7 @@ export default class M5Chain {
 			d.onDisconnected?.();
 		}
 
-		this.running = false;
+		this.#stopPolling();
 
 		await this.#scan();
 
