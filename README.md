@@ -75,6 +75,12 @@ await m5chain.start();
 - Called again after re-scan when the chain sends `ENUM_PLEASE`
 - `devices` is the current connected device list
 
+### `m5chain.onError = (error, context) => {}`
+
+Reports synchronous exceptions and rejected promises from application callbacks without treating them as UART or device
+failures. `context.source` is `deviceEvent`, `deviceListChanged`, or `sample`; device-specific callbacks also provide
+`context.device`.
+
 ### `device.onPush = (status) => {}`
 
 Available on devices with `HasKey` (Encoder / Key / JoyStick).

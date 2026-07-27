@@ -5,6 +5,8 @@ import config from "mc/config";
 import type {
 	DeviceListChangeHandler,
 	M5ChainDeviceLike,
+	M5ChainErrorContext,
+	M5ChainErrorHandler,
 	PacketBuffer,
 	PacketMatch,
 	WaitForPacketOptions,
@@ -12,6 +14,7 @@ import type {
 } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
+export type { M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
 
 type M5ChainOptions = {
 	transmit?: number;
@@ -39,6 +42,7 @@ export default class M5Chain {
 	} as const;
 
 	onDeviceListChanged?: DeviceListChangeHandler;
+	onError?: M5ChainErrorHandler;
 	debug: boolean;
 	pollingInterval: number;
 	running = false;
@@ -164,7 +168,10 @@ export default class M5Chain {
 					if (packetCmd === 0xe0) {
 						const device = self.#deviceList[packetId - 1];
 						if (device) {
-							device.onDispatchEvent?.(frame);
+							self.#invokeUserCallback(() => device.onDispatchEvent?.(frame), {
+								source: "deviceEvent",
+								device,
+							});
 						} else {
 							self.#log(`Unknown device ID: ${packetId}`);
 						}
@@ -188,6 +195,38 @@ export default class M5Chain {
 	}
 	#log(message: string, level = "INFO") {
 		trace(`[m5chain][${level}] ${message}\n`);
+	}
+	#reportUserCallbackError(error: unknown, context: M5ChainErrorContext) {
+		if (this.onError) {
+			try {
+				const result = this.onError(error, context);
+				if (result && typeof (result as PromiseLike<void>).then === "function") {
+					void Promise.resolve(result).catch((onErrorFailure: unknown) => {
+						const message = onErrorFailure instanceof Error ? onErrorFailure.message : String(onErrorFailure);
+						this.#log(`onError callback failed: ${message}`, "WARN");
+					});
+				}
+				return;
+			} catch (onErrorFailure: unknown) {
+				const message = onErrorFailure instanceof Error ? onErrorFailure.message : String(onErrorFailure);
+				this.#log(`onError callback failed: ${message}`, "WARN");
+			}
+		}
+
+		const message = error instanceof Error ? error.message : String(error);
+		this.#log(`${context.source} callback failed: ${message}`, "WARN");
+	}
+	#invokeUserCallback(callback: () => unknown, context: M5ChainErrorContext) {
+		try {
+			const result = callback();
+			if (result && typeof (result as PromiseLike<unknown>).then === "function") {
+				void Promise.resolve(result).catch((error: unknown) => {
+					this.#reportUserCallbackError(error, context);
+				});
+			}
+		} catch (error: unknown) {
+			this.#reportUserCallbackError(error, context);
+		}
 	}
 	async lock() {
 		let unlock: (() => void) | undefined;
@@ -433,7 +472,10 @@ export default class M5Chain {
 				this.#pollFailureCount = 0; // 成功でリセット
 
 				if (value !== undefined) {
-					device.dispatchOnSample?.(value);
+					this.#invokeUserCallback(() => device.dispatchOnSample?.(value), {
+						source: "sample",
+						device,
+					});
 				}
 			} catch (_e) {
 				if (this.#handlePollingFailure()) return;
@@ -551,7 +593,9 @@ export default class M5Chain {
 	}
 
 	#notifyDeviceListChanged() {
-		this.onDeviceListChanged?.(this.#deviceList);
+		this.#invokeUserCallback(() => this.onDeviceListChanged?.(this.#deviceList), {
+			source: "deviceListChanged",
+		});
 	}
 
 	get devices(): M5ChainDeviceLike[] {

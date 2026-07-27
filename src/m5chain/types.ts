@@ -57,7 +57,16 @@ export type DeviceConfigurationSnapshot = {
 	};
 };
 
-export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void;
+export type DeviceListChangeHandler = (devices: M5ChainDeviceLike[]) => void | Promise<void>;
+
+export type M5ChainErrorSource = "deviceEvent" | "deviceListChanged" | "sample";
+
+export type M5ChainErrorContext = {
+	source: M5ChainErrorSource;
+	device?: M5ChainDeviceLike;
+};
+
+export type M5ChainErrorHandler = (error: unknown, context: M5ChainErrorContext) => void | Promise<void>;
 
 export type SampleProvider<T = unknown> = {
 	sample(): T | undefined;
@@ -96,10 +105,10 @@ export interface M5ChainDeviceLike {
 	configure?(options?: DeviceConfiguration): Promise<void>;
 	readConfiguration?(): Promise<DeviceConfigurationSnapshot>;
 	onDisconnected?(): void;
-	onDispatchEvent?(buffer: PacketBuffer): void;
+	onDispatchEvent?(buffer: PacketBuffer): unknown;
 	hasOnSample?(): boolean;
 	readSample?<T = unknown>(): Promise<T | undefined>;
-	dispatchOnSample?<T = unknown>(value: T): void;
+	dispatchOnSample?<T = unknown>(value: T): unknown;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].
