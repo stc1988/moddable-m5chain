@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"incremental": false,
 		"outDir": "dist",
-		"lib": ["es2025"],
+		"lib": ["es2025", "esnext.disposable"],
 		"module": "es2022",
 		"sourceMap": true,
 		"target": "es2025",
