@@ -1,5 +1,6 @@
 import createM5ChainDevice from "createM5ChainDevice";
 import type { M5ChainDevice } from "deviceUnion";
+import PollingState from "pollingState";
 import Serial from "embedded:io/serial";
 import config from "mc/config";
 import Timer from "timer";
@@ -61,7 +62,7 @@ export default class M5Chain {
 	#enumRunning = false;
 	#receiveMatch: PacketMatch | null = null;
 	#pollFailureCounts = new Map<number, number>();
-	#pollRequested = false;
+	#pollState = new PollingState();
 	#pollTask: Promise<void> | null = null;
 	#sendCmd: number | null = null;
 	#sendId: number | null = null;
@@ -508,15 +509,16 @@ export default class M5Chain {
 
 	async #pollLoop() {
 		try {
-			while (this.#pollRequested) {
+			while (this.#pollState.requested) {
 				await this.#pollDevices();
-				if (this.#pollRequested) {
+				if (this.#pollState.requested) {
 					Timer.delay(this.pollingInterval);
 				}
 			}
 		} finally {
 			this.running = false;
 			this.#pollTask = null;
+			this.#pollState.finished();
 			if (this.#hasActiveSampleHandler()) {
 				this.#startPolling();
 			}
@@ -554,14 +556,13 @@ export default class M5Chain {
 	}
 	#startPolling() {
 		if (!this.#started || this.#closed) return;
-		this.#pollRequested = true;
-		if (this.#pollTask) return;
+		if (!this.#pollState.start()) return;
 
 		this.running = true;
 		this.#pollTask = this.#pollLoop();
 	}
 	#stopPolling() {
-		this.#pollRequested = false;
+		this.#pollState.stop();
 		this.running = false;
 	}
 	#updatePollingState() {
