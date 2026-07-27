@@ -497,9 +497,9 @@ export default class M5Chain {
 
 	async close() {
 		if (this.#closed) return;
+		this.#closed = true;
 		await this.stop();
 		this.#serial.close();
-		this.#closed = true;
 		this.#rxLength = 0;
 	}
 
