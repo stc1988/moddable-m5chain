@@ -453,4 +453,4 @@ class BLEMediaControl {
 	}
 }
 
-export { BLEMediaControl, USAGE, type BLEMediaControlOptions, type ConsumerControlUsage };
+export { BLEMediaControl, type BLEMediaControlOptions, type ConsumerControlUsage, USAGE };

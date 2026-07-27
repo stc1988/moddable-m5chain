@@ -942,16 +942,16 @@ Object.freeze(BLEKeyboard);
 
 export {
 	BLEKeyboard,
-	INDICATOR,
-	KEY_CODE,
-	MODIFIER,
-	PROTOCOL_MODE,
 	type BLEKeyboardOptions,
 	type ConnectionState,
+	INDICATOR,
 	type Indicator,
+	KEY_CODE,
 	type KeyCode,
 	type KeyOptions,
+	MODIFIER,
 	type Modifier,
+	PROTOCOL_MODE,
 	type ProtocolMode,
 	type TypeTextOptions,
 };

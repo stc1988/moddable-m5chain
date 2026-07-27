@@ -1,10 +1,10 @@
+import type { M5ChainDevice } from "deviceUnion";
 import M5ChainAngle from "m5chainAngle";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainToF from "m5chainToF";
 import M5ChainUnknownDevice from "m5chainUnknownDevice";
-import type { M5ChainDevice } from "deviceUnion";
 import type { ChainBus, DeviceFactoryOptions } from "types";
 
 type DeviceClass = {

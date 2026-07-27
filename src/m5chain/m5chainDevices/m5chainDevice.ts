@@ -136,4 +136,4 @@ function withDeviceFeatures(
 	}, M5ChainDevice as AnyDeviceConstructor);
 }
 
-export { M5ChainDevice, assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures };
+export { assertKnownConfigurationOptions, assertObjectOption, M5ChainDevice, withDeviceFeatures };

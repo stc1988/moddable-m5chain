@@ -1,8 +1,8 @@
 import createM5ChainDevice from "createM5ChainDevice";
 import type { M5ChainDevice } from "deviceUnion";
 import Serial from "embedded:io/serial";
-import Timer from "timer";
 import config from "mc/config";
+import Timer from "timer";
 import type {
 	DeviceListChangeHandler,
 	M5ChainErrorContext,
@@ -13,8 +13,8 @@ import type {
 	WaitForPacketResult,
 } from "types";
 
-export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 export type { M5ChainDevice } from "deviceUnion";
+export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 export type { M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
 
 export type M5ChainOptions = {
