@@ -4,10 +4,12 @@
 	"license": "MIT",
 	"scripts": {
 		"format": "biome format --write .",
-		"lint": "biome lint --write ."
+		"lint": "biome lint --write .",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.13",
-		"@moddable/typings": "^8.2.1"
+		"@moddable/typings": "^8.2.1",
+		"typescript": "^6.0.3"
 	}
 }
