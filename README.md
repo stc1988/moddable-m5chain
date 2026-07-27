@@ -192,42 +192,6 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 - `examples/basic`: device discovery, info read, and event subscription
 - `examples/led`: LED control for Encoder/Angle/Key/JoyStick/ToF
-- `examples/ble-hid/keyboard`: BLE HID keyboard example that sends Enter from M5Chain Key events ([docs](docs/examples/ble-hid-keyboard.md))
-- `examples/ble-hid/mediaControl`: BLE HID media control example that sends Play/Pause, Next Track, and Previous Track from M5Chain Key events ([docs](docs/examples/ble-hid-media-control.md))
-
-### BLE HID keyboard controls
-
-`examples/ble-hid/keyboard/keyboard.ts` exposes a small keyboard peripheral helper. It supports single keys, modifier combinations, text typing, connection state, up to six simultaneous normal keys in one HID report, manual press/release, host LED indicators such as Caps Lock, and manual BLE advertising control. See [BLE HID Keyboard Example](docs/examples/ble-hid-keyboard.md) for the full API.
-
-```ts
-keyboard.notifyKey({
-	keyCode: BLEKeyboard.KEY_CODE.A,
-	modifiers: BLEKeyboard.MODIFIER.LEFT_SHIFT,
-});
-
-keyboard.notifyKeyCodes([BLEKeyboard.KEY_CODE.A, BLEKeyboard.KEY_CODE.B]);
-keyboard.typeText("hello\n");
-
-keyboard.pressKeyCodes([BLEKeyboard.KEY_CODE.DELETE], BLEKeyboard.MODIFIER.LEFT_CONTROL | BLEKeyboard.MODIFIER.LEFT_ALT);
-keyboard.releaseAll();
-
-keyboard.stopAdvertising();
-keyboard.startAdvertising();
-
-keyboard.onIndicatorsChanged = (indicators) => {
-	trace(`caps lock=${(indicators & BLEKeyboard.INDICATOR.CAPS_LOCK) !== 0}\n`);
-};
-```
-
-### BLE HID media controls
-
-`examples/ble-hid/mediaControl/mediaControl.ts` exposes a small media control peripheral helper. It sends HID Consumer Control usages such as Play/Pause, Next Track, Previous Track, Volume Up, Volume Down, and Mute. See [BLE HID Media Control Example](docs/examples/ble-hid-media-control.md) for the full API.
-
-```ts
-mediaControl.notifyUsage(BLEMediaControl.USAGE.PLAY_PAUSE);
-mediaControl.notifyUsage(BLEMediaControl.USAGE.SCAN_NEXT_TRACK);
-mediaControl.notifyUsage(BLEMediaControl.USAGE.VOLUME_UP);
-```
 
 ## Development
 
