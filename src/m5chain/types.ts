@@ -104,10 +104,12 @@ export interface M5ChainDeviceLike {
 	type: number;
 	kind: string;
 	known: boolean;
+	connected: boolean;
 	uuid?: string;
 	init(): Promise<void>;
 	configure?(options?: DeviceConfiguration): Promise<void>;
 	readConfiguration?(): Promise<DeviceConfigurationSnapshot>;
+	_markDisconnected?(): void;
 	onDisconnected?(): void;
 	onDispatchEvent?(buffer: PacketBuffer): unknown;
 	hasOnSample?(): boolean;

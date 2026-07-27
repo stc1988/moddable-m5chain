@@ -125,6 +125,9 @@ failures without disconnecting other responsive devices.
 
 - `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30 })`
 - `await m5chain.start()`
+- `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
+- `await m5chain.close()` stops the chain and closes UART permanently
+- `m5chain.closed`
 - `m5chain.devices` read-only snapshot of the current device array
 
 ### Common Device API (`M5ChainDevice`)
@@ -133,6 +136,7 @@ failures without disconnecting other responsive devices.
 - `device.type`
 - `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, or `unknown`)
 - `device.known` (`false` for device types not yet supported by this library)
+- `device.connected`
 - `device.uuid` (after `init()`)
 - `await device.configure(options)` applies device and feature settings
 - `await device.readConfiguration()` reads current device and feature settings from the chain device

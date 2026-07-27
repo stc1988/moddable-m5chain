@@ -69,6 +69,7 @@ export default class M5Chain {
 	#rxLength = 0;
 	#deviceList: M5ChainDevice[] = [];
 	#started = false;
+	#closed = false;
 
 	constructor(options: M5ChainOptions = {}) {
 		const self = this;
@@ -272,6 +273,9 @@ export default class M5Chain {
 	}
 
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number) {
+		if (this.#closed) {
+			throw new Error("M5Chain is closed.");
+		}
 		if (!Number.isInteger(size) || size < 0 || size > this.maxPayloadSize) {
 			throw new RangeError(`packet data size must be between 0 and ${this.maxPayloadSize} bytes.`);
 		}
@@ -429,6 +433,7 @@ export default class M5Chain {
 			this.#log(`Device id=${device.id} considered disconnected`, "WARN");
 			this.#pollFailureCounts.delete(device.id);
 			this.#deviceList = this.#deviceList.filter((candidate) => candidate !== device);
+			device._markDisconnected?.();
 			this.#invokeUserCallback(() => device.onDisconnected?.(), {
 				source: "deviceDisconnected",
 				device,
@@ -441,12 +446,64 @@ export default class M5Chain {
 	}
 
 	async start() {
+		if (this.#closed) {
+			throw new Error("M5Chain is closed.");
+		}
 		if (this.#started) return;
 		this.#started = true;
 
 		await this.#scan();
+		if (!this.#started) return;
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
+	}
+
+	async stop() {
+		if (!this.#started && !this.#pollTask && this.#deviceList.length === 0) return;
+
+		this.#started = false;
+		this.#stopPolling();
+		this.#abortPendingWait("M5Chain stopped");
+
+		const pollTask = this.#pollTask;
+		if (pollTask) {
+			try {
+				await pollTask;
+			} catch (error: unknown) {
+				const message = error instanceof Error ? error.message : String(error);
+				this.#log(`poll loop stopped with an error: ${message}`, "WARN");
+			}
+		}
+
+		if (this.#enumTimer) {
+			Timer.clear(this.#enumTimer);
+			this.#enumTimer = null;
+		}
+		this.#enumPending = false;
+
+		const oldDevices = [...this.#deviceList];
+		this.#deviceList = [];
+		this.#pollFailureCounts.clear();
+		for (const device of oldDevices) {
+			device._markDisconnected?.();
+			this.#invokeUserCallback(() => device.onDisconnected?.(), {
+				source: "deviceDisconnected",
+				device,
+			});
+		}
+		this.#notifyDeviceListChanged();
+	}
+
+	async close() {
+		if (this.#closed) return;
+		await this.stop();
+		this.#serial.close();
+		this.#closed = true;
+		this.#rxLength = 0;
+	}
+
+	get closed(): boolean {
+		return this.#closed;
 	}
 
 	async #pollLoop() {
@@ -496,6 +553,7 @@ export default class M5Chain {
 		return this.#deviceList.some((d) => typeof d?.hasOnSample === "function" && d.hasOnSample());
 	}
 	#startPolling() {
+		if (!this.#started || this.#closed) return;
 		this.#pollRequested = true;
 		if (this.#pollTask) return;
 
@@ -590,6 +648,7 @@ export default class M5Chain {
 
 		const oldDevices = [...this.#deviceList];
 		for (const d of oldDevices) {
+			d._markDisconnected?.();
 			this.#invokeUserCallback(() => d.onDisconnected?.(), {
 				source: "deviceDisconnected",
 				device: d,
@@ -599,6 +658,10 @@ export default class M5Chain {
 		this.#stopPolling();
 
 		await this.#scan();
+		if (!this.#started || this.#closed) {
+			this.#enumRunning = false;
+			return;
+		}
 
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();

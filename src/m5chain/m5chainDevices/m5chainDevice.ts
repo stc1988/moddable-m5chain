@@ -24,6 +24,7 @@ class M5ChainDevice {
 	} as const;
 
 	#bus: ChainBus;
+	#connected = true;
 	#id: number;
 	#uuid: string | undefined;
 	readonly kind: string = "device";
@@ -35,7 +36,14 @@ class M5ChainDevice {
 	}
 
 	get bus(): ChainBus {
+		if (!this.#connected) {
+			throw new Error(`M5Chain device id=${this.id} is disconnected.`);
+		}
 		return this.#bus;
+	}
+
+	get connected(): boolean {
+		return this.#connected;
 	}
 
 	get id(): number {
@@ -53,6 +61,12 @@ class M5ChainDevice {
 	async init() {
 		this.#uuid = await this.getUID();
 	}
+
+	_markDisconnected() {
+		this.#connected = false;
+	}
+
+	onDisconnected() {}
 
 	async configure(options: DeviceConfiguration = {}): Promise<void> {
 		assertObjectOption("options", options);
