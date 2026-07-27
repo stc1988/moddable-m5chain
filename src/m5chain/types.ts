@@ -78,6 +78,7 @@ export type SampleHandler<T = unknown> = ((this: SampleProvider<T>) => void) | n
 
 export interface ChainBus {
 	cmdBuffer: Uint8Array;
+	readonly maxPayloadSize: number;
 	lock(): Promise<Unlock>;
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number): void;
 	waitForPacket(cmd: number, options?: WaitForPacketOptions): Promise<WaitForPacketResult>;

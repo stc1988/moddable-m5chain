@@ -47,6 +47,7 @@ export default class M5Chain {
 	debug: boolean;
 	pollingInterval: number;
 	running = false;
+	readonly maxPayloadSize: number;
 
 	#serial;
 	#mutex: Promise<unknown> = Promise.resolve();
@@ -71,6 +72,7 @@ export default class M5Chain {
 
 	constructor(options: M5ChainOptions = {}) {
 		const self = this;
+		this.maxPayloadSize = this.#sendBuffer.length - 9;
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
 		this.#serial = new Serial({
@@ -270,6 +272,13 @@ export default class M5Chain {
 	}
 
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number) {
+		if (!Number.isInteger(size) || size < 0 || size > this.maxPayloadSize) {
+			throw new RangeError(`packet data size must be between 0 and ${this.maxPayloadSize} bytes.`);
+		}
+		if (data.length < size) {
+			throw new RangeError(`packet data contains ${data.length} bytes, but ${size} bytes were requested.`);
+		}
+
 		const cmdSize = size + 3;
 		const sendBufferSize = size + 9;
 
