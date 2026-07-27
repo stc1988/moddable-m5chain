@@ -170,7 +170,7 @@ export default class M5Chain {
 					}
 
 					if (packetCmd === 0xe0) {
-						const device = self.#deviceList[packetId - 1];
+						const device = self.#deviceList.find((candidate) => candidate.id === packetId);
 						if (device) {
 							self.#invokeUserCallback(() => device.onDispatchEvent?.(frame), {
 								source: "deviceEvent",
