@@ -238,17 +238,6 @@ npm run format
 npm run lint
 ```
 
-Build, flash/debug, or start `xsdb` for a platform:
-
-```sh
-npm run build esp32/m5atom_matrix
-npm run debug esp32/m5atom_matrix
-npm run xsdb esp32/m5atom_matrix
-```
-
-`build` passes `-t build` and does not flash the device. `debug` runs `mcconfig` with debug instrumentation, while
-`xsdb` adds `-dl` to launch the command-line debugger.
-
 ## License
 
 MIT

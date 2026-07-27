@@ -3,13 +3,10 @@
 	"version": "1.0.0",
 	"license": "MIT",
 	"scripts": {
-		"build": "node scripts/mcconfig.mjs build",
-		"debug": "node scripts/mcconfig.mjs debug",
-		"format": "biome format --write README.md docs examples scripts src tests biome.json package.json package-lock.json tsconfig.json",
-		"lint": "biome check README.md docs examples scripts src tests biome.json package.json package-lock.json tsconfig.json",
+		"format": "biome format --write README.md docs examples src tests biome.json package.json package-lock.json tsconfig.json",
+		"lint": "biome check README.md docs examples src tests biome.json package.json package-lock.json tsconfig.json",
 		"test": "node --no-warnings --experimental-strip-types --test tests/*.test.mjs",
-		"typecheck": "tsc --noEmit",
-		"xsdb": "node scripts/mcconfig.mjs xsdb"
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.5",
