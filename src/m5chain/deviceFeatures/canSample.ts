@@ -55,7 +55,9 @@ const CanSample = <T = unknown, TBase extends DeviceConstructor<M5ChainDevice> =
 
 		dispatchOnSample(value: T) {
 			this.#sample = value;
-			return this.#onSample?.call(this);
+			const sample = this.sample();
+			if (sample === undefined) return;
+			return this.#onSample?.(sample);
 		}
 	};
 

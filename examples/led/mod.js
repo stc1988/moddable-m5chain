@@ -104,9 +104,7 @@ function attachDevice(device) {
 function attachEncoder(device) {
 	let phase = 0;
 	const STEP = 1 / 36;
-	device.onSample = async function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
+	device.onSample = async (sample) => {
 		trace(`Encoder Device ID\t ${device.id}, encode value\t: ${sample}\n`);
 		phase += sample * STEP;
 		phase = ((phase % 1) + 1) % 1;
@@ -116,9 +114,7 @@ function attachEncoder(device) {
 }
 
 function attachAngle(device) {
-	device.onSample = async function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
+	device.onSample = async (sample) => {
 		trace(`Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
 		const { r, g, b } = hsvToRGB(sample, 1.0, sample);
 		await device.setLedColor(r, g, b);
@@ -148,9 +144,7 @@ function attachKey(device) {
 }
 
 function attachJoyStick(device) {
-	device.onSample = async function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
+	device.onSample = async (sample) => {
 		trace(`JoyStick Device ID\t: ${device.id}, value\t: x:${sample.x}\ty:${sample.y}\n`);
 		const hue = norm(sample.x);
 		const brightness = norm(-sample.y);
@@ -161,9 +155,7 @@ function attachJoyStick(device) {
 }
 
 function attachToF(device) {
-	device.onSample = async function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
+	device.onSample = async (sample) => {
 		trace(`ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
 		const brightness = Math.max(0.1, Math.min(1, 1 - sample / 2000));
 		const { r, g, b } = hsvToRGB(0.58, 1.0, brightness);

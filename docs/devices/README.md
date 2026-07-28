@@ -27,8 +27,7 @@ import M5Chain from "m5chain";
 m5chain.onDeviceListChanged = (devices) => {
 	for (const device of devices) {
 		if (device.kind === "encoder") {
-			device.onSample = function () {
-				const delta = this.sample();
+			device.onSample = (delta) => {
 				trace(`encoder delta=${delta}\n`);
 			};
 		}

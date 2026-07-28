@@ -57,8 +57,7 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 		}
 	};
 
-	encoder.onSample = function () {
-		const delta = this.sample();
+	encoder.onSample = (delta) => {
 		trace(`encoder moved by ${delta}\n`);
 	};
 }
@@ -84,4 +83,4 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 
 ## Sample Value
 
-`onSample` is dispatched when the encoder value changes. `sample()` returns the delta from the previous encoder value.
+`onSample` receives the delta from the previous encoder value and is dispatched only when the value changes. `sample()` returns the latest cached delta.

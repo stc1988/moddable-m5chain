@@ -34,8 +34,7 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 	await angle.setLedColor(0, 255, 80);
 	await angle.configure({ angle: { rotationDirection: AngleRotationDirection.CLOCKWISE } });
 
-	angle.onSample = function () {
-		const sample = this.sample();
+	angle.onSample = (sample) => {
 		trace(`angle=${sample}\n`);
 	};
 }
@@ -60,4 +59,4 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 
 ## Sample Value
 
-`onSample` is dispatched on every poll. `sample()` returns the normalized value from `getAngle12Value()`.
+`onSample` receives the normalized value from `getAngle12Value()` on every poll. `sample()` returns the latest cached value.

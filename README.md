@@ -108,21 +108,23 @@ device.onPush = async (keyEvent) => {
 `KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their TypeScript types are also exported from the key-capable device modules:
 `m5chainEncoder`, `m5chainKey`, and `m5chainJoyStick`.
 
-### `device.onSample = function () {}`
+### `device.onSample = (sample) => {}`
 
 Available on devices with `CanSample` (Encoder / Angle / JoyStick / ToF).
 
 If any device has `onSample` set, bus polling starts. It stops when all `onSample` handlers are `null`.
 
-Use `device.sample()` to read the latest sample. Inside `onSample`, `this` is bound to the device:
+The callback receives the newly acquired sample:
 
 ```js
-device.onSample = function () {
-	const sample = this.sample();
+device.onSample = (sample) => {
+	trace(`sample=${sample}\n`);
 };
 ```
 
-Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
+`device.sample()` remains available as a synchronous accessor for the latest cached sample.
+
+Angle, JoyStick, and ToF dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
 
 Polling failures are tracked per device. A device is removed from the current list after three consecutive sample-read
 failures without disconnecting other responsive devices.

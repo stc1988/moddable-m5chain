@@ -1,3 +1,4 @@
+import type { JoystickValue } from "m5chainJoyStick";
 import M5Chain, { KEY_EVENT, type KeyEvent, type M5ChainDevice } from "m5chain";
 
 const LOG_PREFIX = "[examples/basic]";
@@ -34,20 +35,14 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 	switch (device.kind) {
 		case "encoder":
 			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
-			device.onSample = function () {
-				const sample = this.sample();
-				if (sample !== undefined) {
-					log(`${deviceLabel(device)} delta=${sample}`);
-				}
+			device.onSample = (sample: number) => {
+				log(`${deviceLabel(device)} delta=${sample}`);
 			};
 			break;
 
 		case "angle":
-			device.onSample = function () {
-				const sample = this.sample();
-				if (sample !== undefined) {
-					log(`${deviceLabel(device)} angle=${sample}`);
-				}
+			device.onSample = (sample: number) => {
+				log(`${deviceLabel(device)} angle=${sample}`);
 			};
 			break;
 
@@ -57,20 +52,14 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 
 		case "joystick":
 			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
-			device.onSample = function () {
-				const sample = this.sample();
-				if (sample !== undefined) {
-					log(`${deviceLabel(device)} x=${sample.x} y=${sample.y}`);
-				}
+			device.onSample = (sample: JoystickValue) => {
+				log(`${deviceLabel(device)} x=${sample.x} y=${sample.y}`);
 			};
 			break;
 
 		case "tof":
-			device.onSample = function () {
-				const sample = this.sample();
-				if (sample !== undefined) {
-					log(`${deviceLabel(device)} distance=${sample} mm`);
-				}
+			device.onSample = (sample: number) => {
+				log(`${deviceLabel(device)} distance=${sample} mm`);
 			};
 			break;
 

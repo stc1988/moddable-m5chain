@@ -70,11 +70,7 @@ export type M5ChainErrorContext = {
 
 export type M5ChainErrorHandler = (error: unknown, context: M5ChainErrorContext) => void | Promise<void>;
 
-export type SampleProvider<T = unknown> = {
-	sample(): T | undefined;
-};
-
-export type SampleHandler<T = unknown> = ((this: SampleProvider<T>) => void) | null;
+export type SampleHandler<T = unknown> = ((sample: T) => void) | null;
 
 export interface ChainBus {
 	cmdBuffer: Uint8Array;
