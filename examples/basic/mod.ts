@@ -1,131 +1,101 @@
-import M5ChainAngle from "m5chainAngle";
-import M5ChainEncoder from "m5chainEncoder";
-import M5ChainJoyStick from "m5chainJoyStick";
-import M5ChainKey from "m5chainKey";
-import M5ChainToF from "m5chainToF";
-import M5Chain, { KEY_EVENT, type KeyEvent } from "m5chain";
-import Timer from "timer";
+import M5Chain, { KEY_EVENT, type KeyEvent, type M5ChainDevice } from "m5chain";
 
-type M5ChainExampleDevice = M5ChainEncoder | M5ChainAngle | M5ChainKey | M5ChainJoyStick | M5ChainToF;
-
-const CONNECTED_LED_OFF_DELAY_MS = 1500;
-
-type DeviceWithInfo = M5ChainExampleDevice & {
-	getBootloaderVersion(): Promise<number>;
-	getFirmwareVersion(): Promise<number>;
-};
-
-type LedDevice = M5ChainExampleDevice & {
-	setLedColor(r: number, g: number, b: number): Promise<void>;
-};
-
-function isExampleDevice(device: unknown): device is DeviceWithInfo {
-	if (typeof device !== "object" || device === null) {
-		return false;
-	}
-	return (
-		device instanceof M5ChainEncoder ||
-		device instanceof M5ChainAngle ||
-		device instanceof M5ChainKey ||
-		device instanceof M5ChainJoyStick ||
-		device instanceof M5ChainToF
-	);
-}
-
-function hasLed(device: M5ChainExampleDevice): device is LedDevice {
-	return "setLedColor" in device && typeof device.setLedColor === "function";
-}
+const LOG_PREFIX = "[examples/basic]";
 
 export async function main() {
-	trace("[examples/basic] start\n");
+	log("start");
 
 	const m5chain = new M5Chain();
 
-	m5chain.onDeviceListChanged = async (devices) => {
-		trace("[examples/basic] device list changed\n");
+	m5chain.onError = (error, context) => {
+		log(`${context.source} failed: ${errorMessage(error)}`);
+	};
 
-		const exampleDevices: DeviceWithInfo[] = [];
+	m5chain.onDeviceListChanged = async (devices) => {
+		log(`found ${devices.length} device(s)`);
+
 		for (const device of devices) {
-			if (!isExampleDevice(device)) {
-				continue;
-			}
-			exampleDevices.push(device);
+			attachDeviceHandlers(device);
 		}
 
-		await showConnectedLed(exampleDevices);
-
-		for (const device of exampleDevices) {
-			attachDevice(device);
-			fetchDeviceInfo(device);
+		for (const device of devices) {
+			await logDeviceInfo(device);
 		}
 	};
 
-	m5chain.start();
+	await m5chain.start();
 }
 
-async function fetchDeviceInfo(device: DeviceWithInfo) {
+function attachDeviceHandlers(device: M5ChainDevice) {
+	device.onDisconnected = () => {
+		log(`${deviceLabel(device)} disconnected`);
+	};
+
+	switch (device.kind) {
+		case "encoder":
+			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
+			device.onSample = function () {
+				const sample = this.sample();
+				if (sample !== undefined) {
+					log(`${deviceLabel(device)} delta=${sample}`);
+				}
+			};
+			break;
+
+		case "angle":
+			device.onSample = function () {
+				const sample = this.sample();
+				if (sample !== undefined) {
+					log(`${deviceLabel(device)} angle=${sample}`);
+				}
+			};
+			break;
+
+		case "key":
+			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
+			break;
+
+		case "joystick":
+			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
+			device.onSample = function () {
+				const sample = this.sample();
+				if (sample !== undefined) {
+					log(`${deviceLabel(device)} x=${sample.x} y=${sample.y}`);
+				}
+			};
+			break;
+
+		case "tof":
+			device.onSample = function () {
+				const sample = this.sample();
+				if (sample !== undefined) {
+					log(`${deviceLabel(device)} distance=${sample} mm`);
+				}
+			};
+			break;
+
+		case "unknown":
+			log(`${deviceLabel(device)} is not supported by this library`);
+			break;
+	}
+}
+
+async function logDeviceInfo(device: M5ChainDevice) {
 	const bootloaderVersion = await device.getBootloaderVersion();
 	const firmwareVersion = await device.getFirmwareVersion();
-	trace(
-		`[examples/basic] Device ID: ${device.id}, Type: ${device.type.toString(16)}, UID: ${device.uuid}, Bootloader Version: ${bootloaderVersion}, Firmware Version: ${firmwareVersion}\n`,
-	);
+	log(`${deviceLabel(device)} uid=${device.uuid} bootloader=${bootloaderVersion} firmware=${firmwareVersion}`);
 }
 
-async function showConnectedLed(devices: M5ChainExampleDevice[]) {
-	const ledDevices = devices.filter(hasLed);
-	for (const device of ledDevices) {
-		await turnOnConnectedLed(device);
-	}
-	Timer.delay(CONNECTED_LED_OFF_DELAY_MS);
-	for (const device of ledDevices) {
-		await turnOffConnectedLed(device);
-	}
+function logKeyEvent(device: M5ChainDevice, event: KeyEvent) {
+	log(`${deviceLabel(device)} key=${keyEventName(event)}`);
 }
 
-async function turnOnConnectedLed(device: LedDevice) {
-	try {
-		await device.setLedColor(0, 32, 0);
-	} catch (error) {
-		trace(`[examples/basic] Device ID: ${device.id}, connected LED failed: ${errorMessage(error)}\n`);
-	}
+function deviceLabel(device: M5ChainDevice) {
+	return `${device.kind} id=${device.id} type=0x${device.type.toString(16).padStart(4, "0")}`;
 }
 
-async function turnOffConnectedLed(device: LedDevice) {
-	try {
-		await device.setLedColor(0, 0, 0);
-	} catch (error) {
-		trace(`[examples/basic] Device ID: ${device.id}, connected LED off failed: ${errorMessage(error)}\n`);
-	}
-}
-
-function attachDevice(device: M5ChainExampleDevice) {
-	if (device instanceof M5ChainEncoder) {
-		attachEncoder(device);
-		return;
-	}
-	if (device instanceof M5ChainAngle) {
-		attachAngle(device);
-		return;
-	}
-	if (device instanceof M5ChainKey) {
-		attachKey(device);
-		return;
-	}
-	if (device instanceof M5ChainJoyStick) {
-		attachJoyStick(device);
-		return;
-	}
-	if (device instanceof M5ChainToF) {
-		attachToF(device);
-	}
-}
-
-function errorMessage(error: unknown): string {
-	return error instanceof Error ? error.message : String(error);
-}
-
-function keyEventName(keyEvent: KeyEvent): string {
-	switch (keyEvent) {
+function keyEventName(event: KeyEvent) {
+	switch (event) {
 		case KEY_EVENT.SINGLE_CLICK:
 			return "single click";
 		case KEY_EVENT.DOUBLE_CLICK:
@@ -133,52 +103,14 @@ function keyEventName(keyEvent: KeyEvent): string {
 		case KEY_EVENT.LONG_PRESS:
 			return "long press";
 		default:
-			return `unknown(${keyEvent})`;
+			return `unknown(${event})`;
 	}
 }
 
-function attachEncoder(device: M5ChainEncoder) {
-	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`[examples/basic] Encoder Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
-	};
-
-	device.onSample = function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
-		trace(`[examples/basic] Encoder Device ID\t: ${device.id}, encode value\t: ${sample}\n`);
-	};
+function errorMessage(error: unknown) {
+	return error instanceof Error ? error.message : String(error);
 }
 
-function attachAngle(device: M5ChainAngle) {
-	device.onSample = function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
-		trace(`[examples/basic] Angle Device ID\t: ${device.id}, angle value\t: ${sample}\n`);
-	};
-}
-
-function attachKey(device: M5ChainKey) {
-	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`[examples/basic] Key Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
-	};
-}
-
-function attachJoyStick(device: M5ChainJoyStick) {
-	device.onPush = (keyEvent: KeyEvent) => {
-		trace(`[examples/basic] JoyStick Device ID\t: ${device.id}, Key Event\t: ${keyEventName(keyEvent)}\n`);
-	};
-
-	device.onSample = function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
-		trace(`[examples/basic] JoyStick Device ID\t: ${device.id}, value\t: x:${sample.x}\ty:${sample.y}\n`);
-	};
-}
-
-function attachToF(device: M5ChainToF) {
-	device.onSample = function () {
-		const sample = this.sample();
-		if (sample === undefined) return;
-		trace(`[examples/basic] ToF Device ID	: ${device.id}, distance	: ${sample} mm\n`);
-	};
+function log(message: string) {
+	trace(`${LOG_PREFIX} ${message}\n`);
 }

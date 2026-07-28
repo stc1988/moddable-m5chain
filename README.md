@@ -198,7 +198,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 ## Examples
 
-- `examples/basic`: device discovery, info read, and event subscription
+- `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
 - `examples/led`: LED control for Encoder/Angle/Key/JoyStick/ToF
 
 ## Development
