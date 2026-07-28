@@ -1,4 +1,5 @@
 import type M5ChainAngle from "m5chainAngle";
+import type M5ChainBuzzer from "m5chainBuzzer";
 import type M5ChainEncoder from "m5chainEncoder";
 import type M5ChainJoyStick from "m5chainJoyStick";
 import type M5ChainKey from "m5chainKey";
@@ -12,4 +13,5 @@ export type M5ChainDevice =
 	| (M5ChainKey & M5ChainDeviceLike)
 	| (M5ChainJoyStick & M5ChainDeviceLike)
 	| (M5ChainToF & M5ChainDeviceLike)
+	| (M5ChainBuzzer & M5ChainDeviceLike)
 	| (M5ChainUnknownDevice & M5ChainDeviceLike);

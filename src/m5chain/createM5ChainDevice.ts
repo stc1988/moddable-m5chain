@@ -1,5 +1,6 @@
 import type { M5ChainDevice } from "deviceUnion";
 import M5ChainAngle from "m5chainAngle";
+import M5ChainBuzzer from "m5chainBuzzer";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
@@ -12,7 +13,7 @@ type DeviceClass = {
 	new (m5chain: ChainBus, options: DeviceFactoryOptions): M5ChainDevice;
 };
 
-const DEVICE_CLASSES = [M5ChainEncoder, M5ChainAngle, M5ChainKey, M5ChainJoyStick, M5ChainToF];
+const DEVICE_CLASSES = [M5ChainEncoder, M5ChainAngle, M5ChainKey, M5ChainJoyStick, M5ChainToF, M5ChainBuzzer];
 export default function createM5ChainDevice(m5chain: ChainBus, options: DeviceFactoryOptions): M5ChainDevice {
 	const DeviceCtor = (DEVICE_CLASSES as unknown as DeviceClass[]).find((cls) => cls.DEVICE_TYPE === options.type);
 
