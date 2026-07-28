@@ -1,3 +1,4 @@
+import ConnectionMonitor from "connectionMonitor";
 import createM5ChainDevice from "createM5ChainDevice";
 import type { M5ChainDevice } from "deviceUnion";
 import PollingState from "pollingState";
@@ -23,6 +24,7 @@ export type M5ChainOptions = {
 	receive?: number;
 	debug?: boolean;
 	pollingInterval?: number;
+	connectionCheckInterval?: number;
 };
 
 declare const device: {
@@ -47,12 +49,14 @@ export default class M5Chain {
 	onError?: M5ChainErrorHandler;
 	debug: boolean;
 	pollingInterval: number;
+	connectionCheckInterval: number;
 	running = false;
 	readonly maxPayloadSize: number;
 
 	#serial;
 	#mutex: Promise<unknown> = Promise.resolve();
 	cmdBuffer = new Uint8Array(256);
+	#enumBuffer = new Uint8Array(1);
 	#sendBuffer = new Uint8Array(256);
 	#receiveResolve: ((result: WaitForPacketResult) => void) | null = null;
 	#receiveReject: ((reason?: unknown) => void) | null = null;
@@ -64,6 +68,9 @@ export default class M5Chain {
 	#pollFailureCounts = new Map<number, number>();
 	#pollState = new PollingState();
 	#pollTask: Promise<void> | null = null;
+	#connectionMonitor = new ConnectionMonitor();
+	#connectionCheckTimer: ReturnType<typeof Timer.set> | null = null;
+	#connectionCheckRunning = false;
 	#sendCmd: number | null = null;
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
@@ -77,6 +84,10 @@ export default class M5Chain {
 		this.maxPayloadSize = this.#sendBuffer.length - 9;
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
+		this.connectionCheckInterval = options.connectionCheckInterval ?? 1000;
+		if (!Number.isFinite(this.connectionCheckInterval) || this.connectionCheckInterval < 0) {
+			throw new RangeError("connectionCheckInterval must be a non-negative number.");
+		}
 		this.#serial = new Serial({
 			transmit: options?.transmit ?? config.m5chain?.transmit ?? device.I2C.default.data,
 			receive: options?.receive ?? config.m5chain?.receive ?? device.I2C.default.clock,
@@ -441,6 +452,7 @@ export default class M5Chain {
 			});
 			this.#notifyDeviceListChanged();
 			this.#updatePollingState();
+			this.#updateConnectionMonitoringState();
 			return true;
 		}
 		return false;
@@ -457,6 +469,7 @@ export default class M5Chain {
 		if (!this.#started) return;
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
+		this.#updateConnectionMonitoringState();
 	}
 
 	async stop() {
@@ -464,6 +477,7 @@ export default class M5Chain {
 
 		this.#started = false;
 		this.#stopPolling();
+		this.#stopConnectionMonitoring();
 		this.#abortPendingWait("M5Chain stopped");
 
 		const pollTask = this.#pollTask;
@@ -573,15 +587,84 @@ export default class M5Chain {
 		}
 	}
 
+	#scheduleConnectionCheck() {
+		if (
+			!this.#started ||
+			this.#closed ||
+			this.connectionCheckInterval === 0 ||
+			this.#connectionCheckTimer ||
+			this.#connectionCheckRunning
+		) {
+			return;
+		}
+
+		this.#connectionCheckTimer = Timer.set(() => {
+			this.#connectionCheckTimer = null;
+			void this.#checkConnections();
+		}, this.connectionCheckInterval);
+	}
+
+	#stopConnectionMonitoring() {
+		if (this.#connectionCheckTimer) {
+			Timer.clear(this.#connectionCheckTimer);
+			this.#connectionCheckTimer = null;
+		}
+		this.#connectionMonitor.reset();
+	}
+
+	#updateConnectionMonitoringState() {
+		if (this.#started && !this.#closed && this.connectionCheckInterval > 0) {
+			this.#scheduleConnectionCheck();
+		} else {
+			this.#stopConnectionMonitoring();
+		}
+	}
+
+	async #checkConnections() {
+		if (this.#connectionCheckRunning) return;
+		this.#connectionCheckRunning = true;
+
+		try {
+			if (!this.#started || this.#closed || this.#enumRunning) return;
+
+			try {
+				if (this.#deviceList.length === 0) {
+					const connected = await this.isDeviceConnected();
+					if (!this.#started || this.#closed) return;
+					if (this.#connectionMonitor.observeDeviceCount(0, connected ? 1 : 0)) {
+						await this.#handleEnumPlease();
+					}
+					return;
+				}
+
+				const deviceCount = await this.getDeviceNum({ timeoutMs: 300 });
+				if (!this.#started || this.#closed) return;
+				if (this.#connectionMonitor.observeDeviceCount(this.#deviceList.length, deviceCount)) {
+					await this.#handleEnumPlease();
+				}
+			} catch (error: unknown) {
+				if (!this.#started || this.#closed) return;
+				const message = error instanceof Error ? error.message : String(error);
+				this.#log(`connection check failed: ${message}`, "WARN");
+				if (this.#connectionMonitor.observeFailure()) {
+					this.#connectionMonitor.reset();
+					await this.#handleEnumPlease();
+				}
+			}
+		} finally {
+			this.#connectionCheckRunning = false;
+			this.#updateConnectionMonitoringState();
+		}
+	}
+
 	async getDeviceType(id: number): Promise<number> {
 		const packet = await this.sendAndWait(id, M5Chain.CMD.GET_DEVICE_TYPE, this.cmdBuffer, 0);
 		const deviceType = (packet[7] << 8) | packet[6];
 		return deviceType;
 	}
 
-	async getDeviceNum(): Promise<number> {
-		this.cmdBuffer[0] = 0x00;
-		const packet = await this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.cmdBuffer, 1);
+	async getDeviceNum(options: WaitForPacketOptions | undefined = undefined): Promise<number> {
+		const packet = await this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.#enumBuffer, 1, options);
 		const deviceNum = packet[6];
 		return deviceNum;
 	}
@@ -645,6 +728,11 @@ export default class M5Chain {
 	async #handleEnumPlease() {
 		if (this.#enumRunning) return;
 		this.#enumRunning = true;
+		if (this.#enumTimer) {
+			Timer.clear(this.#enumTimer);
+			this.#enumTimer = null;
+		}
+		this.#enumPending = false;
 		this.#log(`handleEnumPlease`);
 
 		const oldDevices = [...this.#deviceList];
@@ -666,6 +754,7 @@ export default class M5Chain {
 
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
+		this.#updateConnectionMonitoringState();
 
 		this.#enumRunning = false;
 	}
