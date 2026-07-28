@@ -27,8 +27,12 @@
 		"m5chainDevice",
 		"m5chainJoyStick",
 		"m5chainKey",
+		"m5chainMatrixDisplay",
+		"m5chainMono",
+		"m5chainRGB",
 		"m5chainToF",
 		"m5chainUnknownDevice",
+		"matrixDisplayProtocol",
 		"canSample",
 		"hasLed",
 		"hasKey"

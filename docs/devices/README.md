@@ -16,6 +16,8 @@ Shared mixin APIs are documented separately in [Feature API Guides](../features/
 | [JoyStick](joystick.md) | `M5ChainJoyStick` | `m5chainJoyStick` | LED, key, sampling |
 | [ToF](tof.md) | `M5ChainToF` | `m5chainToF` | LED, sampling |
 | [Buzzer](buzzer.md) | `M5ChainBuzzer` | `m5chainBuzzer` | LED, tone and note output |
+| [Mono](mono.md) | `M5ChainMono` | `m5chainMono` | 8x8 monochrome matrix display |
+| [RGB](rgb.md) | `M5ChainRGB` | `m5chainRGB` | 8x8 RGB matrix display |
 | Unknown | `M5ChainUnknownDevice` | `m5chainUnknownDevice` | Common device information |
 
 ## Import Pattern

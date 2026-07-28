@@ -13,6 +13,8 @@ It handles device enumeration, initialization, event dispatch, and polling.
 | [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | [JoyStick API](docs/devices/joystick.md) |
 | [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Yes (distance in mm) | [ToF API](docs/devices/tof.md) |
 | [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer) | `0x000B` | Yes | No | No | No | [Buzzer API](docs/devices/buzzer.md) |
+| [Mono](https://docs.m5stack.com/en/chain/Chain_Mono) | `0x000D` | No | No | No | No | [Mono API](docs/devices/mono.md) |
+| [RGB](https://docs.m5stack.com/en/chain/Chain_RGB) | `0x000E` | No | No | No | No | [RGB API](docs/devices/rgb.md) |
 
 ## Features
 
@@ -145,7 +147,7 @@ failures without disconnecting other responsive devices.
 
 - `device.id`
 - `device.type`
-- `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, `buzzer`, or `unknown`)
+- `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, `buzzer`, `mono`, `rgb`, or `unknown`)
 - `device.known` (`false` for device types not yet supported by this library)
 - `device.connected`
 - `device.uuid` (after `init()`)
@@ -190,6 +192,8 @@ Device-specific usage, TypeScript exports, and method details are split into foc
 - [JoyStick API](docs/devices/joystick.md)
 - [ToF API](docs/devices/tof.md)
 - [Buzzer API](docs/devices/buzzer.md)
+- [Mono API](docs/devices/mono.md)
+- [RGB API](docs/devices/rgb.md)
 
 Feature mixin details are also split into focused pages:
 
@@ -205,6 +209,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 - `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
 - `examples/led`: type-safe, sample-driven LED control for Encoder/Angle/Key/JoyStick/ToF
 - `examples/buzzer`: RGB indication, timed tone playback, and note playback
+- `examples/matrix`: frame drawing and scrolling text on Chain Mono and Chain RGB
 
 ## Development
 

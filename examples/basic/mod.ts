@@ -67,6 +67,11 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 			log(`${deviceLabel(device)} ready`);
 			break;
 
+		case "mono":
+		case "rgb":
+			log(`${deviceLabel(device)} ${device.width}x${device.height} display ready`);
+			break;
+
 		case "unknown":
 			log(`${deviceLabel(device)} is not supported by this library`);
 			break;

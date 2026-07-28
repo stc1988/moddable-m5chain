@@ -26,7 +26,28 @@ export {
 	type NoteOptions,
 	type ToneOptions,
 } from "m5chainBuzzer";
-export type { M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
+export {
+	type DisplayCoordinate,
+	MATRIX_ROTATION,
+	type MatrixDisplayConfiguration,
+	type MatrixDisplayConfigurationSnapshot,
+	type MatrixRotation,
+	SCROLL_BEHAVIOR,
+	SCROLL_DIRECTION,
+	SCROLL_STATE,
+	type ScrollBehavior,
+	type ScrollDirection,
+	type ScrollSettings,
+	type ScrollState,
+} from "m5chainMatrixDisplay";
+export type { MonoPixel, MonoScrollOptions, MonoScrollText } from "m5chainMono";
+export type {
+	RgbMatrixPixel,
+	RgbScrollColor,
+	RgbScrollOptions,
+	RgbScrollText,
+} from "m5chainRGB";
+export type { LedColor, M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
 
 export type M5ChainOptions = {
 	transmit?: number;
