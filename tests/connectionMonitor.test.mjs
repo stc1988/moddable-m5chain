@@ -9,6 +9,13 @@ test("requests a rescan when the observed device count changes", () => {
 	assert.equal(monitor.observeDeviceCount(2, 1), true);
 });
 
+test("requests a rescan when a device appears on an empty chain", () => {
+	const monitor = new ConnectionMonitor();
+
+	assert.equal(monitor.observeDeviceCount(0, 0), false);
+	assert.equal(monitor.observeDeviceCount(0, 1), true);
+});
+
 test("requests a rescan after three consecutive probe failures", () => {
 	const monitor = new ConnectionMonitor();
 

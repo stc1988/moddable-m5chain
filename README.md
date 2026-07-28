@@ -18,7 +18,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 - Packet transport and matching (`sendPacket` / `sendAndWait`)
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
-- Connection monitoring also detects devices that do not use sample polling
+- Connection monitoring detects topology changes even without sample polling, including devices attached after startup
 - Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Sample](docs/features/can-sample.md))
 - Poll loop runs only when at least one device has `onSample` set
 

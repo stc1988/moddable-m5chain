@@ -591,7 +591,6 @@ export default class M5Chain {
 		if (
 			!this.#started ||
 			this.#closed ||
-			this.#deviceList.length === 0 ||
 			this.connectionCheckInterval === 0 ||
 			this.#connectionCheckTimer ||
 			this.#connectionCheckRunning
@@ -614,7 +613,7 @@ export default class M5Chain {
 	}
 
 	#updateConnectionMonitoringState() {
-		if (this.#started && !this.#closed && this.#deviceList.length > 0 && this.connectionCheckInterval > 0) {
+		if (this.#started && !this.#closed && this.connectionCheckInterval > 0) {
 			this.#scheduleConnectionCheck();
 		} else {
 			this.#stopConnectionMonitoring();
@@ -626,9 +625,18 @@ export default class M5Chain {
 		this.#connectionCheckRunning = true;
 
 		try {
-			if (!this.#started || this.#closed || this.#enumRunning || this.#deviceList.length === 0) return;
+			if (!this.#started || this.#closed || this.#enumRunning) return;
 
 			try {
+				if (this.#deviceList.length === 0) {
+					const connected = await this.isDeviceConnected();
+					if (!this.#started || this.#closed) return;
+					if (this.#connectionMonitor.observeDeviceCount(0, connected ? 1 : 0)) {
+						await this.#handleEnumPlease();
+					}
+					return;
+				}
+
 				const deviceCount = await this.getDeviceNum({ timeoutMs: 300 });
 				if (!this.#started || this.#closed) return;
 				if (this.#connectionMonitor.observeDeviceCount(this.#deviceList.length, deviceCount)) {
