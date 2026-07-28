@@ -59,8 +59,7 @@ if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 		}
 	};
 
-	joystick.onSample = function () {
-		const sample = this.sample();
+	joystick.onSample = (sample) => {
 		trace(`joystick x=${sample.x} y=${sample.y}\n`);
 	};
 }
@@ -85,4 +84,4 @@ if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
 
 ## Sample Value
 
-`onSample` is dispatched on every poll. `sample()` returns `{ x, y }` from `getJoystickMappedInt8Value()`.
+`onSample` receives `{ x, y }` from `getJoystickMappedInt8Value()` on every poll. `sample()` returns the latest cached value.

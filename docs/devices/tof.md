@@ -47,8 +47,7 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 		},
 	});
 
-	tof.onSample = function () {
-		const sample = this.sample();
+	tof.onSample = (sample) => {
 		trace(`distance=${sample}mm\n`);
 	};
 }
@@ -76,4 +75,4 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 
 ## Sample Value
 
-`onSample` is dispatched on every poll. `sample()` returns the measured distance in millimeters.
+`onSample` receives the measured distance in millimeters on every poll. `sample()` returns the latest cached value.

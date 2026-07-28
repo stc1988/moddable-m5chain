@@ -13,7 +13,7 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` arrives (debounced)
 - Feature composition via `withDeviceFeatures(...)`
 - Poll loop runs only while at least one device has `onSample` set
-- Sample-capable public APIs follow the ECMA-419 Sensor pattern: `onSample` notifies, and `sample()` returns the latest value
+- Sample-capable public APIs use `onSample(sample)` notifications and a synchronous `sample()` accessor for the latest cached value
 
 ## Repository Structure
 
@@ -73,13 +73,13 @@ Each concrete class composes feature mixins via `withDeviceFeatures(...)`.
 
 - `HasLed`: RGB LED API
 - `HasKey`: key state/config API + key event callback
-- `CanSample`: `onSample` notification + `sample()` accessor + bus sample-read integration
+- `CanSample`: `onSample(sample)` notification + latest-value `sample()` accessor + bus sample-read integration
 
 ### Sampling API Policy
 
 - Public sample-capable device APIs use sample terminology: `CanSample`, `onSample`, `sample()`, `hasOnSample()`.
-- `onSample` callbacks receive no value argument. Inside the callback, use `this.sample()` to read the latest sample.
-- `sample()` is synchronous and returns the latest cached value. The UART request happens in the internal poll loop through `readSample()`.
+- `onSample` callbacks receive the newly acquired sample as their only argument.
+- `sample()` is synchronous and returns the latest cached value outside callbacks as well. The UART request happens in the internal poll loop through `readSample()`.
 - Angle, JoyStick, and ToF dispatch `onSample` every poll cycle with the latest value.
 - Encoder dispatches `onSample` only when the encoder value changes. Its `sample()` value is the delta from the previous encoder value.
 - Internal bus scheduling may keep poll terminology (`#pollLoop`, `pollingInterval`, logs) because the implementation periodically checks devices over the serial bus.

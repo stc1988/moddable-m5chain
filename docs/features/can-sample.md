@@ -12,7 +12,7 @@ import type { SampleHandler } from "types";
 | Export | Description |
 | --- | --- |
 | `CanSample` | Default generic mixin export. |
-| `SampleHandler<T>` | `((this: { sample(): T \| undefined }) => void) \| null`, exported from `types`. |
+| `SampleHandler<T>` | `((sample: T) => void) \| null`, exported from `types`. |
 
 ## Used By
 
@@ -41,17 +41,17 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 
 | Method | Description |
 | --- | --- |
-| `device.onSample = function () {}` | Registers a sample callback. Set to `null` to clear it. |
+| `device.onSample = (sample) => {}` | Registers a callback that receives each newly acquired sample. Set to `null` to clear it. |
 | `device.sample()` | Returns the latest sampled value, or `undefined` before the first sample. Object samples are returned as shallow copies. |
 | `device.hasOnSample()` | Returns whether a sample callback is registered. |
 | `await device.readSample()` | Device implementation hook. Reads from the bus and returns a value to store as the latest sample, or `undefined` to skip dispatch. |
-| `device.dispatchOnSample(value)` | Stores `value` as the latest sample and calls the registered `onSample` handler with `this` bound to the device. |
+| `device.dispatchOnSample(value)` | Stores `value` as the latest sample and passes it to the registered `onSample` handler. Object samples are passed as shallow copies. |
 
 ## Sample Values
 
 Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
 
-| Device | `sample()` value |
+| Device | `onSample` argument and `sample()` value |
 | --- | --- |
 | Encoder | Delta from previous encoder value (`number`) |
 | Angle | Normalized angle value (`0.00` to `1.00`) |
