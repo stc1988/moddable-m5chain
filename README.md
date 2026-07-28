@@ -12,6 +12,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 | [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | No | [Key API](docs/devices/key.md) |
 | [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | [JoyStick API](docs/devices/joystick.md) |
 | [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Yes (distance in mm) | [ToF API](docs/devices/tof.md) |
+| [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer) | `0x000B` | Yes | No | No | No | [Buzzer API](docs/devices/buzzer.md) |
 
 ## Features
 
@@ -144,7 +145,7 @@ failures without disconnecting other responsive devices.
 
 - `device.id`
 - `device.type`
-- `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, or `unknown`)
+- `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, `buzzer`, or `unknown`)
 - `device.known` (`false` for device types not yet supported by this library)
 - `device.connected`
 - `device.uuid` (after `init()`)
@@ -162,7 +163,7 @@ The `M5ChainDevice` union and `M5ChainOptions` types are exported from `m5chain`
 
 ### LED Features (`HasLed`)
 
-Available on: Encoder / Angle / Key / JoyStick / ToF
+Available on: Encoder / Angle / Key / JoyStick / ToF / Buzzer
 
 See [HasLed API](docs/features/has-led.md).
 
@@ -188,6 +189,7 @@ Device-specific usage, TypeScript exports, and method details are split into foc
 - [Key API](docs/devices/key.md)
 - [JoyStick API](docs/devices/joystick.md)
 - [ToF API](docs/devices/tof.md)
+- [Buzzer API](docs/devices/buzzer.md)
 
 Feature mixin details are also split into focused pages:
 
@@ -202,6 +204,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 - `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
 - `examples/led`: type-safe, sample-driven LED control for Encoder/Angle/Key/JoyStick/ToF
+- `examples/buzzer`: RGB indication, timed tone playback, and note playback
 
 ## Development
 

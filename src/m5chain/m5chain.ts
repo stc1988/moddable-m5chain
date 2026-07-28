@@ -17,6 +17,15 @@ import type {
 
 export type { M5ChainDevice } from "deviceUnion";
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
+export {
+	BUZZER_MODE,
+	BUZZER_NOTE,
+	type BuzzerMode,
+	type BuzzerNote,
+	type ContinuousToneOptions,
+	type NoteOptions,
+	type ToneOptions,
+} from "m5chainBuzzer";
 export type { M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
 
 export type M5ChainOptions = {

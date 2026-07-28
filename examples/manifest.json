@@ -22,6 +22,7 @@
 		"m5chain",
 		"createM5ChainDevice",
 		"m5chainAngle",
+		"m5chainBuzzer",
 		"m5chainEncoder",
 		"m5chainDevice",
 		"m5chainJoyStick",
