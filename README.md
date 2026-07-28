@@ -18,6 +18,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 - Packet transport and matching (`sendPacket` / `sendAndWait`)
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
+- Connection monitoring also detects devices that do not use sample polling
 - Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Sample](docs/features/can-sample.md))
 - Poll loop runs only when at least one device has `onSample` set
 
@@ -56,6 +57,7 @@ const m5chain = new M5Chain({
 	receive: config.m5chain.receive,
 	debug: false,
 	pollingInterval: 30, // ms
+	connectionCheckInterval: 1000, // ms; set to 0 to disable
 });
 
 m5chain.onDeviceListChanged = (devices) => {
@@ -72,8 +74,14 @@ await m5chain.start();
 ### `m5chain.onDeviceListChanged = (devices) => {}`
 
 - Called after the initial scan completes in `start()`
-- Called again after re-scan when the chain sends `ENUM_PLEASE`
+- Called again after re-scan when the chain sends `ENUM_PLEASE` or connection monitoring detects a topology change
 - `devices` is the current connected device list
+
+### `device.onDisconnected = () => {}`
+
+- Called before a disconnected device instance is removed or replaced during re-scan
+- Works for devices without `onSample`, such as Key, through connection monitoring
+- The disconnected instance has `device.connected === false` and can no longer access the bus
 
 ### `m5chain.onError = (error, context) => {}`
 
@@ -123,7 +131,7 @@ failures without disconnecting other responsive devices.
 
 ### M5Chain
 
-- `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30 })`
+- `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
 - `await m5chain.start()`
 - `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
 - `await m5chain.close()` stops the chain and closes UART permanently
