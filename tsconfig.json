@@ -15,8 +15,6 @@
 		"noImplicitThis": false,
 		"strictNullChecks": false,
 		"paths": {
-			"keyboard": ["./examples/ble-hid/keyboard/keyboard.ts"],
-			"mediaControl": ["./examples/ble-hid/mediaControl/mediaControl.ts"],
 			"*": [
 				"./node_modules/@moddable/typings/*",
 				"./node_modules/@moddable/typings/ble/*",
