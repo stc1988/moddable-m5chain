@@ -1,7 +1,6 @@
 {
 	"include": [
-		"./src/m5chain/manifest_include.json",
-		"./src/m5chain/manifest_module.json",
-		"./src/m5chain/manifest_chain_base.json"
+		"./src/m5chain/manifest_host.json",
+		"./src/m5chain/manifest_mod.json"
 	]
 }

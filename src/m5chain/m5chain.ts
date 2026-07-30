@@ -4,6 +4,7 @@ import type { M5ChainDevice } from "deviceUnion";
 import PollingState from "pollingState";
 import Serial from "embedded:io/serial";
 import config from "mc/config";
+import Modules from "modules";
 import Timer from "timer";
 import type {
 	DeviceListChangeHandler,
@@ -66,6 +67,34 @@ declare const device: {
 	};
 };
 
+// biome-ignore lint/suspicious/noExplicitAny: Match the type definition of mc/config
+type ConfigRecord = Record<string, any>;
+type connectionConfig = {
+	transmit: number;
+	receive: number;
+};
+function loadConnectionConfig(): connectionConfig {
+	const modConfig: ConfigRecord | undefined = Modules.has("mod/config")
+		? (Modules.importNow("mod/config") as ConfigRecord)
+		: undefined;
+	if (modConfig && typeof modConfig === "object") {
+		return {
+			transmit: modConfig.m5chain.transmit,
+			receive: modConfig.m5chain.receive,
+		};
+	} else if (config && typeof config === "object") {
+		return {
+			transmit: config.m5chain.transmit,
+			receive: config.m5chain.receive,
+		};
+	}
+
+	return {
+		transmit: device.I2C.default.data,
+		receive: device.I2C.default.clock,
+	};
+}
+
 export default class M5Chain {
 	static CMD = Object.freeze({
 		GET_DEVICE_TYPE: 0xfb /**< Get device type. */,
@@ -118,9 +147,13 @@ export default class M5Chain {
 		if (!Number.isFinite(this.connectionCheckInterval) || this.connectionCheckInterval < 0) {
 			throw new RangeError("connectionCheckInterval must be a non-negative number.");
 		}
+		const connectionConfig =
+			options?.transmit && options?.receive
+				? { transmit: options.transmit, receive: options.receive }
+				: loadConnectionConfig();
 		this.#serial = new Serial({
-			transmit: options?.transmit ?? config.m5chain?.transmit ?? device.I2C.default.data,
-			receive: options?.receive ?? config.m5chain?.receive ?? device.I2C.default.clock,
+			transmit: connectionConfig.transmit,
+			receive: connectionConfig.receive,
 			baud: 115200,
 			format: "buffer",
 			port: 1,

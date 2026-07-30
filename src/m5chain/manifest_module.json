@@ -1,5 +1,0 @@
-{
-	"modules": {
-		"*": ["./*", "./m5chainDevices/*", "./deviceFeatures/*"]
-	}
-}

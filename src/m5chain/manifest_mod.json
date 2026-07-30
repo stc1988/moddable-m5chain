@@ -1,0 +1,25 @@
+{
+	"include": ["./manifest_chain_base.json", "$(MODDABLE)/examples/manifest_typings.json"],
+	"modules": {
+		"*": ["./*", "./m5chainDevices/*", "./deviceFeatures/*"]
+	},
+	"preload": [
+		"m5chain",
+		"createM5ChainDevice",
+		"m5chainAngle",
+		"m5chainBuzzer",
+		"m5chainEncoder",
+		"m5chainDevice",
+		"m5chainJoyStick",
+		"m5chainKey",
+		"m5chainMatrixDisplay",
+		"m5chainMono",
+		"m5chainRGB",
+		"m5chainToF",
+		"m5chainUnknownDevice",
+		"matrixDisplayProtocol",
+		"canSample",
+		"hasLed",
+		"hasKey"
+	]
+}

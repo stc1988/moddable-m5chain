@@ -2,8 +2,7 @@
 	"include": [
 		"$(MODDABLE)/examples/manifest_base.json",
 		"$(MODULES)/base/modules/manifest.json",
-		"$(MODDABLE)/modules/io/ble/server/manifest.json",
-		"../src/m5chain/manifest_include.json"
+		"../src/m5chain/manifest_host.json"
 	],
 	"defines": {
 		"XS_MODS": 1,
@@ -18,24 +17,5 @@
 	"modules": {
 		"*": ["./main"]
 	},
-	"preload": [
-		"m5chain",
-		"createM5ChainDevice",
-		"m5chainAngle",
-		"m5chainBuzzer",
-		"m5chainEncoder",
-		"m5chainDevice",
-		"m5chainJoyStick",
-		"m5chainKey",
-		"m5chainMatrixDisplay",
-		"m5chainMono",
-		"m5chainRGB",
-		"m5chainToF",
-		"m5chainUnknownDevice",
-		"matrixDisplayProtocol",
-		"canSample",
-		"hasLed",
-		"hasKey"
-	],
-	"strip": "[]"
+	"strip": []
 }
