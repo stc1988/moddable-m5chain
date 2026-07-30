@@ -219,6 +219,17 @@ mcconfig -d -m -p esp32/m5atom_matrix ./examples/host/manifest.json
 ```
 
 The other examples are Mods loaded by the shared `examples/manifest.json` host.
+That host reserves 6144 XS heap slots so the library and a loaded Mod fit in the fixed-size slot heap. Applications
+using their own Mod host should make the equivalent adjustment in the host manifest, not the Mod manifest:
+
+```json
+"creation": {
+	"heap": {
+		"initial": 6144,
+		"incremental": 0
+	}
+}
+```
 
 ## Development
 
