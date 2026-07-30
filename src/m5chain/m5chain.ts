@@ -1,7 +1,5 @@
-import ConnectionMonitor from "connectionMonitor";
 import createM5ChainDevice from "createM5ChainDevice";
 import type { M5ChainDevice } from "deviceUnion";
-import PollingState from "pollingState";
 import Serial from "embedded:io/serial";
 import config from "mc/config";
 import Modules from "modules";
@@ -73,6 +71,19 @@ type connectionConfig = {
 	transmit: number;
 	receive: number;
 };
+
+type QueuedRequest = {
+	id: number;
+	cmd: number;
+	data: Uint8Array;
+	size: number;
+	timeoutMs: number;
+	match: PacketMatch | null;
+	rejectFailures: boolean;
+	resolve: (result: WaitForPacketResult) => void;
+	reject: (reason?: unknown) => void;
+};
+
 function loadConnectionConfig(): connectionConfig {
 	const modConfig: ConfigRecord | undefined = Modules.has("mod/config")
 		? (Modules.importNow("mod/config") as ConfigRecord)
@@ -113,21 +124,23 @@ export default class M5Chain {
 	readonly maxPayloadSize: number;
 
 	#serial;
-	#mutex: Promise<unknown> = Promise.resolve();
 	cmdBuffer = new Uint8Array(256);
 	#enumBuffer = new Uint8Array(1);
 	#sendBuffer = new Uint8Array(256);
 	#receiveResolve: ((result: WaitForPacketResult) => void) | null = null;
 	#receiveReject: ((reason?: unknown) => void) | null = null;
 	#receiveTimeoutId: ReturnType<typeof Timer.set> | null = null;
+	#rejectRequestFailures = false;
+	#requestQueue: QueuedRequest[] | null = null;
 	#enumPending = false;
 	#enumTimer: ReturnType<typeof Timer.set> | null = null;
 	#enumRunning = false;
 	#receiveMatch: PacketMatch | null = null;
-	#pollFailureCounts = new Map<number, number>();
-	#pollState = new PollingState();
+	#pollFailureCounts: number[] = [];
+	#pollRequested = false;
+	#pollRunning = false;
 	#pollTask: Promise<void> | null = null;
-	#connectionMonitor = new ConnectionMonitor();
+	#connectionFailureCount = 0;
 	#connectionCheckTimer: ReturnType<typeof Timer.set> | null = null;
 	#connectionCheckRunning = false;
 	#sendCmd: number | null = null;
@@ -231,15 +244,12 @@ export default class M5Chain {
 
 					const shouldResolve =
 						!!self.#receiveResolve &&
-						(self.#receiveMatch ? self.#receiveMatch(frame, packetSize) : packetCmd === self.#sendCmd);
+						packetId === self.#sendId &&
+						packetCmd === self.#sendCmd &&
+						(!self.#receiveMatch || self.#receiveMatch(frame, packetSize));
 
 					if (shouldResolve) {
-						const resolve = self.#receiveResolve;
-						if (!resolve) {
-							continue;
-						}
-						resolve(frame);
-						self.#clearPendingWait();
+						self.#completeRequest(frame);
 						continue;
 					}
 
@@ -306,31 +316,6 @@ export default class M5Chain {
 			this.#reportUserCallbackError(error, context);
 		}
 	}
-	async lock() {
-		let unlock: (() => void) | undefined;
-		const p = new Promise<void>((resolve) => {
-			unlock = () => {
-				resolve();
-			};
-		});
-		const prev = this.#mutex;
-		this.#mutex = prev.then(() => p);
-		await prev;
-		if (!unlock) {
-			throw new Error("lock initialization failed");
-		}
-		return unlock;
-	}
-
-	async withLock<T>(fn: () => Promise<T>): Promise<T> {
-		const unlock = await this.lock();
-		try {
-			return await fn();
-		} finally {
-			unlock();
-		}
-	}
-
 	#dumpPacket(buffer: Uint8Array, size: number) {
 		let line = `Packet dump(${size} bytes):`;
 		for (let i = 0; i < size; i++) {
@@ -383,7 +368,7 @@ export default class M5Chain {
 		this.#serial.write(sendBuffer.subarray(0, sendBufferSize));
 	}
 
-	#clearPendingWait() {
+	#clearPendingRequest() {
 		if (this.#receiveTimeoutId) {
 			Timer.clear(this.#receiveTimeoutId);
 			this.#receiveTimeoutId = null;
@@ -391,21 +376,112 @@ export default class M5Chain {
 		this.#receiveResolve = null;
 		this.#receiveReject = null;
 		this.#receiveMatch = null;
+		this.#rejectRequestFailures = false;
 		this.#sendCmd = null;
 		this.#sendId = null;
 	}
 
-	#abortPendingWait(reason: string) {
-		// Resolve the in-flight request with an abort marker so the lock can be released
-		// without producing an unhandled rejection.
-		if (this.#receiveResolve) {
-			try {
-				this.#receiveResolve({ __m5chain: "abort", reason });
-			} catch {
-				// ignore
+	#completeRequest(result: WaitForPacketResult, error?: unknown) {
+		const resolve = this.#receiveResolve;
+		const reject = this.#receiveReject;
+		const rejectFailures = this.#rejectRequestFailures;
+		this.#clearPendingRequest();
+
+		if (error !== undefined) {
+			reject?.(error);
+		} else if (rejectFailures && !(result instanceof Uint8Array)) {
+			if (result.__m5chain === "timeout") {
+				reject?.(
+					new Error(
+						`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd.toString(16).toUpperCase().padStart(2, "0")})`,
+					),
+				);
+			} else {
+				reject?.(new Error(`waitForPacket aborted (${result.reason})`));
+			}
+		} else {
+			resolve?.(result);
+		}
+
+		const request = this.#requestQueue?.shift();
+		if (!request) {
+			this.#requestQueue = null;
+			return;
+		}
+		if (this.#requestQueue?.length === 0) {
+			this.#requestQueue = null;
+		}
+		this.#startRequest(
+			request.id,
+			request.cmd,
+			request.data,
+			request.size,
+			request.timeoutMs,
+			request.match,
+			request.rejectFailures,
+			request.resolve,
+			request.reject,
+		);
+	}
+
+	#startRequest(
+		id: number,
+		cmd: number,
+		data: Uint8Array,
+		size: number,
+		timeoutMs: number,
+		match: PacketMatch | null,
+		rejectFailures: boolean,
+		resolve: (result: WaitForPacketResult) => void,
+		reject: (reason?: unknown) => void,
+	) {
+		this.#sendId = id;
+		this.#sendCmd = cmd;
+		this.#receiveMatch = match;
+		this.#rejectRequestFailures = rejectFailures;
+		this.#receiveResolve = resolve;
+		this.#receiveReject = reject;
+
+		if (timeoutMs > 0) {
+			this.#receiveTimeoutId = Timer.set(() => {
+				if (!this.#receiveResolve) return;
+				this.#completeRequest({
+					__m5chain: "timeout",
+					id: this.#sendId ?? "?",
+					cmd: this.#sendCmd ?? 0,
+				});
+			}, timeoutMs);
+		}
+
+		try {
+			this.sendPacket(id, cmd, data, size);
+		} catch (error: unknown) {
+			this.#completeRequest({ __m5chain: "abort", reason: "send failed" }, error);
+		}
+	}
+
+	#abortRequests(reason: string) {
+		const result = { __m5chain: "abort", reason } as const;
+		const resolve = this.#receiveResolve;
+		const reject = this.#receiveReject;
+		const rejectFailures = this.#rejectRequestFailures;
+		this.#clearPendingRequest();
+		if (rejectFailures) {
+			reject?.(new Error(`waitForPacket aborted (${reason})`));
+		} else {
+			resolve?.(result);
+		}
+
+		const queue = this.#requestQueue;
+		this.#requestQueue = null;
+		if (!queue) return;
+		for (const request of queue) {
+			if (request.rejectFailures) {
+				request.reject(new Error(`waitForPacket aborted (${reason})`));
+			} else {
+				request.resolve(result);
 			}
 		}
-		this.#clearPendingWait();
 	}
 
 	#scheduleEnum() {
@@ -424,89 +500,90 @@ export default class M5Chain {
 		}, 500);
 	}
 
-	async waitForPacket(cmd: number, options: WaitForPacketOptions = {}): Promise<WaitForPacketResult> {
-		const timeoutMs = options.timeoutMs ?? 800;
-		const match = options.match;
-
-		// Defensive: if a previous wait is still pending, abort it to avoid wedging the mutex.
-		if (this.#receiveResolve || this.#receiveReject) {
-			this.#abortPendingWait("waitForPacket overlapped");
-		}
-
-		return new Promise((resolve, reject) => {
-			this.#sendCmd = cmd;
-			this.#receiveResolve = resolve;
-			this.#receiveReject = reject;
-			this.#receiveMatch = typeof match === "function" ? match : null;
-
-			if (timeoutMs > 0) {
-				this.#receiveTimeoutId = Timer.set(() => {
-					// Timeout must release the lock and clear pending state.
-					// Resolve with a timeout marker to avoid an unhandled rejection break in the debugger.
-					if (this.#receiveResolve) {
-						try {
-							this.#receiveResolve({ __m5chain: "timeout", id: this.#sendId ?? "?", cmd });
-						} catch {
-							// ignore
-						}
-					}
-					this.#clearPendingWait();
-				}, timeoutMs);
-			}
-		});
-	}
-
-	async sendAndWaitForResult(
+	sendAndWaitForResult(
 		id: number,
 		cmd: number,
 		data: Uint8Array,
 		size: number,
 		options: WaitForPacketOptions | undefined = undefined,
 	): Promise<WaitForPacketResult> {
-		const baseMatch = options?.match;
-		const match = (buffer: PacketBuffer, bytesReadable: number) => {
-			// Always match both id and cmd to avoid resolving the wrong in-flight request.
-			if (buffer[4] !== id) return false;
-			if (buffer[5] !== cmd) return false;
-			return typeof baseMatch === "function" ? baseMatch(buffer, bytesReadable) : true;
-		};
+		return this.#enqueueRequest(id, cmd, data, size, options?.timeoutMs ?? 800, options?.match ?? null, false);
+	}
 
-		return this.withLock(async () => {
-			this.#sendId = id;
-			this.sendPacket(id, cmd, data, size);
-			const result = await this.waitForPacket(cmd, { ...(options ?? {}), match });
-			return result;
+	#enqueueRequest(
+		id: number,
+		cmd: number,
+		data: Uint8Array,
+		size: number,
+		timeoutMs: number,
+		match: PacketMatch | null,
+		rejectFailures: boolean,
+	): Promise<WaitForPacketResult> {
+		if (!Number.isInteger(size) || size < 0 || size > this.maxPayloadSize) {
+			return Promise.reject(new RangeError(`packet data size must be between 0 and ${this.maxPayloadSize} bytes.`));
+		}
+		if (data.length < size) {
+			return Promise.reject(
+				new RangeError(`packet data contains ${data.length} bytes, but ${size} bytes were requested.`),
+			);
+		}
+
+		return new Promise((resolve, reject) => {
+			if (!this.#receiveResolve) {
+				this.#startRequest(id, cmd, data, size, timeoutMs, match, rejectFailures, resolve, reject);
+				return;
+			}
+
+			const queuedData = new Uint8Array(size);
+			if (size > 0) {
+				queuedData.set(data.subarray(0, size));
+			}
+			const request: QueuedRequest = {
+				id,
+				cmd,
+				data: queuedData,
+				size,
+				timeoutMs,
+				match,
+				rejectFailures,
+				resolve,
+				reject,
+			};
+			if (this.#requestQueue) {
+				this.#requestQueue.push(request);
+			} else {
+				this.#requestQueue = [request];
+			}
 		});
 	}
 
-	async sendAndWait(
+	sendAndWait(
 		id: number,
 		cmd: number,
 		data: Uint8Array,
 		size: number,
 		options: WaitForPacketOptions | undefined = undefined,
 	): Promise<PacketBuffer> {
-		const result = await this.sendAndWaitForResult(id, cmd, data, size, options);
-		if (!(result instanceof Uint8Array) && result.__m5chain === "timeout") {
-			throw new Error(
-				`waitForPacket timeout (id=${result.id}, cmd=0x${result.cmd.toString(16).toUpperCase().padStart(2, "0")})`,
-			);
-		}
-		if (!(result instanceof Uint8Array) && result.__m5chain === "abort") {
-			throw new Error(`waitForPacket aborted (${result.reason})`);
-		}
-		return result;
+		return this.#enqueueRequest(
+			id,
+			cmd,
+			data,
+			size,
+			options?.timeoutMs ?? 800,
+			options?.match ?? null,
+			true,
+		) as Promise<PacketBuffer>;
 	}
 
 	#handlePollingFailure(device: M5ChainDevice, error?: unknown) {
-		const failureCount = (this.#pollFailureCounts.get(device.id) ?? 0) + 1;
-		this.#pollFailureCounts.set(device.id, failureCount);
+		const failureCount = (this.#pollFailureCounts[device.id] ?? 0) + 1;
+		this.#pollFailureCounts[device.id] = failureCount;
 		const detail = error === undefined ? "" : `: ${error instanceof Error ? error.message : String(error)}`;
 		this.#log(`polling failed for device id=${device.id} (count=${failureCount})${detail}`, "WARN");
 
 		if (failureCount >= 3) {
 			this.#log(`Device id=${device.id} considered disconnected`, "WARN");
-			this.#pollFailureCounts.delete(device.id);
+			this.#pollFailureCounts[device.id] = 0;
 			this.#deviceList = this.#deviceList.filter((candidate) => candidate !== device);
 			device._markDisconnected?.();
 			this.#invokeUserCallback(() => device.onDisconnected?.(), {
@@ -541,7 +618,7 @@ export default class M5Chain {
 		this.#started = false;
 		this.#stopPolling();
 		this.#stopConnectionMonitoring();
-		this.#abortPendingWait("M5Chain stopped");
+		this.#abortRequests("M5Chain stopped");
 
 		const pollTask = this.#pollTask;
 		if (pollTask) {
@@ -561,7 +638,7 @@ export default class M5Chain {
 
 		const oldDevices = [...this.#deviceList];
 		this.#deviceList = [];
-		this.#pollFailureCounts.clear();
+		this.#pollFailureCounts.length = 0;
 		for (const device of oldDevices) {
 			device._markDisconnected?.();
 			this.#invokeUserCallback(() => device.onDisconnected?.(), {
@@ -586,16 +663,16 @@ export default class M5Chain {
 
 	async #pollLoop() {
 		try {
-			while (this.#pollState.requested) {
+			while (this.#pollRequested) {
 				await this.#pollDevices();
-				if (this.#pollState.requested) {
+				if (this.#pollRequested) {
 					Timer.delay(this.pollingInterval);
 				}
 			}
 		} finally {
 			this.running = false;
 			this.#pollTask = null;
-			this.#pollState.finished();
+			this.#pollRunning = false;
 			if (this.#hasActiveSampleHandler()) {
 				this.#startPolling();
 			}
@@ -610,7 +687,7 @@ export default class M5Chain {
 
 			try {
 				const value = await device.readSample();
-				this.#pollFailureCounts.delete(device.id);
+				this.#pollFailureCounts[device.id] = 0;
 
 				if (value !== undefined) {
 					this.#invokeUserCallback(() => device.dispatchOnSample?.(value), {
@@ -633,13 +710,15 @@ export default class M5Chain {
 	}
 	#startPolling() {
 		if (!this.#started || this.#closed) return;
-		if (!this.#pollState.start()) return;
+		this.#pollRequested = true;
+		if (this.#pollRunning) return;
 
+		this.#pollRunning = true;
 		this.running = true;
 		this.#pollTask = this.#pollLoop();
 	}
 	#stopPolling() {
-		this.#pollState.stop();
+		this.#pollRequested = false;
 		this.running = false;
 	}
 	#updatePollingState() {
@@ -672,7 +751,7 @@ export default class M5Chain {
 			Timer.clear(this.#connectionCheckTimer);
 			this.#connectionCheckTimer = null;
 		}
-		this.#connectionMonitor.reset();
+		this.#connectionFailureCount = 0;
 	}
 
 	#updateConnectionMonitoringState() {
@@ -694,23 +773,35 @@ export default class M5Chain {
 				if (this.#deviceList.length === 0) {
 					const connected = await this.isDeviceConnected();
 					if (!this.#started || this.#closed) return;
-					if (this.#connectionMonitor.observeDeviceCount(0, connected ? 1 : 0)) {
+					this.#connectionFailureCount = 0;
+					if (connected) {
 						await this.#handleEnumPlease();
 					}
 					return;
 				}
 
-				const deviceCount = await this.getDeviceNum({ timeoutMs: 300 });
+				const packet = (await this.#enqueueRequest(
+					0xff,
+					M5Chain.CMD.ENUM,
+					this.#enumBuffer,
+					1,
+					300,
+					null,
+					true,
+				)) as PacketBuffer;
+				const deviceCount = packet[6];
 				if (!this.#started || this.#closed) return;
-				if (this.#connectionMonitor.observeDeviceCount(this.#deviceList.length, deviceCount)) {
+				this.#connectionFailureCount = 0;
+				if (this.#deviceList.length !== deviceCount) {
 					await this.#handleEnumPlease();
 				}
 			} catch (error: unknown) {
 				if (!this.#started || this.#closed) return;
 				const message = error instanceof Error ? error.message : String(error);
 				this.#log(`connection check failed: ${message}`, "WARN");
-				if (this.#connectionMonitor.observeFailure()) {
-					this.#connectionMonitor.reset();
+				this.#connectionFailureCount += 1;
+				if (this.#connectionFailureCount >= 3) {
+					this.#connectionFailureCount = 0;
 					await this.#handleEnumPlease();
 				}
 			}
@@ -726,30 +817,22 @@ export default class M5Chain {
 		return deviceType;
 	}
 
-	async getDeviceNum(options: WaitForPacketOptions | undefined = undefined): Promise<number> {
-		const packet = await this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.#enumBuffer, 1, options);
-		const deviceNum = packet[6];
-		return deviceNum;
+	getDeviceNum(options: WaitForPacketOptions | undefined = undefined): Promise<number> {
+		return this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.#enumBuffer, 1, options).then((packet) => packet[6]);
 	}
 
-	async isDeviceConnected(): Promise<boolean> {
+	isDeviceConnected(): Promise<boolean> {
 		const id = 0xff;
 		const cmd = M5Chain.CMD.HEARTBEAT;
-		const result = await this.withLock(async () => {
-			this.#sendId = id;
-			this.sendPacket(id, cmd, this.cmdBuffer, 0);
-			return await this.waitForPacket(cmd, {
-				timeoutMs: 300,
-				match: (buffer) => buffer[4] === id && buffer[5] === cmd,
-			});
-		});
-		return result instanceof Uint8Array;
+		return this.#enqueueRequest(id, cmd, this.cmdBuffer, 0, 300, null, false).then(
+			(result) => result instanceof Uint8Array,
+		);
 	}
 
 	async #scan() {
 		this.#log("scan start");
 		this.#deviceList = [];
-		this.#pollFailureCounts.clear();
+		this.#pollFailureCounts.length = 0;
 		try {
 			if (await this.isDeviceConnected()) {
 				const deviceNum = await this.getDeviceNum();

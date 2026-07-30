@@ -132,6 +132,9 @@ Angle, JoyStick, and ToF dispatch `onSample` with the newly acquired value on ev
 Polling failures are tracked per device. A device is removed from the current list after three consecutive sample-read
 failures without disconnecting other responsive devices.
 
+UART requests are serialized. An uncontended request starts immediately; overlapping requests are queued with their
+payload copied so later changes to the shared command buffer cannot affect them.
+
 ## API
 
 ### M5Chain

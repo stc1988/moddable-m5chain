@@ -20,8 +20,6 @@ export type WaitForPacketOptions = {
 	match?: PacketMatch;
 };
 
-export type Unlock = () => void;
-
 export type DeviceFactoryOptions = {
 	id: number;
 	type: number;
@@ -75,9 +73,7 @@ export type SampleHandler<T = unknown> = ((sample: T) => void) | null;
 export interface ChainBus {
 	cmdBuffer: Uint8Array;
 	readonly maxPayloadSize: number;
-	lock(): Promise<Unlock>;
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number): void;
-	waitForPacket(cmd: number, options?: WaitForPacketOptions): Promise<WaitForPacketResult>;
 	sendAndWaitForResult(
 		id: number,
 		cmd: number,

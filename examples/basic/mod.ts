@@ -79,8 +79,10 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 }
 
 async function logDeviceInfo(device: M5ChainDevice) {
-	const bootloaderVersion = await device.getBootloaderVersion();
-	const firmwareVersion = await device.getFirmwareVersion();
+	const [bootloaderVersion, firmwareVersion] = await Promise.all([
+		device.getBootloaderVersion(),
+		device.getFirmwareVersion(),
+	]);
 	log(`${deviceLabel(device)} uid=${device.uuid} bootloader=${bootloaderVersion} firmware=${firmwareVersion}`);
 }
 
