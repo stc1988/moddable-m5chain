@@ -206,10 +206,19 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 ## Examples
 
+- `examples/host`: standalone host application that includes the repository's root `manifest.json`
 - `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
 - `examples/led`: type-safe, sample-driven LED control for Encoder/Angle/Key/JoyStick/ToF
 - `examples/buzzer`: RGB indication, timed tone playback, and note playback
 - `examples/matrix`: frame drawing and scrolling text on Chain Mono and Chain RGB
+
+Build and run the standalone host application:
+
+```sh
+mcconfig -d -m -p esp32/m5atom_matrix ./examples/host/manifest.json
+```
+
+The other examples are Mods loaded by the shared `examples/manifest.json` host.
 
 ## Development
 
