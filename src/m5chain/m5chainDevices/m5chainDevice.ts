@@ -17,11 +17,11 @@ function assertKnownConfigurationOptions(options: DeviceConfiguration, known: st
 }
 
 class M5ChainDevice {
-	static CMD = {
+	static CMD = Object.freeze({
 		GET_UID: 0xf8 /**< Get unique identifier. */,
 		GET_BOOTLOADER_VERSION: 0xf9 /**< Get Bootloader version. */,
 		GET_VERSION_DEVICE: 0xfa /**< Get device software version. */,
-	} as const;
+	} as const);
 
 	#bus: ChainBus;
 	#connected = true;
@@ -128,10 +128,10 @@ function withDeviceFeatures(
 ): AnyDeviceConstructor {
 	return features.reduce((Base, feature) => {
 		const Derived = feature(Base);
-		Derived.CMD = {
+		Derived.CMD = Object.freeze({
 			...(Base.CMD ?? {}),
 			...(Derived.CMD ?? {}),
-		} as typeof M5ChainDevice.CMD;
+		}) as typeof M5ChainDevice.CMD;
 		return Derived;
 	}, M5ChainDevice as AnyDeviceConstructor);
 }

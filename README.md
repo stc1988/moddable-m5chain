@@ -220,6 +220,16 @@ npm run format
 npm run lint
 ```
 
+Verify that the preloaded library does not retain mutable objects in RAM:
+
+```sh
+mcconfig -d -m -p esp32/m5atom_matrix -t build ./manifest.json
+```
+
+The XS linker output should contain no `not frozen` warnings for `m5chain`. Module-level lookup tables, exported
+constant objects, and class command tables must remain frozen so preloaded instances can stay in flash. See
+[Using XS Preload to Optimize Applications](https://github.com/Moddable-OpenSource/moddable/blob/public/documentation/xs/preload.md).
+
 ## License
 
 MIT

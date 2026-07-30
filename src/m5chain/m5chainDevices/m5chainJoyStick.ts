@@ -33,7 +33,7 @@ export type JoystickConfigurationSnapshot = DeviceConfigurationSnapshot & {
 class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>) {
 	static DEVICE_TYPE = 0x0004;
 	readonly kind = "joystick" as const;
-	static CMD = {
+	static CMD = Object.freeze({
 		...super.CMD,
 		GET_16ADC: 0x30 /**< Command to get 16-bit ADC values */,
 		GET_8ADC: 0x31 /**< Command to get 8-bit ADC values */,
@@ -41,7 +41,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		SET_ADC_XY_MAPPED_RANGE: 0x33 /**< Command to set mapped range for X and Y axes */,
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
-	} as const;
+	} as const);
 	declare onSample: SampleHandler<JoystickValue>;
 	declare sample: () => JoystickValue | undefined;
 	declare dispatchOnSample: (value: JoystickValue) => void;

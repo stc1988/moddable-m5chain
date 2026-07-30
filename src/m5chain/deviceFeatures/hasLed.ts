@@ -33,14 +33,14 @@ function assertUnitInterval(name: string, value: number) {
 
 const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 	class extends Base {
-		static CMD = {
-			RGB: {
+		static CMD = Object.freeze({
+			RGB: Object.freeze({
 				SET_RGB_VALUE: 0x20 /**< Set RGB value. */,
 				GET_RGB_VALUE: 0x21 /**< Get RGB value. */,
 				SET_RGB_LIGHT: 0x22 /**< Set RGB brightness. */,
 				GET_RGB_LIGHT: 0x23 /**< Get RGB brightness. */,
-			},
-		} as const;
+			}),
+		} as const);
 
 		async setLedColor(r: number, g: number, b: number): Promise<void> {
 			return await this.setLedColors(0, 1, [{ r, g, b }]);

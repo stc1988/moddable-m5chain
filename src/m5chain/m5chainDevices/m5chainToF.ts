@@ -3,23 +3,23 @@ import HasLed from "hasLed";
 import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
 
-export const MeasurementMode = {
+export const MeasurementMode = Object.freeze({
 	STOP: 0,
 	SINGLE: 1,
 	CONTINUOUS: 2,
-} as const;
+} as const);
 export type MeasurementMode = (typeof MeasurementMode)[keyof typeof MeasurementMode];
 
-export const MeasurementStatus = {
+export const MeasurementStatus = Object.freeze({
 	IDLE: 0,
 	MEASURING: 1,
-} as const;
+} as const);
 export type MeasurementStatus = (typeof MeasurementStatus)[keyof typeof MeasurementStatus];
 
-export const MeasurementCompletionFlag = {
+export const MeasurementCompletionFlag = Object.freeze({
 	INCOMPLETE: 0,
 	COMPLETE: 1,
-} as const;
+} as const);
 export type MeasurementCompletionFlag = (typeof MeasurementCompletionFlag)[keyof typeof MeasurementCompletionFlag];
 
 export type ToFConfiguration = DeviceConfiguration & {
@@ -53,7 +53,7 @@ function measurementStatusToValue(status: MeasurementStatus): number {
 class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0005;
 	readonly kind = "tof" as const;
-	static CMD = {
+	static CMD = Object.freeze({
 		...super.CMD,
 		GET_DISTANCE: 0x50 /**< Get the measured distance in millimeters. */,
 		SET_MEASUREMENT_TIME: 0x51 /**< Set the measurement time in milliseconds. */,
@@ -63,7 +63,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		SET_MEASUREMENT_STATUS: 0x55 /**< Set the current measurement status. */,
 		GET_MEASUREMENT_STATUS: 0x56 /**< Get the current measurement status. */,
 		GET_MEASUREMENT_COMPLETION_FLAG: 0x57 /**< Get the measurement completion flag. */,
-	} as const;
+	} as const);
 	static MEASUREMENT_MODE = MeasurementMode;
 	static MEASUREMENT_STATUS = MeasurementStatus;
 	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;

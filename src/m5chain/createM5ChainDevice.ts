@@ -15,7 +15,7 @@ type DeviceClass = {
 	new (m5chain: ChainBus, options: DeviceFactoryOptions): M5ChainDevice;
 };
 
-const DEVICE_CLASSES = [
+const DEVICE_CLASSES = Object.freeze([
 	M5ChainEncoder,
 	M5ChainAngle,
 	M5ChainKey,
@@ -24,9 +24,11 @@ const DEVICE_CLASSES = [
 	M5ChainBuzzer,
 	M5ChainMono,
 	M5ChainRGB,
-];
+]);
 export default function createM5ChainDevice(m5chain: ChainBus, options: DeviceFactoryOptions): M5ChainDevice {
-	const DeviceCtor = (DEVICE_CLASSES as unknown as DeviceClass[]).find((cls) => cls.DEVICE_TYPE === options.type);
+	const DeviceCtor = (DEVICE_CLASSES as unknown as readonly DeviceClass[]).find(
+		(cls) => cls.DEVICE_TYPE === options.type,
+	);
 
 	if (!DeviceCtor) {
 		return new M5ChainUnknownDevice(m5chain, options);

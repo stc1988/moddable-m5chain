@@ -6,16 +6,16 @@ import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } 
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
-export const EncoderABDirection = {
+export const EncoderABDirection = Object.freeze({
 	CLOCKWISE_INCREASE: 0,
 	CLOCKWISE_DECREASE: 1,
-} as const;
+} as const);
 export type EncoderABDirection = (typeof EncoderABDirection)[keyof typeof EncoderABDirection];
 
-export const SaveToFlash = {
+export const SaveToFlash = Object.freeze({
 	DISABLE: 0,
 	ENABLE: 1,
-} as const;
+} as const);
 export type SaveToFlash = (typeof SaveToFlash)[keyof typeof SaveToFlash];
 
 export type EncoderConfiguration = DeviceConfiguration & {
@@ -48,7 +48,7 @@ function saveToFlashToValue(saveToFlash: SaveToFlash): number {
 class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>) {
 	static DEVICE_TYPE = 0x0001;
 	readonly kind = "encoder" as const;
-	static CMD = {
+	static CMD = Object.freeze({
 		...super.CMD,
 		GET_VALUE: 0x10 /**< Get encoder value. */,
 		GET_INC_VALUE: 0x11 /**< Get encoder increment value. */,
@@ -56,7 +56,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		RESET_INC_VALUE: 0x14 /**< Reset encoder increment value. */,
 		SET_AB_STATUS: 0x15 /**< Set AB status, 0->AB, 1->BA. */,
 		GET_AB_STATUS: 0x16 /**< Get AB status, 0->AB, 1->BA. */,
-	} as const;
+	} as const);
 	static ENCODER_AB_DIRECTION = EncoderABDirection;
 	static SAVE_TO_FLASH = SaveToFlash;
 	#lastValue: number | undefined;

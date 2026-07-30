@@ -3,10 +3,10 @@ import HasLed from "hasLed";
 import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
 
-export const AngleRotationDirection = {
+export const AngleRotationDirection = Object.freeze({
 	CLOCKWISE: 0,
 	COUNTERCLOCKWISE: 1,
-} as const;
+} as const);
 export type AngleRotationDirection = (typeof AngleRotationDirection)[keyof typeof AngleRotationDirection];
 
 export type AngleConfiguration = DeviceConfiguration & {
@@ -34,13 +34,13 @@ function angleRotationDirectionToValue(direction: AngleRotationDirection): numbe
 class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static DEVICE_TYPE = 0x0002;
 	readonly kind = "angle" as const;
-	static CMD = {
+	static CMD = Object.freeze({
 		...super.CMD,
 		GET_12ADC: 0x30 /**< Command to get the latest 12-bit ADC value */,
 		GET_8ADC: 0x31 /**< Command to get the latest 8-bit mapped ADC value */,
 		SET_CLOCKWISE_STATUS: 0x32 /**< Command to set the clockwise direction status */,
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
-	} as const;
+	} as const);
 	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
 	declare onSample: SampleHandler<number>;
 	declare sample: () => number | undefined;

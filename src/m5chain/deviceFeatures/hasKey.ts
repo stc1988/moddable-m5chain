@@ -9,25 +9,25 @@ import type {
 	PacketBuffer,
 } from "types";
 
-const KEY_EVENT = {
+const KEY_EVENT = Object.freeze({
 	SINGLE_CLICK: 0,
 	DOUBLE_CLICK: 1,
 	LONG_PRESS: 2,
-} as const;
+} as const);
 
 type KeyEvent = (typeof KEY_EVENT)[keyof typeof KEY_EVENT];
 
 type KeyHandler = ((keyEvent: KeyEvent) => void | Promise<void>) | null;
 
-const KEY_MODE = {
+const KEY_MODE = Object.freeze({
 	PASSIVE: 0,
 	ACTIVE: 1,
-} as const;
+} as const);
 
-const KEY_STATUS = {
+const KEY_STATUS = Object.freeze({
 	RELEASED: 0,
 	PRESSED: 1,
-} as const;
+} as const);
 
 type KeyMode = (typeof KEY_MODE)[keyof typeof KEY_MODE];
 type KeyStatus = (typeof KEY_STATUS)[keyof typeof KEY_STATUS];
@@ -109,15 +109,15 @@ type KeyCommandSet = {
 
 const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 	class extends Base {
-		static CMD = {
-			KEY: {
+		static CMD = Object.freeze({
+			KEY: Object.freeze({
 				GET_STATUS: 0xe1 /**< Get key status. */,
 				SET_TRIGGER_TIMEOUT: 0xe2 /**< Set trigger timeout. */,
 				GET_TRIGGER_TIMEOUT: 0xe3 /**< Get trigger timeout. */,
 				SET_MODE: 0xe4 /**< Set key mode. */,
 				GET_MODE: 0xe5 /**< Get key mode. */,
-			},
-		} as const;
+			}),
+		} as const);
 
 		#onPush: KeyHandler = null;
 

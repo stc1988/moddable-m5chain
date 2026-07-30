@@ -1,31 +1,31 @@
-export const MATRIX_ROTATION = {
+export const MATRIX_ROTATION = Object.freeze({
 	DEG_0: 0,
 	DEG_90: 90,
 	DEG_180: 180,
 	DEG_270: 270,
-} as const;
+} as const);
 export type MatrixRotation = (typeof MATRIX_ROTATION)[keyof typeof MATRIX_ROTATION];
 
-export const SCROLL_DIRECTION = {
+export const SCROLL_DIRECTION = Object.freeze({
 	LEFT: "left",
 	RIGHT: "right",
 	UP: "up",
 	DOWN: "down",
-} as const;
+} as const);
 export type ScrollDirection = (typeof SCROLL_DIRECTION)[keyof typeof SCROLL_DIRECTION];
 
-export const SCROLL_BEHAVIOR = {
+export const SCROLL_BEHAVIOR = Object.freeze({
 	ONCE: "once",
 	LOOP: "loop",
 	BOUNCE: "bounce",
-} as const;
+} as const);
 export type ScrollBehavior = (typeof SCROLL_BEHAVIOR)[keyof typeof SCROLL_BEHAVIOR];
 
-export const SCROLL_STATE = {
+export const SCROLL_STATE = Object.freeze({
 	RUNNING: "running",
 	PAUSED: "paused",
 	STOPPED: "stopped",
-} as const;
+} as const);
 export type ScrollState = (typeof SCROLL_STATE)[keyof typeof SCROLL_STATE];
 
 export type DisplayCoordinate = {

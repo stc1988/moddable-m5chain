@@ -40,14 +40,14 @@ export type MatrixDisplayConfigurationSnapshot = DeviceConfigurationSnapshot & {
 	};
 };
 
-const DISPLAY_MODE = {
+const DISPLAY_MODE = Object.freeze({
 	PIXEL: 0,
 	SCROLL: 1,
-} as const;
+} as const);
 type DisplayMode = (typeof DISPLAY_MODE)[keyof typeof DISPLAY_MODE];
 
 abstract class M5ChainMatrixDisplay extends M5ChainDevice {
-	static CMD = {
+	static CMD = Object.freeze({
 		...M5ChainDevice.CMD,
 		SET_DISPLAY_MODE: 0x10,
 		GET_DISPLAY_MODE: 0x11,
@@ -65,7 +65,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 		SET_BRIGHTNESS: 0xe2,
 		GET_BRIGHTNESS: 0xe3,
 		CLEAR: 0xe4,
-	} as const;
+	} as const);
 
 	readonly width = 8;
 	readonly height = 8;

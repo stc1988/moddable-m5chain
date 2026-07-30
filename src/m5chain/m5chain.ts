@@ -67,13 +67,13 @@ declare const device: {
 };
 
 export default class M5Chain {
-	static CMD = {
+	static CMD = Object.freeze({
 		GET_DEVICE_TYPE: 0xfb /**< Get device type. */,
 		ENUM_PLEASE: 0xfc /**< Enumeration request. */,
 		HEARTBEAT: 0xfd /**< Heartbeat packet. */,
 		ENUM: 0xfe /**< Enumeration response. */,
 		RESET: 0xff /**< Reset command. */,
-	} as const;
+	} as const);
 
 	onDeviceListChanged?: DeviceListChangeHandler<M5ChainDevice>;
 	onError?: M5ChainErrorHandler;

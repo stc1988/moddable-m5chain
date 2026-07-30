@@ -42,12 +42,12 @@ export type RgbScrollText = ScrollSettings & {
 	color: RgbScrollColor;
 };
 
-const RGB_DIRECTIONS: WireDirectionMap = {
+const RGB_DIRECTIONS: WireDirectionMap = Object.freeze({
 	[SCROLL_DIRECTION.LEFT]: 0,
 	[SCROLL_DIRECTION.RIGHT]: 1,
 	[SCROLL_DIRECTION.UP]: 2,
 	[SCROLL_DIRECTION.DOWN]: 3,
-};
+});
 
 class M5ChainRGB extends M5ChainMatrixDisplay {
 	static DEVICE_TYPE = 0x000e;

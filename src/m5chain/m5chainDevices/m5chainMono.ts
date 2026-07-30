@@ -34,12 +34,12 @@ export type MonoScrollText = ScrollSettings & {
 	text: string;
 };
 
-const MONO_DIRECTIONS: WireDirectionMap = {
+const MONO_DIRECTIONS: WireDirectionMap = Object.freeze({
 	[SCROLL_DIRECTION.LEFT]: 1,
 	[SCROLL_DIRECTION.RIGHT]: 0,
 	[SCROLL_DIRECTION.UP]: 2,
 	[SCROLL_DIRECTION.DOWN]: 3,
-};
+});
 
 class M5ChainMono extends M5ChainMatrixDisplay {
 	static DEVICE_TYPE = 0x000d;

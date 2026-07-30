@@ -2,14 +2,14 @@ import HasLed from "hasLed";
 import { assertObjectOption, withDeviceFeatures } from "m5chainDevice";
 import type { LedColor } from "types";
 
-export const BUZZER_MODE = {
+export const BUZZER_MODE = Object.freeze({
 	AUTO: 0,
 	MANUAL: 1,
 	NOTE: 2,
-} as const;
+} as const);
 export type BuzzerMode = (typeof BUZZER_MODE)[keyof typeof BUZZER_MODE];
 
-export const BUZZER_NOTE = {
+export const BUZZER_NOTE = Object.freeze({
 	REST: 0,
 	C3: 1,
 	C_SHARP_3: 2,
@@ -72,7 +72,7 @@ export const BUZZER_NOTE = {
 	A_SHARP_7: 59,
 	B7: 60,
 	C8: 61,
-} as const;
+} as const);
 export type BuzzerNote = (typeof BUZZER_NOTE)[keyof typeof BUZZER_NOTE];
 
 export type ToneOptions = {
@@ -135,7 +135,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 	readonly kind = "buzzer" as const;
 	static BUZZER_MODE = BUZZER_MODE;
 	static BUZZER_NOTE = BUZZER_NOTE;
-	static CMD = {
+	static CMD = Object.freeze({
 		...super.CMD,
 		SET_BUZZER_MODE: 0x30,
 		GET_BUZZER_MODE: 0x31,
@@ -147,7 +147,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		SET_TONE_STATE: 0x37,
 		GET_TONE_STATE: 0x38,
 		PLAY_NOTE: 0x39,
-	} as const;
+	} as const);
 
 	#operationMutex: Promise<void> = Promise.resolve();
 
