@@ -1,0 +1,7 @@
+{
+	"include": ["./manifest_feature_led.json", "./manifest_feature_key.json", "./manifest_feature_sample.json"],
+	"modules": {
+		"m5chainJoyStick": "./m5chainDevices/m5chainJoyStick"
+	},
+	"preload": ["m5chainJoyStick"]
+}

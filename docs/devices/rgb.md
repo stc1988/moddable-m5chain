@@ -8,21 +8,20 @@ Protocol: [Chain RGB Communication Protocol](https://m5stack-doc.oss-cn-shenzhen
 
 ```ts
 import M5ChainRGB, {
+	type LedColor,
+	MATRIX_ROTATION,
+	SCROLL_BEHAVIOR,
+	SCROLL_DIRECTION,
+	SCROLL_STATE,
 	type RgbMatrixPixel,
 	type RgbScrollColor,
 	type RgbScrollOptions,
 	type RgbScrollText,
 } from "m5chainRGB";
-import {
-	MATRIX_ROTATION,
-	SCROLL_BEHAVIOR,
-	SCROLL_DIRECTION,
-	SCROLL_STATE,
-	type LedColor,
-} from "m5chain";
 ```
 
-The matrix constants and device types are also exported from `m5chain`. `LedColor` is exported from `types`.
+The matrix constants, display types, and `LedColor` are re-exported from `m5chainRGB`; the M5Chain core does not import
+display code.
 
 Chain RGB is an output-only 8x8 full-color LED matrix. It does not provide `HasLed`, key, or sample APIs. Its device type
 is `0x000E`, and `device.kind` is `"rgb"`.

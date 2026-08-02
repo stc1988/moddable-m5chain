@@ -1,54 +1,34 @@
 import createM5ChainDevice from "createM5ChainDevice";
-import type { M5ChainDevice } from "deviceUnion";
+import { normalizeDeviceClasses } from "deviceRegistry";
 import Serial from "embedded:io/serial";
 import config from "mc/config";
 import Modules from "modules";
 import Timer from "timer";
 import type {
 	DeviceListChangeHandler,
+	M5ChainDeviceClass,
 	M5ChainErrorContext,
 	M5ChainErrorHandler,
 	PacketBuffer,
 	PacketMatch,
+	RegisteredM5ChainDevice,
 	WaitForPacketOptions,
 	WaitForPacketResult,
 } from "types";
 
-export type { M5ChainDevice } from "deviceUnion";
-export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
-export {
-	BUZZER_MODE,
-	BUZZER_NOTE,
-	type BuzzerMode,
-	type BuzzerNote,
-	type ContinuousToneOptions,
-	type NoteOptions,
-	type ToneOptions,
-} from "m5chainBuzzer";
-export {
-	type DisplayCoordinate,
-	MATRIX_ROTATION,
-	type MatrixDisplayConfiguration,
-	type MatrixDisplayConfigurationSnapshot,
-	type MatrixRotation,
-	SCROLL_BEHAVIOR,
-	SCROLL_DIRECTION,
-	SCROLL_STATE,
-	type ScrollBehavior,
-	type ScrollDirection,
-	type ScrollSettings,
-	type ScrollState,
-} from "m5chainMatrixDisplay";
-export type { MonoPixel, MonoScrollOptions, MonoScrollText } from "m5chainMono";
 export type {
-	RgbMatrixPixel,
-	RgbScrollColor,
-	RgbScrollOptions,
-	RgbScrollText,
-} from "m5chainRGB";
-export type { LedColor, M5ChainErrorContext, M5ChainErrorHandler, M5ChainErrorSource } from "types";
+	LedColor,
+	M5ChainDeviceClass,
+	M5ChainDeviceLike,
+	M5ChainErrorContext,
+	M5ChainErrorHandler,
+	M5ChainErrorSource,
+	M5ChainUnknownDeviceLike,
+	RegisteredM5ChainDevice,
+} from "types";
 
-export type M5ChainOptions = {
+export type M5ChainOptions<TClasses extends readonly M5ChainDeviceClass[]> = {
+	deviceClasses: TClasses;
 	transmit?: number;
 	receive?: number;
 	debug?: boolean;
@@ -106,7 +86,7 @@ function loadConnectionConfig(): connectionConfig {
 	};
 }
 
-export default class M5Chain {
+export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	static CMD = Object.freeze({
 		GET_DEVICE_TYPE: 0xfb /**< Get device type. */,
 		ENUM_PLEASE: 0xfc /**< Enumeration request. */,
@@ -115,7 +95,7 @@ export default class M5Chain {
 		RESET: 0xff /**< Reset command. */,
 	} as const);
 
-	onDeviceListChanged?: DeviceListChangeHandler<M5ChainDevice>;
+	onDeviceListChanged?: DeviceListChangeHandler<RegisteredM5ChainDevice<TClasses>>;
 	onError?: M5ChainErrorHandler;
 	debug: boolean;
 	pollingInterval: number;
@@ -147,12 +127,17 @@ export default class M5Chain {
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
 	#rxLength = 0;
-	#deviceList: M5ChainDevice[] = [];
+	#deviceList: RegisteredM5ChainDevice<TClasses>[] = [];
+	readonly #deviceClasses: TClasses;
 	#started = false;
 	#closed = false;
 
-	constructor(options: M5ChainOptions = {}) {
+	constructor(options: M5ChainOptions<TClasses>) {
 		const self = this;
+		if (!options || typeof options !== "object" || Array.isArray(options)) {
+			throw new TypeError("options must be an object.");
+		}
+		this.#deviceClasses = normalizeDeviceClasses(options.deviceClasses) as TClasses;
 		this.maxPayloadSize = this.#sendBuffer.length - 9;
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
@@ -575,7 +560,7 @@ export default class M5Chain {
 		) as Promise<PacketBuffer>;
 	}
 
-	#handlePollingFailure(device: M5ChainDevice, error?: unknown) {
+	#handlePollingFailure(device: RegisteredM5ChainDevice<TClasses>, error?: unknown) {
 		const failureCount = (this.#pollFailureCounts[device.id] ?? 0) + 1;
 		this.#pollFailureCounts[device.id] = failureCount;
 		const detail = error === undefined ? "" : `: ${error instanceof Error ? error.message : String(error)}`;
@@ -838,7 +823,7 @@ export default class M5Chain {
 				const deviceNum = await this.getDeviceNum();
 				const deviceList = await this.getDeviceList(deviceNum);
 				for (let i = 0; i < deviceList.length; i++) {
-					const device = createM5ChainDevice(this, {
+					const device = createM5ChainDevice(this.#deviceClasses, this, {
 						id: i + 1,
 						type: deviceList[i],
 					});
@@ -912,7 +897,7 @@ export default class M5Chain {
 		});
 	}
 
-	get devices(): readonly M5ChainDevice[] {
+	get devices(): readonly RegisteredM5ChainDevice<TClasses>[] {
 		return [...this.#deviceList];
 	}
 }

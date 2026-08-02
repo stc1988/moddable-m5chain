@@ -2,8 +2,12 @@
 	"include": [
 		"$(MODDABLE)/examples/manifest_mod.json",
 		"$(MODDABLE)/examples/manifest_typings.json",
-		"../../src/m5chain/manifest_module.json",
-		"../../src/m5chain/manifest_chain_base.json"
+		"../../src/m5chain/manifest_mod_base.json",
+		"../../src/m5chain/manifest_device_angle.json",
+		"../../src/m5chain/manifest_device_encoder.json",
+		"../../src/m5chain/manifest_device_joystick.json",
+		"../../src/m5chain/manifest_device_key.json",
+		"../../src/m5chain/manifest_device_tof.json"
 	],
 	"modules": {
 		"*": ["./mod"]

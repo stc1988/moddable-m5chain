@@ -19,6 +19,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 ## Features
 
 - Packet transport and matching (`sendPacket` / `sendAndWait`)
+- Application-selected device classes keep unused device modules out of Mods
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
 - Connection monitoring detects topology changes even without sample polling, including devices attached after startup
@@ -29,7 +30,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ### 1) Include this module in your manifest
 
-In your app's `manifest.json`, include this module's manifest.
+The repository root manifest is the standalone, all-device entry point:
 
 ```json
 {
@@ -40,6 +41,36 @@ In your app's `manifest.json`, include this module's manifest.
 	]
 }
 ```
+
+For a shared Mod host, include only the M5Chain core in the host manifest:
+
+```json
+{
+	"include": [
+		"path/to/moddable-m5chain/src/m5chain/manifest_host.json"
+	]
+}
+```
+
+Each Mod includes `manifest_mod_base.json` plus only the devices it supports. For example, an Encoder and ToF Mod uses:
+
+```json
+{
+	"include": [
+		"$(MODDABLE)/examples/manifest_mod.json",
+		"$(MODDABLE)/examples/manifest_typings.json",
+		"path/to/moddable-m5chain/src/m5chain/manifest_mod_base.json",
+		"path/to/moddable-m5chain/src/m5chain/manifest_device_encoder.json",
+		"path/to/moddable-m5chain/src/m5chain/manifest_device_tof.json"
+	]
+}
+```
+
+Available device manifests are `manifest_device_angle.json`, `manifest_device_buzzer.json`,
+`manifest_device_encoder.json`, `manifest_device_joystick.json`, `manifest_device_key.json`,
+`manifest_device_mono.json`, `manifest_device_rgb.json`, and `manifest_device_tof.json`.
+`manifest_devices_all.json` includes every device implementation, while `manifest_mod.json` is the corresponding
+all-device convenience manifest for Mods.
 
 ### 2) Pin configuration
 
@@ -53,9 +84,12 @@ See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
 
 ```js
 import M5Chain from "m5chain";
+import M5ChainEncoder from "m5chainEncoder";
+import M5ChainToF from "m5chainToF";
 import config from "mc/config";
 
 const m5chain = new M5Chain({
+	deviceClasses: [M5ChainEncoder, M5ChainToF],
 	transmit: config.m5chain.transmit,
 	receive: config.m5chain.receive,
 	debug: false,
@@ -70,6 +104,21 @@ m5chain.onDeviceListChanged = (devices) => {
 };
 
 await m5chain.start();
+```
+
+`deviceClasses` is required and copied when the `M5Chain` instance is created. The array may be empty. A connected
+device whose type is not registered remains visible as an `UnknownDevice`; this allows one Mod to use its supported
+devices even when other device types are present on the same chain. Duplicate `DEVICE_TYPE` values are rejected.
+
+An all-device application can use the explicit aggregate registry:
+
+```js
+import M5Chain from "m5chain";
+import { M5CHAIN_DEVICE_CLASSES } from "m5chainDevices";
+
+const m5chain = new M5Chain({
+	deviceClasses: M5CHAIN_DEVICE_CLASSES,
+});
 ```
 
 ## Event Model
@@ -99,7 +148,7 @@ Available on devices with `HasKey` (Encoder / Key / JoyStick).
 - Use `KEY_EVENT.SINGLE_CLICK`, `KEY_EVENT.DOUBLE_CLICK`, or `KEY_EVENT.LONG_PRESS`
 
 ```js
-import M5Chain, { KEY_EVENT } from "m5chain";
+import { KEY_EVENT } from "m5chainEncoder";
 
 device.onPush = async (keyEvent) => {
 	if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
@@ -108,7 +157,7 @@ device.onPush = async (keyEvent) => {
 };
 ```
 
-`KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their TypeScript types are also exported from the key-capable device modules:
+`KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their TypeScript types are exported from the key-capable device modules:
 `m5chainEncoder`, `m5chainKey`, and `m5chainJoyStick`.
 
 ### `device.onSample = (sample) => {}`
@@ -139,7 +188,7 @@ payload copied so later changes to the shared command buffer cannot affect them.
 
 ### M5Chain
 
-- `new M5Chain({ transmit, receive, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
+- `new M5Chain({ deviceClasses, transmit, receive, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
 - `await m5chain.start()`
 - `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
 - `await m5chain.close()` stops the chain and closes UART permanently
@@ -163,8 +212,9 @@ payload copied so later changes to the shared command buffer cannot affect them.
 Unknown device types remain in the device list as `M5ChainUnknownDevice`. They expose the common device API, allowing
 applications to keep using recognized devices on the same chain and to report unsupported type IDs.
 
-The `M5ChainDevice` union and `M5ChainOptions` types are exported from `m5chain`. TypeScript applications can switch on
-`device.kind` to access device-specific APIs without a type assertion.
+`M5Chain` derives its connected-device union from the classes passed in `deviceClasses`, plus `UnknownDevice`. The
+`RegisteredM5ChainDevice`, `M5ChainDeviceClass`, `M5ChainDeviceLike`, and generic `M5ChainOptions` types are exported from
+`m5chain`. The `m5chainDevices` all-device aggregate also exports its inferred `M5ChainDevice` union.
 
 ### LED Features (`HasLed`)
 
@@ -209,11 +259,11 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 ## Examples
 
-- `examples/host`: standalone host application that includes the repository's root `manifest.json`
+- `examples/host`: standalone all-device application that includes the repository's root `manifest.json`
 - `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
-- `examples/led`: type-safe, sample-driven LED control for Encoder/Angle/Key/JoyStick/ToF
-- `examples/buzzer`: RGB indication, timed tone playback, and note playback
-- `examples/matrix`: frame drawing and scrolling text on Chain Mono and Chain RGB
+- `examples/led`: Mod containing only Encoder/Angle/Key/JoyStick/ToF and their shared features
+- `examples/buzzer`: Mod containing only Buzzer, with RGB indication, timed tones, and notes
+- `examples/matrix`: Mod containing only Mono/RGB and their shared matrix protocol
 
 Build and run the standalone host application:
 
@@ -221,7 +271,9 @@ Build and run the standalone host application:
 mcconfig -d -m -p esp32/m5atom_matrix ./examples/host/manifest.json
 ```
 
-The other examples are Mods loaded by the shared `examples/manifest.json` host.
+The other examples are device-selective Mods loaded by the shared `examples/manifest.json` host. The shared host
+contains the M5Chain transport, scan, polling, base-device, and UnknownDevice code; concrete device implementations
+come from each Mod.
 That host reserves 6144 XS heap slots so the library and a loaded Mod fit in the fixed-size slot heap. Applications
 using their own Mod host should make the equivalent adjustment in the host manifest, not the Mod manifest:
 

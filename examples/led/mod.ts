@@ -1,5 +1,10 @@
+import M5ChainAngle from "m5chainAngle";
+import M5ChainEncoder, { KEY_EVENT, type KeyEvent } from "m5chainEncoder";
 import type { JoystickValue } from "m5chainJoyStick";
-import M5Chain, { KEY_EVENT, type KeyEvent, type M5ChainDevice } from "m5chain";
+import M5ChainJoyStick from "m5chainJoyStick";
+import M5ChainKey from "m5chainKey";
+import M5ChainToF from "m5chainToF";
+import M5Chain, { type RegisteredM5ChainDevice } from "m5chain";
 
 type LedColor = {
 	r: number;
@@ -17,11 +22,13 @@ const KEY_COLORS: LedColor[] = [
 ];
 const TOF_MAX_DISTANCE_MM = 2000;
 const TOF_MIN_BRIGHTNESS = 0.1;
+const LED_DEVICE_CLASSES = Object.freeze([M5ChainEncoder, M5ChainAngle, M5ChainKey, M5ChainJoyStick, M5ChainToF]);
+type LedDevice = RegisteredM5ChainDevice<typeof LED_DEVICE_CLASSES>;
 
 export async function main() {
 	log("start");
 
-	const m5chain = new M5Chain();
+	const m5chain = new M5Chain({ deviceClasses: LED_DEVICE_CLASSES });
 
 	m5chain.onError = (error, context) => {
 		log(`${context.source} failed: ${errorMessage(error)}`);
@@ -38,7 +45,7 @@ export async function main() {
 	await m5chain.start();
 }
 
-function attachDeviceHandlers(device: M5ChainDevice) {
+function attachDeviceHandlers(device: LedDevice) {
 	switch (device.kind) {
 		case "encoder": {
 			let hue = 0;
@@ -141,7 +148,7 @@ function wrapUnit(value: number) {
 	return ((value % 1) + 1) % 1;
 }
 
-function deviceLabel(device: M5ChainDevice) {
+function deviceLabel(device: LedDevice) {
 	return `${device.kind} id=${device.id}`;
 }
 

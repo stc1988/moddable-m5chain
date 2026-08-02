@@ -22,10 +22,16 @@ Shared mixin APIs are documented separately in [Feature API Guides](../features/
 
 ## Import Pattern
 
-Most applications discover devices through `M5Chain` and narrow the exported device union with `device.kind`.
+Applications import the device classes they support, pass them to `M5Chain`, and narrow the inferred device union with
+`device.kind`.
 
 ```ts
 import M5Chain from "m5chain";
+import M5ChainEncoder from "m5chainEncoder";
+
+const m5chain = new M5Chain({
+	deviceClasses: [M5ChainEncoder],
+});
 
 m5chain.onDeviceListChanged = (devices) => {
 	for (const device of devices) {
@@ -36,6 +42,8 @@ m5chain.onDeviceListChanged = (devices) => {
 		}
 	}
 };
+
+await m5chain.start();
 ```
 
 Key-capable devices also export `KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their related types from their device modules.

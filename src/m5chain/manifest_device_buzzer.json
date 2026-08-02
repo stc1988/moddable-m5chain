@@ -1,0 +1,7 @@
+{
+	"include": ["./manifest_feature_led.json"],
+	"modules": {
+		"m5chainBuzzer": "./m5chainDevices/m5chainBuzzer"
+	},
+	"preload": ["m5chainBuzzer"]
+}

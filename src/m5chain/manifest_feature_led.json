@@ -1,0 +1,6 @@
+{
+	"modules": {
+		"hasLed": "./deviceFeatures/hasLed"
+	},
+	"preload": ["hasLed"]
+}

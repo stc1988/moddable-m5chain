@@ -8,19 +8,17 @@ Protocol: [Chain Mono Communication Protocol](https://m5stack-doc.oss-cn-shenzhe
 
 ```ts
 import M5ChainMono, {
-	type MonoPixel,
-	type MonoScrollOptions,
-	type MonoScrollText,
-} from "m5chainMono";
-import {
 	MATRIX_ROTATION,
 	SCROLL_BEHAVIOR,
 	SCROLL_DIRECTION,
 	SCROLL_STATE,
-} from "m5chain";
+	type MonoPixel,
+	type MonoScrollOptions,
+	type MonoScrollText,
+} from "m5chainMono";
 ```
 
-The constants and types are also exported from `m5chain`.
+The display constants and types are re-exported from `m5chainMono`; the M5Chain core does not import display code.
 
 Chain Mono is an output-only 8x8 white LED matrix. It does not provide `HasLed`, key, or sample APIs. Its device type is
 `0x000D`, and `device.kind` is `"mono"`.

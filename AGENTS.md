@@ -9,7 +9,7 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 ## Key Features
 
 - Packet framing + parsing via `sendPacket` / `waitForPacket`
-- Type-based device instantiation via `createM5ChainDevice`
+- Application-selected, type-based device instantiation via `deviceClasses` and `createM5ChainDevice`
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` arrives (debounced)
 - Feature composition via `withDeviceFeatures(...)`
 - Poll loop runs only while at least one device has `onSample` set
@@ -20,7 +20,7 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 ### Core
 
 - `src/m5chain/m5chain.ts` (bus communication, scan/re-scan, poll loop, dispatch)
-- `src/m5chain/createM5ChainDevice.ts` (device type -> class mapping)
+- `src/m5chain/createM5ChainDevice.ts` (registered device type -> class mapping)
 - `src/m5chain/m5chainDevices/m5chainDevice.ts` (base class + feature composition)
 - `src/m5chain/m5chainDevices/m5chainBus.ts` (bus-typed device placeholder)
 
@@ -40,17 +40,19 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 
 ### Manifests / Config
 
-- `src/m5chain/manifest.json`
-- `src/m5chain/manifest_module.json`
-- `src/m5chain/manifest_include.json`
+- `manifest.json` (standalone all-device entry point)
+- `src/m5chain/manifest_mod.json` (all-device Mod convenience manifest)
+- `src/m5chain/manifest_mod_base.json` (Host-provided core typings for Mods)
+- `src/m5chain/manifest_devices_all.json`
+- `src/m5chain/manifest_device_*.json`
 - `src/m5chain/manifest_chain_base.json`
 - `examples/manifest.json`
 - `examples/main.ts`
 
 ### Examples (current)
 
-- `examples/basic/mod.js`
-- `examples/led/mod.js`
+- `examples/basic/mod.ts`
+- `examples/led/mod.ts`
 
 ### Device Protocol PDFs
 
@@ -66,8 +68,9 @@ This document is a developer- and AI-oriented overview of the repository. It sum
 
 ### Device Creation
 
-`createM5ChainDevice` selects a device class by `DEVICE_TYPE` and returns an instance.  
-Each concrete class composes feature mixins via `withDeviceFeatures(...)`.
+Applications pass supported device classes to `new M5Chain({ deviceClasses })`. `createM5ChainDevice` selects a
+registered class by `DEVICE_TYPE` and returns an instance; unregistered types become `UnknownDevice`. Each concrete
+class composes feature mixins via `withDeviceFeatures(...)`.
 
 ### Mixins
 

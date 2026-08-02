@@ -1,0 +1,7 @@
+{
+	"include": ["./manifest_feature_led.json", "./manifest_feature_sample.json"],
+	"modules": {
+		"m5chainToF": "./m5chainDevices/m5chainToF"
+	},
+	"preload": ["m5chainToF"]
+}

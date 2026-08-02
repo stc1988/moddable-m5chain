@@ -1,0 +1,16 @@
+{
+	"include": [
+		"./manifest_device_angle.json",
+		"./manifest_device_buzzer.json",
+		"./manifest_device_encoder.json",
+		"./manifest_device_joystick.json",
+		"./manifest_device_key.json",
+		"./manifest_device_mono.json",
+		"./manifest_device_rgb.json",
+		"./manifest_device_tof.json"
+	],
+	"modules": {
+		"m5chainDevices": "./m5chainDevices"
+	},
+	"preload": ["m5chainDevices"]
+}

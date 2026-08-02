@@ -1,0 +1,7 @@
+{
+	"include": ["./manifest_feature_led.json", "./manifest_feature_sample.json"],
+	"modules": {
+		"m5chainAngle": "./m5chainDevices/m5chainAngle"
+	},
+	"preload": ["m5chainAngle"]
+}

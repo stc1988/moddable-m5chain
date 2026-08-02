@@ -1,0 +1,6 @@
+{
+	"modules": {
+		"hasKey": "./deviceFeatures/hasKey"
+	},
+	"preload": ["hasKey"]
+}

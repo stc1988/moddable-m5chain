@@ -18,7 +18,7 @@ import M5ChainBuzzer, {
 } from "m5chainBuzzer";
 ```
 
-The constants and types are also exported from `m5chain`.
+The constants and types are exported from `m5chainBuzzer` so the M5Chain core does not depend on Buzzer code.
 
 | Export | Description |
 | --- | --- |

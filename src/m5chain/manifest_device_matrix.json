@@ -1,0 +1,7 @@
+{
+	"modules": {
+		"m5chainMatrixDisplay": "./m5chainDevices/m5chainMatrixDisplay",
+		"matrixDisplayProtocol": "./matrixDisplayProtocol"
+	},
+	"preload": ["m5chainMatrixDisplay", "matrixDisplayProtocol"]
+}

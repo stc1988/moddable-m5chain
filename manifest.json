@@ -1,6 +1,6 @@
 {
 	"include": [
 		"./src/m5chain/manifest_host.json",
-		"./src/m5chain/manifest_mod.json"
+		"./src/m5chain/manifest_devices_all.json"
 	]
 }

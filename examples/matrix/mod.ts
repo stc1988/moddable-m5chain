@@ -1,17 +1,15 @@
-import M5Chain, {
-	type LedColor,
-	type M5ChainDevice,
-	MATRIX_ROTATION,
-	SCROLL_BEHAVIOR,
-	SCROLL_DIRECTION,
-} from "m5chain";
+import M5ChainMono from "m5chainMono";
+import M5ChainRGB, { type LedColor, MATRIX_ROTATION, SCROLL_BEHAVIOR, SCROLL_DIRECTION } from "m5chainRGB";
+import M5Chain, { type RegisteredM5ChainDevice } from "m5chain";
 
 const LOG_PREFIX = "[examples/matrix]";
+const MATRIX_DEVICE_CLASSES = Object.freeze([M5ChainMono, M5ChainRGB]);
+type MatrixDevice = RegisteredM5ChainDevice<typeof MATRIX_DEVICE_CLASSES>;
 
 export async function main() {
 	log("start");
 
-	const m5chain = new M5Chain();
+	const m5chain = new M5Chain({ deviceClasses: MATRIX_DEVICE_CLASSES });
 
 	m5chain.onError = (error, context) => {
 		log(`${context.source} failed: ${errorMessage(error)}`);
@@ -33,7 +31,7 @@ export async function main() {
 	await m5chain.start();
 }
 
-async function showMono(mono: Extract<M5ChainDevice, { kind: "mono" }>) {
+async function showMono(mono: Extract<MatrixDevice, { kind: "mono" }>) {
 	await mono.configure({
 		display: {
 			rotation: MATRIX_ROTATION.DEG_0,
@@ -46,7 +44,7 @@ async function showMono(mono: Extract<M5ChainDevice, { kind: "mono" }>) {
 	log(`Mono id=${mono.id} showing a frame`);
 }
 
-async function showRGB(rgb: Extract<M5ChainDevice, { kind: "rgb" }>) {
+async function showRGB(rgb: Extract<MatrixDevice, { kind: "rgb" }>) {
 	await rgb.configure({
 		display: {
 			rotation: MATRIX_ROTATION.DEG_0,

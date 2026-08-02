@@ -1,3 +1,16 @@
 {
-	"include": ["$(MODDABLE)/modules/io/manifest.json", "$(MODULES)/base/modules/manifest.json"]
+	"include": [
+		"./manifest_chain_base.json",
+		"$(MODDABLE)/modules/io/manifest.json",
+		"$(MODULES)/base/modules/manifest.json"
+	],
+	"modules": {
+		"m5chain": "./m5chain",
+		"createM5ChainDevice": "./createM5ChainDevice",
+		"deviceRegistry": "./deviceRegistry",
+		"m5chainDevice": "./m5chainDevices/m5chainDevice",
+		"m5chainUnknownDevice": "./m5chainDevices/m5chainUnknownDevice",
+		"types": "./types"
+	},
+	"preload": ["m5chain", "createM5ChainDevice", "deviceRegistry", "m5chainDevice", "m5chainUnknownDevice"]
 }

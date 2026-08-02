@@ -1,0 +1,6 @@
+{
+	"modules": {
+		"canSample": "./deviceFeatures/canSample"
+	},
+	"preload": ["canSample"]
+}

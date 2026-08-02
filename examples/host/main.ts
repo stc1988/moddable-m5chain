@@ -1,6 +1,7 @@
+import { M5CHAIN_DEVICE_CLASSES } from "m5chainDevices";
 import M5Chain from "m5chain";
 
-const m5chain = new M5Chain();
+const m5chain = new M5Chain({ deviceClasses: M5CHAIN_DEVICE_CLASSES });
 
 m5chain.onError = (error, context) => {
 	trace(`[examples/host] ${context.source} failed: ${error}\n`);

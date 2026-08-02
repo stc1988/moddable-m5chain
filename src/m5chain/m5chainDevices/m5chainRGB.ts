@@ -24,6 +24,22 @@ import {
 } from "matrixDisplayProtocol";
 import type { LedColor } from "types";
 
+export {
+	type DisplayCoordinate,
+	MATRIX_ROTATION,
+	type MatrixDisplayConfiguration,
+	type MatrixDisplayConfigurationSnapshot,
+	type MatrixRotation,
+	SCROLL_BEHAVIOR,
+	SCROLL_DIRECTION,
+	SCROLL_STATE,
+	type ScrollBehavior,
+	type ScrollDirection,
+	type ScrollSettings,
+	type ScrollState,
+} from "m5chainMatrixDisplay";
+export type { LedColor } from "types";
+
 export type RgbMatrixPixel = DisplayCoordinate & {
 	color: LedColor;
 };

@@ -1,12 +1,15 @@
-import M5Chain, { BUZZER_NOTE, type M5ChainDevice } from "m5chain";
+import M5ChainBuzzer, { BUZZER_NOTE } from "m5chainBuzzer";
+import M5Chain, { type RegisteredM5ChainDevice } from "m5chain";
 import Timer from "timer";
 
 const LOG_PREFIX = "[examples/buzzer]";
+const BUZZER_DEVICE_CLASSES = Object.freeze([M5ChainBuzzer]);
+type BuzzerDevice = RegisteredM5ChainDevice<typeof BUZZER_DEVICE_CLASSES>;
 
 export async function main() {
 	log("start");
 
-	const m5chain = new M5Chain();
+	const m5chain = new M5Chain({ deviceClasses: BUZZER_DEVICE_CLASSES });
 
 	m5chain.onError = (error, context) => {
 		log(`${context.source} failed: ${errorMessage(error)}`);
@@ -36,7 +39,7 @@ export async function main() {
 	await m5chain.start();
 }
 
-function findBuzzer(devices: readonly M5ChainDevice[]) {
+function findBuzzer(devices: readonly BuzzerDevice[]) {
 	for (const device of devices) {
 		if (device.kind === "buzzer") return device;
 	}

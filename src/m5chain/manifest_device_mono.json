@@ -1,0 +1,7 @@
+{
+	"include": ["./manifest_device_matrix.json"],
+	"modules": {
+		"m5chainMono": "./m5chainDevices/m5chainMono"
+	},
+	"preload": ["m5chainMono"]
+}

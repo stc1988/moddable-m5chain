@@ -44,7 +44,7 @@ import M5ChainKey, { KEY_EVENT, KEY_MODE, type KeyEvent, type KeyMode } from "m5
 ## Usage
 
 ```ts
-import { KEY_EVENT, KEY_MODE } from "m5chain";
+import { KEY_EVENT, KEY_MODE } from "m5chainEncoder";
 
 await device.configure({ key: { mode: KEY_MODE.ACTIVE } });
 

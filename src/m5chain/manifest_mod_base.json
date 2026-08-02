@@ -1,0 +1,8 @@
+{
+	"include": ["./manifest_chain_base.json"],
+	"modules": {
+		"m5chain": "./typings/m5chain",
+		"m5chainDevice": "./typings/m5chainDevice",
+		"types": "./typings/types"
+	}
+}

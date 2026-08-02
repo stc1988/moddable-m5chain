@@ -1,12 +1,14 @@
+import { M5CHAIN_DEVICE_CLASSES, type M5ChainDevice } from "m5chainDevices";
+import { KEY_EVENT, type KeyEvent } from "m5chainEncoder";
 import type { JoystickValue } from "m5chainJoyStick";
-import M5Chain, { KEY_EVENT, type KeyEvent, type M5ChainDevice } from "m5chain";
+import M5Chain from "m5chain";
 
 const LOG_PREFIX = "[examples/basic]";
 
 export async function main() {
 	log("start");
 
-	const m5chain = new M5Chain();
+	const m5chain = new M5Chain({ deviceClasses: M5CHAIN_DEVICE_CLASSES });
 
 	m5chain.onError = (error, context) => {
 		log(`${context.source} failed: ${errorMessage(error)}`);
