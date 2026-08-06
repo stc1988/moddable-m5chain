@@ -2,6 +2,8 @@
 
 This document is a developer- and AI-oriented overview of the repository. It summarizes current structure and runtime behavior based on the implementation in this repo.
 
+For general Moddable SDK development and validation rules, follow `$MODDABLE/AGENTS.md`. This file only adds guidance specific to this repository.
+
 ## Overview
 
 `moddable-m5chain` is a Moddable SDK module for controlling M5Chain devices over a UART bus. It handles scanning, initialization, serial-bus polling, sample notification, and event dispatch, then exposes device-specific APIs via feature mixins.
@@ -180,17 +182,6 @@ When asking for changes, the following expectations apply:
 - Breaking API changes are acceptable.
 - If code changes, update documentation accordingly.
 - For implementation changes, run `npm run format` and `npm run lint`, then address reported lint findings.
-- After modifying this repository, verify that Moddable builds pass with:
-  - `mcconfig -d -m -p esp32/m5atom_matrix -t build ./examples/manifest.json`
-  - `mcrun -d -m -p esp32/m5atom_matrix -t build ./examples/basic/manifest.json`
-- To verify runtime behavior on hardware with a debugger, run `mcconfig` with `-dl` and without `-t build`, for example:
-  - `mcconfig -dl -m -p esp32/m5atom_matrix ./examples/manifest.json`
-- `-t build` verifies the build only. It does not flash the device or enter `xsdb`.
-- The `-dl` option starts `xsdb`, a debugger that can be used similarly to `gdb`. Use the `help` command inside `xsdb` for command details.
-- Use `xsdb` to confirm the app starts without errors and emits the expected logs.
-- If `mcconfig -dl` reports `#xsbug-log missing modules! Did you npm install?`, install the Moddable log tool dependencies with:
-  - `pushd $MODDABLE/tools/xsbug-log && npm install && popd`
-- When verification is complete, exit `xsdb` with `quit`.
-- Do not leave debugger/logging processes running in the background. After using `mcconfig -dl`, `xsbug-log`, `serial2xsbug`, or `xsdb`, confirm that no related process is still listening on the xsbug port, for example:
-  - `lsof -nP -iTCP:5002 -sTCP:LISTEN`
-- If a leftover `xsbug-log`, `serial2xsbug`, or `xsdb` process remains, terminate it before reporting completion. Background debugger processes make the current hardware/debug state hard to understand for the next operator.
+- After modifying this repository, verify both the host application and Mod build for the primary target:
+  - `mcconfig -dn -m -p esp32/m5atom_matrix -t build ./examples/manifest.json`
+  - `mcrun -dn -m -p esp32/m5atom_matrix -t build ./examples/basic/manifest.json`
