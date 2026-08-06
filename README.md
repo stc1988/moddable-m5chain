@@ -78,6 +78,8 @@ For M5Stack products, the default UART pins are set to the Grove port.
 
 If you use an M5Atom series device with  [Atom Chain Base](https://docs.m5stack.com/ja/accessory/Atomic_ToChain_Base), automatically provides a `config.m5chain` pin configuration.
 
+`transmit` and `receive` may override either configured pin independently. Pin number `0` is supported.
+
 See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
 
 ## Minimal Usage
@@ -189,6 +191,7 @@ payload copied so later changes to the shared command buffer cannot affect them.
 ### M5Chain
 
 - `new M5Chain({ deviceClasses, transmit, receive, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
+  - `pollingInterval` and `connectionCheckInterval` must be non-negative finite numbers.
 - `await m5chain.start()`
 - `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
 - `await m5chain.close()` stops the chain and closes UART permanently

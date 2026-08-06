@@ -29,7 +29,7 @@ export async function main() {
 			dutyCycle: 0.5,
 			durationMs: 500,
 		});
-		Timer.delay(600);
+		await delay(600);
 		await buzzer.playNote({
 			note: BUZZER_NOTE.C4,
 			durationMs: 250,
@@ -37,6 +37,10 @@ export async function main() {
 	};
 
 	await m5chain.start();
+}
+
+function delay(milliseconds: number) {
+	return new Promise<void>((resolve) => Timer.set(() => resolve(), milliseconds));
 }
 
 function findBuzzer(devices: readonly BuzzerDevice[]) {

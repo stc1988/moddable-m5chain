@@ -120,6 +120,8 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	#pollRequested = false;
 	#pollRunning = false;
 	#pollTask: Promise<void> | null = null;
+	#pollDelayTimer: ReturnType<typeof Timer.set> | null = null;
+	#pollDelayResolve: (() => void) | null = null;
 	#connectionFailureCount = 0;
 	#connectionCheckTimer: ReturnType<typeof Timer.set> | null = null;
 	#connectionCheckRunning = false;
@@ -142,13 +144,20 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
 		this.connectionCheckInterval = options.connectionCheckInterval ?? 1000;
+		if (!Number.isFinite(this.pollingInterval) || this.pollingInterval < 0) {
+			throw new RangeError("pollingInterval must be a non-negative number.");
+		}
 		if (!Number.isFinite(this.connectionCheckInterval) || this.connectionCheckInterval < 0) {
 			throw new RangeError("connectionCheckInterval must be a non-negative number.");
 		}
-		const connectionConfig =
-			options?.transmit && options?.receive
-				? { transmit: options.transmit, receive: options.receive }
-				: loadConnectionConfig();
+		let connectionConfig: connectionConfig;
+		if (options.transmit !== undefined && options.receive !== undefined) {
+			connectionConfig = { transmit: options.transmit, receive: options.receive };
+		} else {
+			connectionConfig = loadConnectionConfig();
+			connectionConfig.transmit = options.transmit ?? connectionConfig.transmit;
+			connectionConfig.receive = options.receive ?? connectionConfig.receive;
+		}
 		this.#serial = new Serial({
 			transmit: connectionConfig.transmit,
 			receive: connectionConfig.receive,
@@ -651,7 +660,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			while (this.#pollRequested) {
 				await this.#pollDevices();
 				if (this.#pollRequested) {
-					Timer.delay(this.pollingInterval);
+					await this.#waitForNextPoll();
 				}
 			}
 		} finally {
@@ -662,6 +671,27 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 				this.#startPolling();
 			}
 		}
+	}
+
+	#waitForNextPoll() {
+		return new Promise<void>((resolve) => {
+			this.#pollDelayResolve = resolve;
+			this.#pollDelayTimer = Timer.set(() => {
+				this.#pollDelayTimer = null;
+				this.#pollDelayResolve = null;
+				resolve();
+			}, this.pollingInterval);
+		});
+	}
+
+	#cancelPollDelay() {
+		if (!this.#pollDelayResolve) return;
+
+		Timer.clear(this.#pollDelayTimer);
+		this.#pollDelayTimer = null;
+		const resolve = this.#pollDelayResolve;
+		this.#pollDelayResolve = null;
+		resolve();
 	}
 
 	async #pollDevices() {
@@ -705,6 +735,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	#stopPolling() {
 		this.#pollRequested = false;
 		this.running = false;
+		this.#cancelPollDelay();
 	}
 	#updatePollingState() {
 		if (this.#hasActiveSampleHandler()) {
