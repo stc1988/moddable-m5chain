@@ -59,6 +59,8 @@ export type DeviceListChangeHandler<TDevice extends M5ChainDeviceLike = M5ChainD
 	devices: readonly TDevice[],
 ) => void | Promise<void>;
 
+export type DeviceDisconnectHandler = (() => void | Promise<void>) | null;
+
 export type M5ChainErrorSource = "deviceDisconnected" | "deviceEvent" | "deviceListChanged" | "sample";
 
 export type M5ChainErrorContext = {
@@ -105,7 +107,7 @@ export interface M5ChainDeviceLike {
 	configure?(options?: DeviceConfiguration): Promise<void>;
 	readConfiguration?(): Promise<DeviceConfigurationSnapshot>;
 	_markDisconnected?(): void;
-	onDisconnected?(): void;
+	onDisconnected?: DeviceDisconnectHandler;
 	onDispatchEvent?(buffer: PacketBuffer): unknown;
 	hasOnSample?(): boolean;
 	readSample?<T = unknown>(): Promise<T | undefined>;

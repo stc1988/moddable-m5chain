@@ -1,4 +1,10 @@
-import type { ChainBus, DeviceConfiguration, DeviceConfigurationSnapshot, DeviceFactoryOptions } from "types";
+import type {
+	ChainBus,
+	DeviceConfiguration,
+	DeviceConfigurationSnapshot,
+	DeviceDisconnectHandler,
+	DeviceFactoryOptions,
+} from "types";
 
 function assertObjectOption(name: string, value: unknown) {
 	if (value === undefined) return;
@@ -26,6 +32,7 @@ class M5ChainDevice {
 	#bus: ChainBus;
 	#connected = true;
 	#id: number;
+	#onDisconnected: DeviceDisconnectHandler = null;
 	#uuid: string | undefined;
 	readonly kind: string = "device";
 	readonly known: boolean = true;
@@ -66,7 +73,16 @@ class M5ChainDevice {
 		this.#connected = false;
 	}
 
-	onDisconnected() {}
+	set onDisconnected(fn: DeviceDisconnectHandler) {
+		if (fn !== null && typeof fn !== "function") {
+			throw new Error("onDisconnected must be a function or null");
+		}
+		this.#onDisconnected = fn;
+	}
+
+	get onDisconnected(): DeviceDisconnectHandler {
+		return this.#onDisconnected;
+	}
 
 	async configure(options: DeviceConfiguration = {}): Promise<void> {
 		assertObjectOption("options", options);

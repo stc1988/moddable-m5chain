@@ -1,4 +1,10 @@
-import type { ChainBus, DeviceConfiguration, DeviceConfigurationSnapshot, DeviceFactoryOptions } from "types";
+import type {
+	ChainBus,
+	DeviceConfiguration,
+	DeviceConfigurationSnapshot,
+	DeviceDisconnectHandler,
+	DeviceFactoryOptions,
+} from "types";
 
 declare class M5ChainDevice {
 	static readonly CMD: Readonly<{
@@ -16,7 +22,7 @@ declare class M5ChainDevice {
 	get uuid(): string | undefined;
 	init(): Promise<void>;
 	_markDisconnected(): void;
-	onDisconnected(): void;
+	onDisconnected: DeviceDisconnectHandler;
 	configure(options?: DeviceConfiguration): Promise<void>;
 	readConfiguration(): Promise<DeviceConfigurationSnapshot>;
 	getUID(uidType?: number): Promise<string>;

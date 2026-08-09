@@ -136,6 +136,7 @@ const m5chain = new M5Chain({
 - Called before a disconnected device instance is removed or replaced during re-scan
 - Works for devices without `onSample`, such as Key, through connection monitoring
 - The disconnected instance has `device.connected === false` and can no longer access the bus
+- Set to `null` to remove the handler
 
 ### `m5chain.onError = (error, context) => {}`
 
