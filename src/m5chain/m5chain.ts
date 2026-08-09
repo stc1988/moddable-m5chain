@@ -64,6 +64,8 @@ type QueuedRequest = {
 	reject: (reason?: unknown) => void;
 };
 
+const MAX_PACKET_SIZE = 256;
+
 function loadConnectionConfig(): connectionConfig {
 	const modConfig: ConfigRecord | undefined = Modules.has("mod/config")
 		? (Modules.importNow("mod/config") as ConfigRecord)
@@ -106,7 +108,9 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	#serial;
 	cmdBuffer = new Uint8Array(256);
 	#enumBuffer = new Uint8Array(1);
-	#sendBuffer = new Uint8Array(256);
+	#outputQueue: Uint8Array[] = [];
+	#outputOffset = 0;
+	#writable = 0;
 	#receiveResolve: ((result: WaitForPacketResult) => void) | null = null;
 	#receiveReject: ((reason?: unknown) => void) | null = null;
 	#receiveTimeoutId: ReturnType<typeof Timer.set> | null = null;
@@ -140,7 +144,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			throw new TypeError("options must be an object.");
 		}
 		this.#deviceClasses = normalizeDeviceClasses(options.deviceClasses) as TClasses;
-		this.maxPayloadSize = this.#sendBuffer.length - 9;
+		this.maxPayloadSize = MAX_PACKET_SIZE - 9;
 		this.debug = !!options?.debug;
 		this.pollingInterval = options.pollingInterval ?? 30;
 		this.connectionCheckInterval = options.connectionCheckInterval ?? 1000;
@@ -273,6 +277,10 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 					}
 				}
 			},
+			onWritable: (bytesWritable: number) => {
+				self.#writable = bytesWritable;
+				self.#drainOutput();
+			},
 		});
 	}
 	#log(message: string, level = "INFO") {
@@ -340,7 +348,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		const cmdSize = size + 3;
 		const sendBufferSize = size + 9;
 
-		const sendBuffer = this.#sendBuffer;
+		const sendBuffer = new Uint8Array(sendBufferSize);
 		sendBuffer[0] = 0xaa;
 		sendBuffer[1] = 0x55;
 		sendBuffer[2] = cmdSize & 0xff;
@@ -359,7 +367,23 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			this.#dumpPacket(sendBuffer, sendBufferSize);
 		}
 
-		this.#serial.write(sendBuffer.subarray(0, sendBufferSize));
+		this.#outputQueue.push(sendBuffer);
+		this.#drainOutput();
+	}
+
+	#drainOutput() {
+		while (this.#writable > 0 && this.#outputQueue.length > 0) {
+			const packet = this.#outputQueue[0];
+			const count = Math.min(this.#writable, packet.length - this.#outputOffset);
+			this.#serial.write(packet.subarray(this.#outputOffset, this.#outputOffset + count));
+			this.#writable -= count;
+			this.#outputOffset += count;
+
+			if (this.#outputOffset === packet.length) {
+				this.#outputQueue.shift();
+				this.#outputOffset = 0;
+			}
+		}
 	}
 
 	#clearPendingRequest() {
@@ -647,6 +671,9 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		if (this.#closed) return;
 		this.#closed = true;
 		await this.stop();
+		this.#outputQueue.length = 0;
+		this.#outputOffset = 0;
+		this.#writable = 0;
 		this.#serial.close();
 		this.#rxLength = 0;
 	}

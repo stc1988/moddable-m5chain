@@ -186,6 +186,7 @@ failures without disconnecting other responsive devices.
 
 UART requests are serialized. An uncontended request starts immediately; overlapping requests are queued with their
 payload copied so later changes to the shared command buffer cannot affect them.
+Packets larger than the UART transmit FIFO are written in chunks as output space becomes available.
 
 ## API
 
