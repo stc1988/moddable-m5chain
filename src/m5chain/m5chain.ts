@@ -862,7 +862,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 						await device.init();
 						this.#deviceList.push(device);
 						this.#log(
-							`found ${device.known ? "known" : "unknown"} device id=${device.id ?? "?"}, type=0x${(device.type ?? 0).toString(16).toUpperCase()} uuid=${device.uuid}`,
+							`found device id=${device.id ?? "?"} kind=${device.kind} type=0x${(device.type ?? 0).toString(16).toUpperCase().padStart(4, "0")} uuid=${device.uuid}`,
 						);
 					} catch (error: unknown) {
 						const message = error instanceof Error ? error.message : String(error);

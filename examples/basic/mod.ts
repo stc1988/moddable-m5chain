@@ -93,7 +93,7 @@ function logKeyEvent(device: M5ChainDevice, event: KeyEvent) {
 }
 
 function deviceLabel(device: M5ChainDevice) {
-	return `${device.kind} id=${device.id} type=0x${device.type.toString(16).padStart(4, "0")}`;
+	return `${device.kind} id=${device.id}`;
 }
 
 function keyEventName(event: KeyEvent) {

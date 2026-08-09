@@ -101,7 +101,7 @@ const m5chain = new M5Chain({
 
 m5chain.onDeviceListChanged = (devices) => {
 	for (const device of devices) {
-		trace(`id=${device.id} type=0x${device.type.toString(16)} uid=${device.uuid}\n`);
+		trace(`id=${device.id} kind=${device.kind} uid=${device.uuid}\n`);
 	}
 };
 
@@ -202,8 +202,8 @@ payload copied so later changes to the shared command buffer cannot affect them.
 ### Common Device API (`M5ChainDevice`)
 
 - `device.id`
-- `device.type`
-- `device.kind` (`encoder`, `angle`, `key`, `joystick`, `tof`, `buzzer`, `mono`, `rgb`, or `unknown`)
+- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `buzzer`, `mono`, `rgb`, or `unknown`)
+- `device.type` numeric device type ID used by the M5Chain protocol
 - `device.known` (`false` for device types not yet supported by this library)
 - `device.connected`
 - `device.uuid` (after `init()`)
