@@ -45,11 +45,12 @@ declare const device: {
 	};
 };
 
-// biome-ignore lint/suspicious/noExplicitAny: Match the type definition of mc/config
-type ConfigRecord = Record<string, any>;
 type connectionConfig = {
 	transmit: number;
 	receive: number;
+};
+type ConfigRecord = {
+	m5chain: connectionConfig;
 };
 
 type QueuedRequest = {
