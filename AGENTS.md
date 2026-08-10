@@ -68,6 +68,28 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 
 ## Architecture Summary
 
+### Host and Mod Type Definitions
+
+Host and Mod builds resolve the same module specifiers to different files because the Host owns the core runtime
+implementation while Mods compile against that implementation:
+
+- `manifest_host.json` maps `m5chain`, `m5chainDevice`, and `types` to the implementation sources. In particular,
+  `src/m5chain/types.ts` is the shared type source used while compiling the Host implementation.
+- `manifest_mod_base.json` maps those module specifiers to declaration-only files under `src/m5chain/typings/`.
+  These `.d.ts` files let Mod code type-check imports from the Host without compiling another copy of the core runtime.
+- The distinction is a build and module-resolution boundary, even though TypeScript erases all of these types at
+  runtime.
+
+Keep the two type surfaces synchronized:
+
+- Changes to shared definitions in `src/m5chain/types.ts` must be reflected in
+  `src/m5chain/typings/types.d.ts`.
+- Changes to the public API of `src/m5chain/m5chain.ts` or
+  `src/m5chain/m5chainDevices/m5chainDevice.ts` must be reflected in the corresponding declaration under
+  `src/m5chain/typings/`.
+- Do not add runtime behavior to `src/m5chain/typings/`; it represents Host-provided modules to the Mod compiler.
+- Validate both the Host application build and a Mod build after changing either surface.
+
 ### Device Creation
 
 Applications pass supported device classes to `new M5Chain({ deviceClasses })`. `createM5ChainDevice` selects a

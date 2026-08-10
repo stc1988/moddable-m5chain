@@ -133,5 +133,4 @@ export type DeviceConstructor<TInstance = object> = new (...args: any[]) => TIns
 
 export type DeviceMixin<TBase extends DeviceConstructor, TAdded extends object> = (
 	Base: TBase,
-	// biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].
-) => (new (...args: any[]) => InstanceType<TBase> & TAdded) & TBase;
+) => (new (...args: ConstructorParameters<TBase>) => InstanceType<TBase> & TAdded) & TBase;
