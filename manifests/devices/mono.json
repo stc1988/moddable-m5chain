@@ -1,0 +1,3 @@
+{
+	"include": ["../../src/m5chain/manifest_device_mono.json"]
+}
