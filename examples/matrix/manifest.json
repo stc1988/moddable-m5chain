@@ -2,9 +2,9 @@
 	"include": [
 		"$(MODDABLE)/examples/manifest_mod.json",
 		"$(MODDABLE)/examples/manifest_typings.json",
-		"../../src/m5chain/manifest_mod_base.json",
-		"../../src/m5chain/manifest_device_mono.json",
-		"../../src/m5chain/manifest_device_rgb.json"
+		"../../manifests/mod-base.json",
+		"../../manifests/devices/mono.json",
+		"../../manifests/devices/rgb.json"
 	],
 	"modules": {
 		"*": ["./mod"]

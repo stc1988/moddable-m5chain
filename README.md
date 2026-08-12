@@ -28,51 +28,129 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ## Setup
 
-### 1) Include this module in your manifest
+### 1) Include the library from Git
 
-The repository root manifest is the standalone, all-device entry point:
+The repository root manifest is the standalone, all-device entry point. Until the first release tag is available, use
+the `main` branch:
 
 ```json
 {
 	"include": [
 		{
-			"git":"https://github.com/stc1988/moddable-m5chain.git"
+			"git": "https://github.com/stc1988/moddable-m5chain.git",
+			"branch": "main"
 		}
 	]
 }
 ```
 
-For a shared Mod host, include only the M5Chain core in the host manifest:
+For reproducible builds, replace `branch` with a published release tag when one is available:
 
 ```json
 {
 	"include": [
-		"path/to/moddable-m5chain/src/m5chain/manifest_host.json"
+		{
+			"git": "https://github.com/stc1988/moddable-m5chain.git",
+			"tag": "v1.0.0"
+		}
 	]
 }
 ```
 
-Each Mod includes `manifest_mod_base.json` plus only the devices it supports. For example, an Encoder and ToF Mod uses:
+Release tags are intended to be immutable. Branch builds follow ongoing development and may include breaking changes.
+If a cached branch build does not update, clean the application build before rebuilding; Moddable stores cloned
+repositories with the project's temporary build files.
+
+The root manifest includes every supported device. To reduce the application size, select only the required device
+manifests in an inline Git manifest. This example includes Encoder and ToF:
+
+```json
+{
+	"include": [
+		"$(MODDABLE)/examples/manifest_base.json",
+		{
+			"git": "https://github.com/stc1988/moddable-m5chain.git",
+			"branch": "main",
+			"manifest": {
+				"include": [
+					"./manifests/host.json",
+					"./manifests/devices/encoder.json",
+					"./manifests/devices/tof.json"
+				]
+			}
+		}
+	]
+}
+```
+
+Available public device manifests are `angle.json`, `buzzer.json`, `encoder.json`, `joystick.json`, `key.json`,
+`mono.json`, `rgb.json`, and `tof.json` under `manifests/devices/`. `manifests/devices/all.json` includes every device.
+Device manifests automatically include their required LED, key, sample, or matrix features.
+
+### 2) Include the library in a shared Mod host
+
+The Host owns the M5Chain transport, scan, polling, base-device, and UnknownDevice implementation. Include only the
+core Host manifest:
+
+```json
+{
+	"include": [
+		{
+			"git": "https://github.com/stc1988/moddable-m5chain.git",
+			"branch": "main",
+			"manifest": "./manifests/host.json"
+		}
+	]
+}
+```
+
+Each Mod includes the declaration-only core surface plus only the device implementations it uses. For an Encoder and
+ToF Mod:
 
 ```json
 {
 	"include": [
 		"$(MODDABLE)/examples/manifest_mod.json",
 		"$(MODDABLE)/examples/manifest_typings.json",
-		"path/to/moddable-m5chain/src/m5chain/manifest_mod_base.json",
-		"path/to/moddable-m5chain/src/m5chain/manifest_device_encoder.json",
-		"path/to/moddable-m5chain/src/m5chain/manifest_device_tof.json"
+		{
+			"git": "https://github.com/stc1988/moddable-m5chain.git",
+			"branch": "main",
+			"manifest": {
+				"include": [
+					"./manifests/mod-base.json",
+					"./manifests/devices/encoder.json",
+					"./manifests/devices/tof.json"
+				]
+			}
+		}
+	],
+	"modules": {
+		"*": "./mod"
+	}
+}
+```
+
+`manifests/mod-all.json` is the all-device convenience entry point for a Mod. It also includes the Moddable TypeScript
+declarations, so an all-device Mod only needs `$(MODDABLE)/examples/manifest_mod.json` plus that Git manifest.
+
+### 3) Use a local checkout while developing
+
+Do not edit the temporary clone created by Git include because a clean build deletes it. This repository's examples
+use local relative paths to the same public manifests, for example:
+
+```json
+{
+	"include": [
+		"path/to/moddable-m5chain/manifests/host.json",
+		"path/to/moddable-m5chain/manifests/devices/encoder.json"
 	]
 }
 ```
 
-Available device manifests are `manifest_device_angle.json`, `manifest_device_buzzer.json`,
-`manifest_device_encoder.json`, `manifest_device_joystick.json`, `manifest_device_key.json`,
-`manifest_device_mono.json`, `manifest_device_rgb.json`, and `manifest_device_tof.json`.
-`manifest_devices_all.json` includes every device implementation, while `manifest_mod.json` is the corresponding
-all-device convenience manifest for Mods.
+The files under `manifests/` are the stable public manifest entry points. Files under `src/m5chain/` are internal and
+may move as the implementation evolves.
 
-### 2) Pin configuration
+### 4) Pin configuration
 
 For M5Stack products, the default UART pins are set to the Grove port.
 
