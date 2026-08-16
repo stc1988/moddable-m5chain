@@ -153,10 +153,12 @@ may move as the implementation evolves.
 
 ### 4) Pin configuration
 
-For M5Stack products, the default UART pins are set to the Grove port.
+When no M5Chain pin configuration is present, the UART pins default to the target's Grove-compatible
+`device.I2C.default.data` and `device.I2C.default.clock` pins.
 
 If you use an M5Atom series device with  [Atom Chain Base](https://docs.m5stack.com/ja/accessory/Atomic_ToChain_Base), automatically provides a `config.m5chain` pin configuration.
 
+Target defaults, `mc/config`, `mod/config`, and constructor options are applied in that order of increasing priority.
 `transmit` and `receive` may override either configured pin independently. Pin number `0` is supported.
 
 See [Minimal Usage](#minimal-usage) for the concrete usage pattern.

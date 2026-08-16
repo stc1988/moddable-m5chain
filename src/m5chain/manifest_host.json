@@ -6,11 +6,19 @@
 	],
 	"modules": {
 		"m5chain": "./m5chain",
+		"connectionConfig": "./connectionConfig",
 		"createM5ChainDevice": "./createM5ChainDevice",
 		"deviceRegistry": "./deviceRegistry",
 		"m5chainDevice": "./m5chainDevices/m5chainDevice",
 		"m5chainUnknownDevice": "./m5chainDevices/m5chainUnknownDevice",
 		"types": "./types"
 	},
-	"preload": ["m5chain", "createM5ChainDevice", "deviceRegistry", "m5chainDevice", "m5chainUnknownDevice"]
+	"preload": [
+		"m5chain",
+		"connectionConfig",
+		"createM5ChainDevice",
+		"deviceRegistry",
+		"m5chainDevice",
+		"m5chainUnknownDevice"
+	]
 }

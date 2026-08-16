@@ -1,3 +1,4 @@
+import { type ConnectionConfig, resolveConnectionConfig } from "connectionConfig";
 import createM5ChainDevice from "createM5ChainDevice";
 import { normalizeDeviceClasses } from "deviceRegistry";
 import Serial from "embedded:io/serial";
@@ -45,14 +46,6 @@ declare const device: {
 	};
 };
 
-type connectionConfig = {
-	transmit: number;
-	receive: number;
-};
-type ConfigRecord = {
-	m5chain: connectionConfig;
-};
-
 type QueuedRequest = {
 	id: number;
 	cmd: number;
@@ -67,26 +60,12 @@ type QueuedRequest = {
 
 const MAX_PACKET_SIZE = 256;
 
-function loadConnectionConfig(): connectionConfig {
-	const modConfig: ConfigRecord | undefined = Modules.has("mod/config")
-		? (Modules.importNow("mod/config") as ConfigRecord)
-		: undefined;
-	if (modConfig && typeof modConfig === "object") {
-		return {
-			transmit: modConfig.m5chain.transmit,
-			receive: modConfig.m5chain.receive,
-		};
-	} else if (config && typeof config === "object") {
-		return {
-			transmit: config.m5chain.transmit,
-			receive: config.m5chain.receive,
-		};
-	}
-
-	return {
+function loadConnectionConfig(): ConnectionConfig {
+	const modConfig = Modules.has("mod/config") ? Modules.importNow("mod/config") : undefined;
+	return resolveConnectionConfig(modConfig, config, {
 		transmit: device.I2C.default.data,
 		receive: device.I2C.default.clock,
-	};
+	});
 }
 
 export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
@@ -155,7 +134,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		if (!Number.isFinite(this.connectionCheckInterval) || this.connectionCheckInterval < 0) {
 			throw new RangeError("connectionCheckInterval must be a non-negative number.");
 		}
-		let connectionConfig: connectionConfig;
+		let connectionConfig: ConnectionConfig;
 		if (options.transmit !== undefined && options.receive !== undefined) {
 			connectionConfig = { transmit: options.transmit, receive: options.receive };
 		} else {
