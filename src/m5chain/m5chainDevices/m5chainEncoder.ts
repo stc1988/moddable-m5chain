@@ -1,8 +1,8 @@
-import CanSample from "canSample";
-import HasKey from "hasKey";
-import HasLed from "hasLed";
+import CanSample, { type CanSampleMethods } from "canSample";
+import HasKey, { type HasKeyMethods } from "hasKey";
+import HasLed, { type HasLedMethods } from "hasLed";
 import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
-import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -45,7 +45,8 @@ function saveToFlashToValue(saveToFlash: SaveToFlash): number {
 	return saveToFlash;
 }
 
-class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>) {
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
+class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>()) {
 	static DEVICE_TYPE = 0x0001;
 	readonly kind = "encoder" as const;
 	static CMD = Object.freeze({
@@ -60,10 +61,6 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	static ENCODER_AB_DIRECTION = EncoderABDirection;
 	static SAVE_TO_FLASH = SaveToFlash;
 	#lastValue: number | undefined;
-	declare onSample: SampleHandler<number>;
-	declare sample: () => number | undefined;
-	declare dispatchOnSample: (value: number) => void;
-
 	async configure(options: EncoderConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["key", "encoder"]);
 		await super.configure(options);
@@ -172,5 +169,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		}
 	}
 }
+
+interface M5ChainEncoder extends HasLedMethods, HasKeyMethods, CanSampleMethods<number> {}
 
 export default M5ChainEncoder;

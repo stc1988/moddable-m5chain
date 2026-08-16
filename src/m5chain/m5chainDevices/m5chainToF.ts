@@ -1,7 +1,7 @@
-import CanSample from "canSample";
-import HasLed from "hasLed";
+import CanSample, { type CanSampleMethods } from "canSample";
+import HasLed, { type HasLedMethods } from "hasLed";
 import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
-import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export const MeasurementMode = Object.freeze({
 	STOP: 0,
@@ -50,7 +50,8 @@ function measurementStatusToValue(status: MeasurementStatus): number {
 	return status;
 }
 
-class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
+class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	static DEVICE_TYPE = 0x0005;
 	readonly kind = "tof" as const;
 	static CMD = Object.freeze({
@@ -67,10 +68,6 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 	static MEASUREMENT_MODE = MeasurementMode;
 	static MEASUREMENT_STATUS = MeasurementStatus;
 	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;
-	declare onSample: SampleHandler<number>;
-	declare sample: () => number | undefined;
-	declare dispatchOnSample: (value: number) => void;
-
 	async configure(options: ToFConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["tof"]);
 		await super.configure(options);
@@ -201,5 +198,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>) {
 		await this.#setMeasurementStatus(MeasurementStatus.MEASURING);
 	}
 }
+
+interface M5ChainToF extends HasLedMethods, CanSampleMethods<number> {}
 
 export default M5ChainToF;

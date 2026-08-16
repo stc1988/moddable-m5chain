@@ -1,7 +1,7 @@
 import type { M5ChainDevice } from "m5chainDevice";
 import type { DeviceConstructor, DeviceMixin, LedColor } from "types";
 
-type HasLedMethods = {
+export type HasLedMethods = {
 	setLedColor(r: number, g: number, b: number): Promise<void>;
 	getLedColor(): Promise<LedColor>;
 	setLedColors(index: number, num: number, colors: LedColor[]): Promise<void>;
@@ -141,4 +141,4 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		}
 	};
 
-export default HasLed as DeviceMixin<DeviceConstructor<M5ChainDevice>, HasLedMethods>;
+export default HasLed as DeviceMixin<HasLedMethods, M5ChainDevice>;

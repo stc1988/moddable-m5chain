@@ -1,5 +1,5 @@
-import CanSample from "canSample";
-import HasLed from "hasLed";
+import CanSample, { type CanSampleMethods } from "canSample";
+import HasLed, { type HasLedMethods } from "hasLed";
 import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
 import {
 	assertPIRHoldSeconds,
@@ -13,7 +13,7 @@ import {
 	pirStatusFromEventPacket,
 	pirStatusFromValue,
 } from "pirProtocol";
-import type { DeviceConfiguration, DeviceConfigurationSnapshot, PacketBuffer, SampleHandler } from "types";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot, PacketBuffer } from "types";
 
 export { PIR_REPORT_MODE, PIR_STATUS, type PIRReportMode, type PIRStatus } from "pirProtocol";
 
@@ -34,7 +34,8 @@ export type PIRConfigurationSnapshot = DeviceConfigurationSnapshot & {
 
 export type PIRPresenceHandler = ((status: PIRStatus) => void | Promise<void>) | null;
 
-class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>) {
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
+class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 	static DEVICE_TYPE = 0x0009;
 	readonly kind = "pir" as const;
 	static PIR_STATUS = PIR_STATUS;
@@ -43,9 +44,6 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>) {
 		...super.CMD,
 		...PIR_COMMAND,
 	} as const);
-	declare onSample: SampleHandler<PIRStatus>;
-	declare sample: () => PIRStatus | undefined;
-	declare dispatchOnSample: (value: PIRStatus) => void;
 
 	#onPresenceChanged: PIRPresenceHandler = null;
 
@@ -144,5 +142,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>) {
 		return packet[6];
 	}
 }
+
+interface M5ChainPIR extends HasLedMethods, CanSampleMethods<PIRStatus> {}
 
 export default M5ChainPIR;

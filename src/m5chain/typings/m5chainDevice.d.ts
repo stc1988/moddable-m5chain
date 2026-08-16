@@ -2,6 +2,7 @@ import type {
 	ChainBus,
 	DeviceConfiguration,
 	DeviceConfigurationSnapshot,
+	DeviceConstructor,
 	DeviceDisconnectHandler,
 	DeviceFactoryOptions,
 } from "types";
@@ -32,7 +33,13 @@ declare class M5ChainDevice {
 
 declare function assertObjectOption(name: string, value: unknown): void;
 declare function assertKnownConfigurationOptions(options: DeviceConfiguration, known: string[]): void;
-// biome-ignore lint/suspicious/noExplicitAny: Mirrors the runtime mixin composition signature.
-declare function withDeviceFeatures(...features: Array<(Base: any) => any>): any;
+type ComposedDeviceConstructor = DeviceConstructor<M5ChainDevice> & {
+	// biome-ignore lint/suspicious/noExplicitAny: Feature command tables are merged dynamically.
+	CMD: any;
+};
+declare function withDeviceFeatures(
+	// biome-ignore lint/suspicious/noExplicitAny: Features accept and return progressively extended constructors.
+	...features: Array<(Base: any) => any>
+): ComposedDeviceConstructor;
 
 export { assertKnownConfigurationOptions, assertObjectOption, M5ChainDevice, withDeviceFeatures };

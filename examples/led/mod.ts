@@ -1,6 +1,5 @@
 import M5ChainAngle from "m5chainAngle";
-import M5ChainEncoder, { KEY_EVENT, type KeyEvent } from "m5chainEncoder";
-import type { JoystickValue } from "m5chainJoyStick";
+import M5ChainEncoder, { KEY_EVENT } from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainPIR, { PIR_STATUS } from "m5chainPIR";
@@ -58,7 +57,7 @@ function attachDeviceHandlers(device: LedDevice) {
 		case "encoder": {
 			let hue = 0;
 
-			device.onSample = async (delta: number) => {
+			device.onSample = async (delta) => {
 				hue = wrapUnit(hue + delta / ENCODER_STEPS_PER_TURN);
 				const color = hsvToRgb(hue, 1, 0.8);
 				log(`${deviceLabel(device)} delta=${delta}`);
@@ -68,7 +67,7 @@ function attachDeviceHandlers(device: LedDevice) {
 		}
 
 		case "angle":
-			device.onSample = async (angle: number) => {
+			device.onSample = async (angle) => {
 				const color = hsvToRgb(angle, 1, angle);
 				log(`${deviceLabel(device)} angle=${angle}`);
 				await device.setLedColor(color.r, color.g, color.b);
@@ -78,7 +77,7 @@ function attachDeviceHandlers(device: LedDevice) {
 		case "key": {
 			let step = 0;
 
-			device.onPush = async (event: KeyEvent) => {
+			device.onPush = async (event) => {
 				log(`${deviceLabel(device)} key event=${event}`);
 				if (event !== KEY_EVENT.SINGLE_CLICK) return;
 
@@ -93,7 +92,7 @@ function attachDeviceHandlers(device: LedDevice) {
 		}
 
 		case "joystick":
-			device.onSample = async (sample: JoystickValue) => {
+			device.onSample = async (sample) => {
 				const hue = normalizeJoystickAxis(sample.x);
 				const brightness = normalizeJoystickAxis(-sample.y);
 				const color = hsvToRgb(hue, 1, brightness);
@@ -104,7 +103,7 @@ function attachDeviceHandlers(device: LedDevice) {
 			break;
 
 		case "tof":
-			device.onSample = async (distance: number) => {
+			device.onSample = async (distance) => {
 				const brightness = clampUnit(1 - distance / TOF_MAX_DISTANCE_MM, TOF_MIN_BRIGHTNESS);
 				const color = hsvToRgb(0.58, 1, brightness);
 

@@ -1,7 +1,7 @@
-import CanSample from "canSample";
-import HasLed from "hasLed";
+import CanSample, { type CanSampleMethods } from "canSample";
+import HasLed, { type HasLedMethods } from "hasLed";
 import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
-import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export const AngleRotationDirection = Object.freeze({
 	CLOCKWISE: 0,
@@ -31,7 +31,8 @@ function angleRotationDirectionToValue(direction: AngleRotationDirection): numbe
 	return direction;
 }
 
-class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
+class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	static DEVICE_TYPE = 0x0002;
 	readonly kind = "angle" as const;
 	static CMD = Object.freeze({
@@ -42,10 +43,6 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const);
 	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
-	declare onSample: SampleHandler<number>;
-	declare sample: () => number | undefined;
-	declare dispatchOnSample: (value: number) => void;
-
 	async configure(options: AngleConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["angle"]);
 		await super.configure(options);
@@ -126,5 +123,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 		}
 	}
 }
+
+interface M5ChainAngle extends HasLedMethods, CanSampleMethods<number> {}
 
 export default M5ChainAngle;

@@ -76,6 +76,8 @@ export type RegisteredM5ChainDevice<TClasses extends readonly M5ChainDeviceClass
 	| M5ChainUnknownDeviceLike;
 // biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].
 export type DeviceConstructor<TInstance = object> = new (...args: any[]) => TInstance;
-export type DeviceMixin<TBase extends DeviceConstructor, TAdded extends object> = (
+export type DeviceMixin<TAdded extends object, TConstraint extends object = object> = <
+	TBase extends DeviceConstructor<TConstraint>,
+>(
 	Base: TBase,
 ) => (new (...args: ConstructorParameters<TBase>) => InstanceType<TBase> & TAdded) & TBase;

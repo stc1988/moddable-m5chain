@@ -89,7 +89,7 @@ function keyModeFromValue(value: number): KeyMode {
 	}
 }
 
-type HasKeyMethods = {
+export type HasKeyMethods = {
 	onPush: KeyHandler;
 	onDispatchEvent(buffer: PacketBuffer): void;
 	isKeyPressed(): Promise<boolean>;
@@ -217,4 +217,4 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 	};
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyHandler, type KeyMode, type KeyStatus };
-export default HasKey as DeviceMixin<DeviceConstructor<M5ChainDevice>, HasKeyMethods>;
+export default HasKey as DeviceMixin<HasKeyMethods, M5ChainDevice>;

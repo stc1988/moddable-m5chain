@@ -1,8 +1,8 @@
-import CanSample from "canSample";
-import HasKey from "hasKey";
-import HasLed from "hasLed";
+import CanSample, { type CanSampleMethods } from "canSample";
+import HasKey, { type HasKeyMethods } from "hasKey";
+import HasLed, { type HasLedMethods } from "hasLed";
 import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
-import type { DeviceConfiguration, DeviceConfigurationSnapshot, SampleHandler } from "types";
+import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -30,7 +30,8 @@ export type JoystickConfigurationSnapshot = DeviceConfigurationSnapshot & {
 	};
 };
 
-class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>) {
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
+class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>()) {
 	static DEVICE_TYPE = 0x0004;
 	readonly kind = "joystick" as const;
 	static CMD = Object.freeze({
@@ -42,10 +43,6 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	} as const);
-	declare onSample: SampleHandler<JoystickValue>;
-	declare sample: () => JoystickValue | undefined;
-	declare dispatchOnSample: (value: JoystickValue) => void;
-
 	async configure(options: JoystickConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["key", "joystick"]);
 		await super.configure(options);
@@ -146,5 +143,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		};
 	}
 }
+
+interface M5ChainJoyStick extends HasLedMethods, HasKeyMethods, CanSampleMethods<JoystickValue> {}
 
 export default M5ChainJoyStick;

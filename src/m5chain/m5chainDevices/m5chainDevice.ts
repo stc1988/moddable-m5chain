@@ -2,6 +2,7 @@ import type {
 	ChainBus,
 	DeviceConfiguration,
 	DeviceConfigurationSnapshot,
+	DeviceConstructor,
 	DeviceDisconnectHandler,
 	DeviceFactoryOptions,
 } from "types";
@@ -136,20 +137,23 @@ class M5ChainDevice {
 	}
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin composition is easier to express with any here.
-type AnyDeviceConstructor = any;
+type ComposedDeviceConstructor = DeviceConstructor<M5ChainDevice> & {
+	// biome-ignore lint/suspicious/noExplicitAny: Feature command tables are merged dynamically.
+	CMD: any;
+};
 
 function withDeviceFeatures(
-	...features: Array<(Base: AnyDeviceConstructor) => AnyDeviceConstructor>
-): AnyDeviceConstructor {
-	return features.reduce((Base, feature) => {
+	// biome-ignore lint/suspicious/noExplicitAny: Features accept and return progressively extended constructors.
+	...features: Array<(Base: any) => any>
+): ComposedDeviceConstructor {
+	return features.reduce<ComposedDeviceConstructor>((Base, feature) => {
 		const Derived = feature(Base);
 		Derived.CMD = Object.freeze({
 			...(Base.CMD ?? {}),
 			...(Derived.CMD ?? {}),
 		}) as typeof M5ChainDevice.CMD;
 		return Derived;
-	}, M5ChainDevice as AnyDeviceConstructor);
+	}, M5ChainDevice as ComposedDeviceConstructor);
 }
 
 export { assertKnownConfigurationOptions, assertObjectOption, M5ChainDevice, withDeviceFeatures };

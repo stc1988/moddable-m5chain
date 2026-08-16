@@ -1,4 +1,4 @@
-import HasLed from "hasLed";
+import HasLed, { type HasLedMethods } from "hasLed";
 import { assertObjectOption, withDeviceFeatures } from "m5chainDevice";
 import type { LedColor } from "types";
 
@@ -130,6 +130,7 @@ function modeFromValue(value: number): BuzzerMode {
 	}
 }
 
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
 class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 	static DEVICE_TYPE = 0x000b;
 	readonly kind = "buzzer" as const;
@@ -337,5 +338,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		}
 	}
 }
+
+interface M5ChainBuzzer extends HasLedMethods {}
 
 export default M5ChainBuzzer;

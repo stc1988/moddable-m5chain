@@ -1,6 +1,5 @@
 import { M5CHAIN_DEVICE_CLASSES, type M5ChainDevice } from "m5chainDevices";
 import { KEY_EVENT, type KeyEvent } from "m5chainEncoder";
-import type { JoystickValue } from "m5chainJoyStick";
 import { PIR_STATUS } from "m5chainPIR";
 import M5Chain from "m5chain";
 
@@ -37,31 +36,31 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 
 	switch (device.kind) {
 		case "encoder":
-			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
-			device.onSample = (sample: number) => {
+			device.onPush = (event) => logKeyEvent(device, event);
+			device.onSample = (sample) => {
 				log(`${deviceLabel(device)} delta=${sample}`);
 			};
 			break;
 
 		case "angle":
-			device.onSample = (sample: number) => {
+			device.onSample = (sample) => {
 				log(`${deviceLabel(device)} angle=${sample}`);
 			};
 			break;
 
 		case "key":
-			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
+			device.onPush = (event) => logKeyEvent(device, event);
 			break;
 
 		case "joystick":
-			device.onPush = (event: KeyEvent) => logKeyEvent(device, event);
-			device.onSample = (sample: JoystickValue) => {
+			device.onPush = (event) => logKeyEvent(device, event);
+			device.onSample = (sample) => {
 				log(`${deviceLabel(device)} x=${sample.x} y=${sample.y}`);
 			};
 			break;
 
 		case "tof":
-			device.onSample = (sample: number) => {
+			device.onSample = (sample) => {
 				log(`${deviceLabel(device)} distance=${sample} mm`);
 			};
 			break;
