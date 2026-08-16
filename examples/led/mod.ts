@@ -61,7 +61,7 @@ function attachDeviceHandlers(device: LedDevice) {
 				hue = wrapUnit(hue + delta / ENCODER_STEPS_PER_TURN);
 				const color = hsvToRgb(hue, 1, 0.8);
 				log(`${deviceLabel(device)} delta=${delta}`);
-				await device.setLedColor(color.r, color.g, color.b);
+				await device.setLedColor(color);
 			};
 			break;
 		}
@@ -70,7 +70,7 @@ function attachDeviceHandlers(device: LedDevice) {
 			device.onSample = async (angle) => {
 				const color = hsvToRgb(angle, 1, angle);
 				log(`${deviceLabel(device)} angle=${angle}`);
-				await device.setLedColor(color.r, color.g, color.b);
+				await device.setLedColor(color);
 			};
 			break;
 
@@ -85,7 +85,7 @@ function attachDeviceHandlers(device: LedDevice) {
 				const color = KEY_COLORS[Math.floor(step / KEY_BRIGHTNESS_LEVELS.length)];
 				const brightness = KEY_BRIGHTNESS_LEVELS[step % KEY_BRIGHTNESS_LEVELS.length];
 
-				await device.setLedColor(color.r, color.g, color.b);
+				await device.setLedColor(color);
 				await device.setLedBrightness(brightness);
 			};
 			break;
@@ -98,7 +98,7 @@ function attachDeviceHandlers(device: LedDevice) {
 				const color = hsvToRgb(hue, 1, brightness);
 
 				log(`${deviceLabel(device)} x=${sample.x} y=${sample.y}`);
-				await device.setLedColor(color.r, color.g, color.b);
+				await device.setLedColor(color);
 			};
 			break;
 
@@ -108,7 +108,7 @@ function attachDeviceHandlers(device: LedDevice) {
 				const color = hsvToRgb(0.58, 1, brightness);
 
 				log(`${deviceLabel(device)} distance=${distance} mm`);
-				await device.setLedColor(color.r, color.g, color.b);
+				await device.setLedColor(color);
 			};
 			break;
 

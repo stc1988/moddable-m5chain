@@ -29,7 +29,7 @@ import type { LedColor } from "types";
 `HasLed` exposes LED operation methods used by application code:
 
 ```ts
-await device.setLedColor(255, 0, 0);
+await device.setLedColor({ r: 255, g: 0, b: 0 });
 await device.setLedBrightness(0.5);
 const color = await device.getLedColor();
 ```
@@ -40,7 +40,8 @@ LED color and brightness are output state, not device configuration. They are in
 
 | Method | Description |
 | --- | --- |
-| `await device.setLedColor(r, g, b)` | Sets LED 0. `r`, `g`, and `b` must be integers from `0` to `255`. |
+| `await device.setLedColor(color)` | Sets LED 0 from a `{ r, g, b }` object. Each channel must be an integer from `0` to `255`. |
+| `await device.setLedColor(r, g, b)` | Sets LED 0 from three channel arguments. |
 | `await device.getLedColor()` | Reads LED 0. Returns `{ r, g, b }` with `0` to `255` values. |
 | `await device.setLedColors(index, num, colors)` | Sets `num` LEDs starting at `index`. `colors` is an array of `{ r, g, b }`. |
 | `await device.getLedColors(index, num)` | Reads `num` LED colors starting at `index`. Returns `LedColor[]`. |

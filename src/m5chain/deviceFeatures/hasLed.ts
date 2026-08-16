@@ -2,6 +2,7 @@ import type { M5ChainDevice } from "m5chainDevice";
 import type { DeviceConstructor, DeviceMixin, LedColor } from "types";
 
 export type HasLedMethods = {
+	setLedColor(color: LedColor): Promise<void>;
 	setLedColor(r: number, g: number, b: number): Promise<void>;
 	getLedColor(): Promise<LedColor>;
 	setLedColors(index: number, num: number, colors: LedColor[]): Promise<void>;
@@ -42,8 +43,12 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			}),
 		} as const);
 
-		async setLedColor(r: number, g: number, b: number): Promise<void> {
-			return await this.setLedColors(0, 1, [{ r, g, b }]);
+		async setLedColor(color: LedColor): Promise<void>;
+		async setLedColor(r: number, g: number, b: number): Promise<void>;
+		async setLedColor(colorOrRed: LedColor | number, green?: number, blue?: number): Promise<void> {
+			const color =
+				typeof colorOrRed === "number" ? { r: colorOrRed, g: green as number, b: blue as number } : colorOrRed;
+			return await this.setLedColors(0, 1, [color]);
 		}
 
 		async getLedColor(): Promise<LedColor> {
