@@ -7,6 +7,7 @@
 		"../../manifests/devices/encoder.json",
 		"../../manifests/devices/joystick.json",
 		"../../manifests/devices/key.json",
+		"../../manifests/devices/pir.json",
 		"../../manifests/devices/tof.json"
 	],
 	"modules": {

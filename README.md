@@ -12,6 +12,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 | [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | No | [Key API](docs/devices/key.md) |
 | [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | Yes (`{ x, y }` in `-128` to `127`) | [JoyStick API](docs/devices/joystick.md) |
 | [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Yes (distance in mm) | [ToF API](docs/devices/tof.md) |
+| [PIR](https://docs.m5stack.com/en/chain/Chain_PIR) | `0x0009` | Yes | No | Yes | Yes (presence status) | [PIR API](docs/devices/pir.md) |
 | [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer) | `0x000B` | Yes | No | No | No | [Buzzer API](docs/devices/buzzer.md) |
 | [Mono](https://docs.m5stack.com/en/chain/Chain_Mono) | `0x000D` | No | No | No | No | [Mono API](docs/devices/mono.md) |
 | [RGB](https://docs.m5stack.com/en/chain/Chain_RGB) | `0x000E` | No | No | No | No | [RGB API](docs/devices/rgb.md) |
@@ -84,7 +85,7 @@ manifests in an inline Git manifest. This example includes Encoder and ToF:
 ```
 
 Available public device manifests are `angle.json`, `buzzer.json`, `encoder.json`, `joystick.json`, `key.json`,
-`mono.json`, `rgb.json`, and `tof.json` under `manifests/devices/`. `manifests/devices/all.json` includes every device.
+`mono.json`, `pir.json`, `rgb.json`, and `tof.json` under `manifests/devices/`. `manifests/devices/all.json` includes every device.
 Device manifests automatically include their required LED, key, sample, or matrix features.
 
 ### 2) Include the library in a shared Mod host
@@ -243,7 +244,7 @@ device.onPush = async (keyEvent) => {
 
 ### `device.onSample = (sample) => {}`
 
-Available on devices with `CanSample` (Encoder / Angle / JoyStick / ToF).
+Available on devices with `CanSample` (Encoder / Angle / JoyStick / ToF / PIR).
 
 If any device has `onSample` set, bus polling starts. It stops when all `onSample` handlers are `null`.
 
@@ -257,7 +258,12 @@ device.onSample = (sample) => {
 
 `device.sample()` remains available as a synchronous accessor for the latest cached sample.
 
-Angle, JoyStick, and ToF dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
+Angle, JoyStick, ToF, and PIR dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
+
+### `pir.onPresenceChanged = (status) => {}`
+
+Available on Chain PIR. When PIR report mode is enabled, the device sends a change-driven event with
+`PIR_STATUS.NO_PERSON` or `PIR_STATUS.PERSON_DETECTED`. See the [PIR API](docs/devices/pir.md).
 
 Polling failures are tracked per device. A device is removed from the current list after three consecutive sample-read
 failures without disconnecting other responsive devices.
@@ -281,7 +287,7 @@ Packets larger than the UART transmit FIFO are written in chunks as output space
 ### Common Device API (`M5ChainDevice`)
 
 - `device.id`
-- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `buzzer`, `mono`, `rgb`, or `unknown`)
+- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `pir`, `buzzer`, `mono`, `rgb`, or `unknown`)
 - `device.type` numeric device type ID used by the M5Chain protocol
 - `device.known` (`false` for device types not yet supported by this library)
 - `device.connected`
@@ -301,7 +307,7 @@ applications to keep using recognized devices on the same chain and to report un
 
 ### LED Features (`HasLed`)
 
-Available on: Encoder / Angle / Key / JoyStick / ToF / Buzzer
+Available on: Encoder / Angle / Key / JoyStick / ToF / PIR / Buzzer
 
 See [HasLed API](docs/features/has-led.md).
 
@@ -313,7 +319,7 @@ See [HasKey API](docs/features/has-key.md).
 
 ### Sample Features (`CanSample`)
 
-Available on: Encoder / Angle / JoyStick / ToF
+Available on: Encoder / Angle / JoyStick / ToF / PIR
 
 See [CanSample API](docs/features/can-sample.md).
 
@@ -327,6 +333,7 @@ Device-specific usage, TypeScript exports, and method details are split into foc
 - [Key API](docs/devices/key.md)
 - [JoyStick API](docs/devices/joystick.md)
 - [ToF API](docs/devices/tof.md)
+- [PIR API](docs/devices/pir.md)
 - [Buzzer API](docs/devices/buzzer.md)
 - [Mono API](docs/devices/mono.md)
 - [RGB API](docs/devices/rgb.md)
@@ -344,7 +351,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 
 - `examples/host`: standalone all-device application that includes the repository's root `manifest.json`
 - `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
-- `examples/led`: Mod containing only Encoder/Angle/Key/JoyStick/ToF and their shared features
+- `examples/led`: Mod containing only Encoder/Angle/Key/JoyStick/ToF/PIR and their shared features
 - `examples/buzzer`: Mod containing only Buzzer, with RGB indication, timed tones, and notes
 - `examples/matrix`: Mod containing only Mono/RGB and their shared matrix protocol
 

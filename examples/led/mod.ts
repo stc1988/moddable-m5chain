@@ -3,6 +3,7 @@ import M5ChainEncoder, { KEY_EVENT, type KeyEvent } from "m5chainEncoder";
 import type { JoystickValue } from "m5chainJoyStick";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
+import M5ChainPIR, { PIR_STATUS } from "m5chainPIR";
 import M5ChainToF from "m5chainToF";
 import M5Chain, { type RegisteredM5ChainDevice } from "m5chain";
 
@@ -22,7 +23,14 @@ const KEY_COLORS: LedColor[] = [
 ];
 const TOF_MAX_DISTANCE_MM = 2000;
 const TOF_MIN_BRIGHTNESS = 0.1;
-const LED_DEVICE_CLASSES = Object.freeze([M5ChainEncoder, M5ChainAngle, M5ChainKey, M5ChainJoyStick, M5ChainToF]);
+const LED_DEVICE_CLASSES = Object.freeze([
+	M5ChainEncoder,
+	M5ChainAngle,
+	M5ChainKey,
+	M5ChainJoyStick,
+	M5ChainToF,
+	M5ChainPIR,
+]);
 type LedDevice = RegisteredM5ChainDevice<typeof LED_DEVICE_CLASSES>;
 
 export async function main() {
@@ -102,6 +110,14 @@ function attachDeviceHandlers(device: LedDevice) {
 
 				log(`${deviceLabel(device)} distance=${distance} mm`);
 				await device.setLedColor(color.r, color.g, color.b);
+			};
+			break;
+
+		case "pir":
+			device.onPresenceChanged = async (status) => {
+				const detected = status === PIR_STATUS.PERSON_DETECTED;
+				log(`${deviceLabel(device)} person detected=${detected}`);
+				await device.setLedColor(detected ? 0 : 255, detected ? 255 : 0, 0);
 			};
 			break;
 
