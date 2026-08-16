@@ -61,7 +61,13 @@ export type DeviceListChangeHandler<TDevice extends M5ChainDeviceLike = M5ChainD
 
 export type DeviceDisconnectHandler = (() => void | Promise<void>) | null;
 
-export type M5ChainErrorSource = "deviceDisconnected" | "deviceEvent" | "deviceListChanged" | "sample";
+export type M5ChainErrorSource =
+	| "deviceDisconnected"
+	| "deviceEvent"
+	| "deviceInitialization"
+	| "deviceListChanged"
+	| "sample"
+	| "scan";
 
 export type M5ChainErrorContext = {
 	source: M5ChainErrorSource;

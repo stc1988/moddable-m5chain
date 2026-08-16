@@ -221,8 +221,12 @@ const m5chain = new M5Chain({
 
 ### `m5chain.onError = (error, context) => {}`
 
-Reports synchronous exceptions and rejected promises from application callbacks without treating them as UART or device
-failures. `context.source` identifies the callback kind; device-specific callbacks also provide `context.device`.
+Reports scan failures, device initialization failures, synchronous exceptions, and rejected promises from application
+callbacks. `context.source` identifies the failure kind; device-specific failures also provide `context.device`.
+
+An initial scan protocol failure also rejects `start()` so application startup can fail explicitly. A heartbeat timeout
+with no connected chain remains a successful scan with an empty device list. Background re-scan failures are reported
+through `onError` without stopping connection monitoring.
 
 ### `device.onPush = (status) => {}`
 
@@ -280,7 +284,7 @@ Packets larger than the UART transmit FIFO are written in chunks as output space
 
 - `new M5Chain({ deviceClasses, transmit, receive, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
   - `pollingInterval` and `connectionCheckInterval` must be non-negative finite numbers.
-- `await m5chain.start()`
+- `await m5chain.start()` scans the chain and rejects if enumeration fails; no connected chain is a successful empty scan
 - `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
 - `await m5chain.close()` stops the chain and closes UART permanently
 - `m5chain.closed`

@@ -266,7 +266,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	#log(message: string, level = "INFO") {
 		trace(`[m5chain][${level}] ${message}\n`);
 	}
-	#reportUserCallbackError(error: unknown, context: M5ChainErrorContext) {
+	#reportError(error: unknown, context: M5ChainErrorContext) {
 		if (this.onError) {
 			try {
 				const result = this.onError(error, context);
@@ -284,18 +284,18 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		}
 
 		const message = error instanceof Error ? error.message : String(error);
-		this.#log(`${context.source} callback failed: ${message}`, "WARN");
+		this.#log(`${context.source} failed: ${message}`, "WARN");
 	}
 	#invokeUserCallback(callback: () => unknown, context: M5ChainErrorContext) {
 		try {
 			const result = callback();
 			if (result && typeof (result as PromiseLike<unknown>).then === "function") {
 				void Promise.resolve(result).catch((error: unknown) => {
-					this.#reportUserCallbackError(error, context);
+					this.#reportError(error, context);
 				});
 			}
 		} catch (error: unknown) {
-			this.#reportUserCallbackError(error, context);
+			this.#reportError(error, context);
 		}
 	}
 	#dumpPacket(buffer: Uint8Array, size: number) {
@@ -603,7 +603,12 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		if (this.#started) return;
 		this.#started = true;
 
-		await this.#scan();
+		try {
+			await this.#scan(true);
+		} catch (error: unknown) {
+			this.#started = false;
+			throw error;
+		}
 		if (!this.#started) return;
 		this.#notifyDeviceListChanged();
 		this.#updatePollingState();
@@ -852,7 +857,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		);
 	}
 
-	async #scan() {
+	async #scan(throwOnError = false) {
 		this.#log("scan start");
 		this.#deviceList = [];
 		this.#pollFailureCounts.length = 0;
@@ -874,13 +879,19 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 					} catch (error: unknown) {
 						const message = error instanceof Error ? error.message : String(error);
 						this.#log(`device initialization failed for id=${device.id}: ${message}`, "WARN");
+						this.#reportError(error, {
+							source: "deviceInitialization",
+							device,
+						});
 					}
 				}
 			}
-		} catch (e: unknown) {
-			const message = e instanceof Error ? e.message : String(e);
+		} catch (error: unknown) {
+			const message = error instanceof Error ? error.message : String(error);
 			this.#log(`scan failed: ${message}`);
 			this.#deviceList = [];
+			this.#reportError(error, { source: "scan" });
+			if (throwOnError) throw error;
 		}
 		return this.#deviceList;
 	}

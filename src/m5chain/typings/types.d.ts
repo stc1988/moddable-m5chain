@@ -16,7 +16,13 @@ export type DeviceListChangeHandler<TDevice extends M5ChainDeviceLike = M5ChainD
 	devices: readonly TDevice[],
 ) => void | Promise<void>;
 export type DeviceDisconnectHandler = (() => void | Promise<void>) | null;
-export type M5ChainErrorSource = "deviceDisconnected" | "deviceEvent" | "deviceListChanged" | "sample";
+export type M5ChainErrorSource =
+	| "deviceDisconnected"
+	| "deviceEvent"
+	| "deviceInitialization"
+	| "deviceListChanged"
+	| "sample"
+	| "scan";
 export type M5ChainErrorContext = { source: M5ChainErrorSource; device?: M5ChainDeviceLike };
 export type M5ChainErrorHandler = (error: unknown, context: M5ChainErrorContext) => void | Promise<void>;
 export type SampleHandler<T = unknown> = ((sample: T) => void) | null;
