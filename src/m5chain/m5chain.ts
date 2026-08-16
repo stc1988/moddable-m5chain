@@ -13,6 +13,7 @@ import type {
 	PacketBuffer,
 	PacketMatch,
 	RegisteredM5ChainDevice,
+	RegisteredM5ChainRuntimeDevice,
 	WaitForPacketOptions,
 	WaitForPacketResult,
 } from "types";
@@ -113,7 +114,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	#sendId: number | null = null;
 	#rxBuffer = new Uint8Array(512);
 	#rxLength = 0;
-	#deviceList: RegisteredM5ChainDevice<TClasses>[] = [];
+	#deviceList: RegisteredM5ChainRuntimeDevice<TClasses>[] = [];
 	readonly #deviceClasses: TClasses;
 	#started = false;
 	#closed = false;
@@ -573,7 +574,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		) as Promise<PacketBuffer>;
 	}
 
-	#handlePollingFailure(device: RegisteredM5ChainDevice<TClasses>, error?: unknown) {
+	#handlePollingFailure(device: RegisteredM5ChainRuntimeDevice<TClasses>, error?: unknown) {
 		const failureCount = (this.#pollFailureCounts[device.id] ?? 0) + 1;
 		this.#pollFailureCounts[device.id] = failureCount;
 		const detail = error === undefined ? "" : `: ${error instanceof Error ? error.message : String(error)}`;
@@ -583,7 +584,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			this.#log(`Device id=${device.id} considered disconnected`, "WARN");
 			this.#pollFailureCounts[device.id] = 0;
 			this.#deviceList = this.#deviceList.filter((candidate) => candidate !== device);
-			device._markDisconnected?.();
+			device._markDisconnected();
 			this.#invokeUserCallback(() => device.onDisconnected?.(), {
 				source: "deviceDisconnected",
 				device,
@@ -643,7 +644,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		this.#deviceList = [];
 		this.#pollFailureCounts.length = 0;
 		for (const device of oldDevices) {
-			device._markDisconnected?.();
+			device._markDisconnected();
 			this.#invokeUserCallback(() => device.onDisconnected?.(), {
 				source: "deviceDisconnected",
 				device,
@@ -917,7 +918,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 
 		const oldDevices = [...this.#deviceList];
 		for (const d of oldDevices) {
-			d._markDisconnected?.();
+			d._markDisconnected();
 			this.#invokeUserCallback(() => d.onDisconnected?.(), {
 				source: "deviceDisconnected",
 				device: d,
@@ -940,13 +941,13 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	}
 
 	#notifyDeviceListChanged() {
-		const devices = [...this.#deviceList];
+		const devices = [...this.#deviceList] as RegisteredM5ChainDevice<TClasses>[];
 		this.#invokeUserCallback(() => this.onDeviceListChanged?.(devices), {
 			source: "deviceListChanged",
 		});
 	}
 
 	get devices(): readonly RegisteredM5ChainDevice<TClasses>[] {
-		return [...this.#deviceList];
+		return [...this.#deviceList] as RegisteredM5ChainDevice<TClasses>[];
 	}
 }

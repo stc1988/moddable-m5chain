@@ -309,7 +309,8 @@ applications to keep using recognized devices on the same chain and to report un
 
 `M5Chain` derives its connected-device union from the classes passed in `deviceClasses`, plus `UnknownDevice`. The
 `RegisteredM5ChainDevice`, `M5ChainDeviceClass`, `M5ChainDeviceLike`, and generic `M5ChainOptions` types are exported from
-`m5chain`. The `m5chainDevices` all-device aggregate also exports its inferred `M5ChainDevice` union.
+`m5chain`. These application-facing types omit bus transport, initialization, event dispatch, and polling hooks used by
+device implementations. The `m5chainDevices` all-device aggregate also exports its inferred `M5ChainDevice` union.
 
 ### LED Features (`HasLed`)
 

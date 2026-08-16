@@ -100,25 +100,31 @@ export interface ChainBus {
 }
 
 export interface M5ChainDeviceLike {
-	id: number;
-	type: number;
-	kind: string;
-	known: boolean;
-	connected: boolean;
-	uuid?: string;
-	init(): Promise<void>;
+	readonly id: number;
+	readonly type: number;
+	readonly kind: string;
+	readonly known: boolean;
+	readonly connected: boolean;
+	readonly uuid?: string;
 	getUID(uidType?: number): Promise<string>;
 	getBootloaderVersion(): Promise<number>;
 	getFirmwareVersion(): Promise<number>;
 	configure?(options?: DeviceConfiguration): Promise<void>;
 	readConfiguration?(): Promise<DeviceConfigurationSnapshot>;
-	_markDisconnected?(): void;
 	onDisconnected?: DeviceDisconnectHandler;
+}
+
+export interface M5ChainRuntimeHooks {
+	readonly bus: ChainBus;
+	init(): Promise<void>;
+	_markDisconnected(): void;
 	onDispatchEvent?(buffer: PacketBuffer): unknown;
 	hasOnSample?(): boolean;
 	readSample?<T = unknown>(): Promise<T | undefined>;
 	dispatchOnSample?<T = unknown>(value: T): unknown;
 }
+
+export interface M5ChainRuntimeDevice extends M5ChainDeviceLike, M5ChainRuntimeHooks {}
 
 export type M5ChainDeviceClass<TDevice extends object = object> = {
 	readonly DEVICE_TYPE: number;
@@ -130,9 +136,17 @@ export interface M5ChainUnknownDeviceLike extends M5ChainDeviceLike {
 	readonly known: false;
 }
 
+type PublicDeviceInstance<TDevice> = TDevice extends object
+	? Omit<TDevice, keyof M5ChainRuntimeHooks> & M5ChainDeviceLike
+	: never;
+
 export type RegisteredM5ChainDevice<TClasses extends readonly M5ChainDeviceClass[]> =
-	| (InstanceType<TClasses[number]> & M5ChainDeviceLike)
+	| PublicDeviceInstance<InstanceType<TClasses[number]>>
 	| M5ChainUnknownDeviceLike;
+
+export type RegisteredM5ChainRuntimeDevice<TClasses extends readonly M5ChainDeviceClass[]> =
+	| (InstanceType<TClasses[number]> & M5ChainRuntimeDevice)
+	| (M5ChainUnknownDeviceLike & M5ChainRuntimeDevice);
 
 // biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].
 export type DeviceConstructor<TInstance = object> = new (...args: any[]) => TInstance;
