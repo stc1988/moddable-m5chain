@@ -20,6 +20,7 @@ import type { SampleHandler } from "types";
 - Angle
 - JoyStick
 - ToF
+- PIR
 
 ## Composition
 
@@ -49,7 +50,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 
 ## Sample Values
 
-Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
+Angle, JoyStick, ToF, and PIR dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
 
 | Device | `onSample` argument and `sample()` value |
 | --- | --- |
@@ -57,6 +58,7 @@ Angle, JoyStick, and ToF dispatch `onSample` with the latest sampled value on ev
 | Angle | Normalized angle value (`0.00` to `1.00`) |
 | JoyStick | `{ x, y }` (`-128` to `127`) |
 | ToF | Measured distance in millimeters (`number`) |
+| PIR | Presence status (`PIRStatus`) |
 
 ## Poll Loop Behavior
 

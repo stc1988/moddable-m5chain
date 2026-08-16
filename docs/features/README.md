@@ -8,9 +8,9 @@ Feature mixins are primarily for device class implementation. Application code u
 
 | Feature | Module | Adds | Used by |
 | --- | --- | --- | --- |
-| [HasLed](has-led.md) | `hasLed` | RGB LED color and brightness methods | Encoder, Angle, Key, JoyStick, ToF, Buzzer |
+| [HasLed](has-led.md) | `hasLed` | RGB LED color and brightness methods | Encoder, Angle, Key, JoyStick, ToF, PIR, Buzzer |
 | [HasKey](has-key.md) | `hasKey` | Key state, key events, key mode methods | Encoder, Key, JoyStick |
-| [CanSample](can-sample.md) | `canSample` | `onSample` callback, `sample()` accessor, and serial-bus sample reads | Encoder, Angle, JoyStick, ToF |
+| [CanSample](can-sample.md) | `canSample` | `onSample` callback, `sample()` accessor, and serial-bus sample reads | Encoder, Angle, JoyStick, ToF, PIR |
 
 ## Composition Pattern
 

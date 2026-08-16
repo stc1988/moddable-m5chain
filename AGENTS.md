@@ -33,6 +33,7 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 - `src/m5chain/m5chainDevices/m5chainKey.ts`
 - `src/m5chain/m5chainDevices/m5chainJoyStick.ts`
 - `src/m5chain/m5chainDevices/m5chainToF.ts`
+- `src/m5chain/m5chainDevices/m5chainPIR.ts`
 
 ### Feature Mixins
 
@@ -65,6 +66,7 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 | Key | Single key with RGB LED | [M5Stack-Chain-Key-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1192/M5Stack-Chain-Key-Protocol-EN.pdf) |
 | JoyStick | 2-axis joystick with RGB LED + key + sample support | [M5Stack-Chain-Joystick-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1191/M5Stack-Chain-Joystick-Protocol-EN.pdf) |
 | ToF | Time-of-Flight distance sensor | [M5Stack-Chain-ToF-Protocol-EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1199/M5Stack-Chain-ToF-Protocol-EN.pdf) |
+| PIR | Passive infrared presence sensor with RGB LED + sample and change-event support | [M5Stack-Chain-PIR-Protocol-V1_EN.pdf](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1261/M5Stack-Chain-PIR-Protocol-V1_EN.pdf) |
 
 ## Architecture Summary
 
@@ -107,7 +109,7 @@ class composes feature mixins via `withDeviceFeatures(...)`.
 - Public sample-capable device APIs use sample terminology: `CanSample`, `onSample`, `sample()`, `hasOnSample()`.
 - `onSample` callbacks receive the newly acquired sample as their only argument.
 - `sample()` is synchronous and returns the latest cached value outside callbacks as well. The UART request happens in the internal poll loop through `readSample()`.
-- Angle, JoyStick, and ToF dispatch `onSample` every poll cycle with the latest value.
+- Angle, JoyStick, ToF, and PIR dispatch `onSample` every poll cycle with the latest value.
 - Encoder dispatches `onSample` only when the encoder value changes. Its `sample()` value is the delta from the previous encoder value.
 - Internal bus scheduling may keep poll terminology (`#pollLoop`, `pollingInterval`, logs) because the implementation periodically checks devices over the serial bus.
 

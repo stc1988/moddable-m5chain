@@ -21,6 +21,7 @@ import type { LedColor } from "types";
 - Key
 - JoyStick
 - ToF
+- PIR
 - Buzzer
 
 ## Common Device Methods
@@ -49,7 +50,7 @@ LED color and brightness are output state, not device configuration. They are in
 `setLedColors()` and `getLedColors()` reject requests that cannot fit in one transport packet. With the default
 transport buffer, the maximum is 81 colors per call.
 
-Chain Buzzer has one RGB LED and therefore accepts only `index = 0` and `num = 1`.
+Chain PIR and Chain Buzzer each have one RGB LED and therefore accept only `index = 0` and `num = 1`.
 
 ## Implementation Notes
 

@@ -1,0 +1,8 @@
+{
+	"include": ["./manifest_feature_led.json", "./manifest_feature_sample.json"],
+	"modules": {
+		"m5chainPIR": "./m5chainDevices/m5chainPIR",
+		"pirProtocol": "./pirProtocol"
+	},
+	"preload": ["m5chainPIR", "pirProtocol"]
+}

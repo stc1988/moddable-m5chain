@@ -6,6 +6,7 @@
 		"./manifest_device_joystick.json",
 		"./manifest_device_key.json",
 		"./manifest_device_mono.json",
+		"./manifest_device_pir.json",
 		"./manifest_device_rgb.json",
 		"./manifest_device_tof.json"
 	],
