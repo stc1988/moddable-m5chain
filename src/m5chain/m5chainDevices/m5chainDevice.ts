@@ -7,6 +7,28 @@ import type {
 	DeviceFactoryOptions,
 } from "types";
 
+function readPacketByte(packet: Uint8Array, offset: number, operation: string): number {
+	const value = packet[offset];
+	if (value === undefined) {
+		throw new Error(`${operation} response is too short (missing byte at offset ${offset}).`);
+	}
+	return value;
+}
+
+function readPacketUint16LE(packet: Uint8Array, offset: number, operation: string): number {
+	return readPacketByte(packet, offset, operation) | (readPacketByte(packet, offset + 1, operation) << 8);
+}
+
+function readPacketInt8(packet: Uint8Array, offset: number, operation: string): number {
+	const value = readPacketByte(packet, offset, operation);
+	return value > 0x7f ? value - 0x100 : value;
+}
+
+function readPacketInt16LE(packet: Uint8Array, offset: number, operation: string): number {
+	const value = readPacketUint16LE(packet, offset, operation);
+	return value > 0x7fff ? value - 0x10000 : value;
+}
+
 function assertObjectOption(name: string, value: unknown) {
 	if (value === undefined) return;
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -100,18 +122,18 @@ class M5ChainDevice {
 		const size = uidType === 0 ? 4 : 12;
 		this.bus.cmdBuffer[0] = uidType;
 		const returnPacket = await this.bus.sendAndWait(this.id, M5ChainDevice.CMD.GET_UID, this.bus.cmdBuffer, 1);
-		if (returnPacket[6] === 0) {
+		if (readPacketByte(returnPacket, 6, "getUID") === 0) {
 			throw new Error("getUID failed.");
 		}
 
 		const uid = new Uint8Array(size);
 		for (let i = 0; i < size; i++) {
-			uid[i] = returnPacket[7 + i];
+			uid[i] = readPacketByte(returnPacket, 7 + i, "getUID");
 		}
 
 		let uidStr = "";
-		for (let i = 0; i < size; i++) {
-			uidStr += uid[i].toString(16).toUpperCase().padStart(2, "0");
+		for (const byte of uid) {
+			uidStr += byte.toString(16).toUpperCase().padStart(2, "0");
 		}
 		return uidStr;
 	}
@@ -123,7 +145,7 @@ class M5ChainDevice {
 			this.bus.cmdBuffer,
 			0,
 		);
-		return returnPacket[6];
+		return readPacketByte(returnPacket, 6, "getBootloaderVersion");
 	}
 
 	async getFirmwareVersion(): Promise<number> {
@@ -133,7 +155,7 @@ class M5ChainDevice {
 			this.bus.cmdBuffer,
 			0,
 		);
-		return returnPacket[6];
+		return readPacketByte(returnPacket, 6, "getFirmwareVersion");
 	}
 }
 
@@ -156,4 +178,13 @@ function withDeviceFeatures(
 	}, M5ChainDevice as ComposedDeviceConstructor);
 }
 
-export { assertKnownConfigurationOptions, assertObjectOption, M5ChainDevice, withDeviceFeatures };
+export {
+	assertKnownConfigurationOptions,
+	assertObjectOption,
+	M5ChainDevice,
+	readPacketByte,
+	readPacketInt8,
+	readPacketInt16LE,
+	readPacketUint16LE,
+	withDeviceFeatures,
+};

@@ -1,6 +1,7 @@
 import { type ConnectionConfig, resolveConnectionConfig } from "connectionConfig";
 import createM5ChainDevice from "createM5ChainDevice";
 import { normalizeDeviceClasses } from "deviceRegistry";
+import { readPacketByte, readPacketUint16LE } from "m5chainDevice";
 import Serial from "embedded:io/serial";
 import config from "mc/config";
 import Modules from "modules";
@@ -167,10 +168,17 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 				// Parse as many complete frames as possible
 				while (self.#rxLength >= 9) {
 					// Seek header 0xAA 0x55
-					if (self.#rxBuffer[0] !== 0xaa || self.#rxBuffer[1] !== 0x55) {
+					if (
+						readPacketByte(self.#rxBuffer, 0, "packet header") !== 0xaa ||
+						readPacketByte(self.#rxBuffer, 1, "packet header") !== 0x55
+					) {
 						let idx = 1;
 						for (; idx + 1 < self.#rxLength; idx++) {
-							if (self.#rxBuffer[idx] === 0xaa && self.#rxBuffer[idx + 1] === 0x55) break;
+							if (
+								readPacketByte(self.#rxBuffer, idx, "packet header search") === 0xaa &&
+								readPacketByte(self.#rxBuffer, idx + 1, "packet header search") === 0x55
+							)
+								break;
 						}
 						// Drop bytes before the next possible header
 						self.#rxBuffer.copyWithin(0, idx, self.#rxLength);
@@ -178,7 +186,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 						if (self.#rxLength < 9) break;
 					}
 
-					const length = (self.#rxBuffer[2] & 0xff) | ((self.#rxBuffer[3] & 0xff) << 8);
+					const length = readPacketUint16LE(self.#rxBuffer, 2, "packet length");
 					const packetSize = 4 + length + 2;
 
 					// Sanity check: header(2)+len(2)+payload+footer(2). Length includes id/cmd/data/crc.
@@ -195,7 +203,10 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 					}
 
 					// Footer check
-					if (self.#rxBuffer[packetSize - 2] !== 0x55 || self.#rxBuffer[packetSize - 1] !== 0xaa) {
+					if (
+						readPacketByte(self.#rxBuffer, packetSize - 2, "packet footer") !== 0x55 ||
+						readPacketByte(self.#rxBuffer, packetSize - 1, "packet footer") !== 0xaa
+					) {
 						// Not a valid frame; drop one byte and retry
 						self.#rxBuffer.copyWithin(0, 1, self.#rxLength);
 						self.#rxLength -= 1;
@@ -213,13 +224,13 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 					}
 
 					const crc8 = self.#calculateCRC(frame, packetSize);
-					if (crc8 !== frame[packetSize - 3]) {
+					if (crc8 !== readPacketByte(frame, packetSize - 3, "packet CRC")) {
 						self.#log("crc8 error");
 						continue;
 					}
 
-					const packetId = frame[4];
-					const packetCmd = frame[5];
+					const packetId = readPacketByte(frame, 4, "packet id");
+					const packetCmd = readPacketByte(frame, 5, "packet command");
 
 					const shouldResolve =
 						!!self.#receiveResolve &&
@@ -301,16 +312,16 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	}
 	#dumpPacket(buffer: Uint8Array, size: number) {
 		let line = `Packet dump(${size} bytes):`;
-		for (let i = 0; i < size; i++) {
-			line += ` 0x${buffer[i].toString(16).toUpperCase().padStart(2, "0")}`;
+		for (const byte of buffer.subarray(0, size)) {
+			line += ` 0x${byte.toString(16).toUpperCase().padStart(2, "0")}`;
 		}
 		trace(`[m5chain] ${line}\n`);
 	}
 
 	#calculateCRC(buffer: Uint8Array, size: number) {
 		let crc8 = 0;
-		for (let i = 4; i < size - 3; i++) {
-			crc8 = (crc8 + buffer[i]) & 0xff;
+		for (const byte of buffer.subarray(4, size - 3)) {
+			crc8 = (crc8 + byte) & 0xff;
 		}
 		return crc8;
 	}
@@ -355,6 +366,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	#drainOutput() {
 		while (this.#writable > 0 && this.#outputQueue.length > 0) {
 			const packet = this.#outputQueue[0];
+			if (!packet) break;
 			const count = Math.min(this.#writable, packet.length - this.#outputOffset);
 			this.#serial.write(packet.subarray(this.#outputOffset, this.#outputOffset + count));
 			this.#writable -= count;
@@ -818,7 +830,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 					null,
 					true,
 				)) as PacketBuffer;
-				const deviceCount = packet[6];
+				const deviceCount = readPacketByte(packet, 6, "get device count");
 				if (!this.#started || this.#closed) return;
 				this.#connectionFailureCount = 0;
 				if (this.#deviceList.length !== deviceCount) {
@@ -842,12 +854,13 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 
 	async getDeviceType(id: number): Promise<number> {
 		const packet = await this.sendAndWait(id, M5Chain.CMD.GET_DEVICE_TYPE, this.cmdBuffer, 0);
-		const deviceType = (packet[7] << 8) | packet[6];
-		return deviceType;
+		return readPacketUint16LE(packet, 6, "get device type");
 	}
 
 	getDeviceNum(options: WaitForPacketOptions | undefined = undefined): Promise<number> {
-		return this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.#enumBuffer, 1, options).then((packet) => packet[6]);
+		return this.sendAndWait(0xff, M5Chain.CMD.ENUM, this.#enumBuffer, 1, options).then((packet) =>
+			readPacketByte(packet, 6, "get device count"),
+		);
 	}
 
 	isDeviceConnected(): Promise<boolean> {
@@ -866,10 +879,10 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			if (await this.isDeviceConnected()) {
 				const deviceNum = await this.getDeviceNum();
 				const deviceList = await this.getDeviceList(deviceNum);
-				for (let i = 0; i < deviceList.length; i++) {
+				for (const [i, type] of deviceList.entries()) {
 					const device = createM5ChainDevice(this.#deviceClasses, this, {
 						id: i + 1,
-						type: deviceList[i],
+						type,
 					});
 					try {
 						await device.init();

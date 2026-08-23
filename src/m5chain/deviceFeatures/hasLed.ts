@@ -1,4 +1,4 @@
-import type { M5ChainDevice } from "m5chainDevice";
+import { type M5ChainDevice, readPacketByte } from "m5chainDevice";
 import type { DeviceConstructor, DeviceMixin, LedColor } from "types";
 
 export type HasLedMethods = {
@@ -53,7 +53,9 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 
 		async getLedColor(): Promise<LedColor> {
 			const colors = await this.getLedColors(0, 1);
-			return colors[0];
+			const color = colors[0];
+			if (!color) throw new Error("getLedColor returned no color.");
+			return color;
 		}
 
 		async setLedColors(index: number, num: number, colors: LedColor[]) {
@@ -71,21 +73,25 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 				throw new RangeError(`colors must contain at least ${num} entries.`);
 			}
 			for (let i = 0; i < num; i++) {
-				assertIntegerInRange(`colors[${i}].r`, colors[i].r, 0, 255);
-				assertIntegerInRange(`colors[${i}].g`, colors[i].g, 0, 255);
-				assertIntegerInRange(`colors[${i}].b`, colors[i].b, 0, 255);
+				const color = colors[i];
+				if (!color) throw new RangeError(`colors must contain an entry at index ${i}.`);
+				assertIntegerInRange(`colors[${i}].r`, color.r, 0, 255);
+				assertIntegerInRange(`colors[${i}].g`, color.g, 0, 255);
+				assertIntegerInRange(`colors[${i}].b`, color.b, 0, 255);
 			}
 			const cmdBuffer = bus.cmdBuffer;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
 			cmdBuffer[0] = index;
 			cmdBuffer[1] = num;
 			for (let i = 0; i < num; i++) {
-				cmdBuffer[2 + i * 3] = colors[i].r;
-				cmdBuffer[3 + i * 3] = colors[i].g;
-				cmdBuffer[4 + i * 3] = colors[i].b;
+				const color = colors[i];
+				if (!color) throw new RangeError(`colors must contain an entry at index ${i}.`);
+				cmdBuffer[2 + i * 3] = color.r;
+				cmdBuffer[3 + i * 3] = color.g;
+				cmdBuffer[4 + i * 3] = color.b;
 			}
 			const packet = await bus.sendAndWait(this.id, commands.RGB.SET_RGB_VALUE, cmdBuffer, num * 3 + 2);
-			const result = packet[6];
+			const result = readPacketByte(packet, 6, "set LED colors");
 			if (result !== 1) {
 				throw new Error("setLedColors failed.\n");
 			}
@@ -104,18 +110,22 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			cmdBuffer[0] = index;
 			cmdBuffer[1] = num;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.GET_RGB_VALUE, cmdBuffer, 2);
+			if (num === 0) return [];
 			let start = 6;
 			let count = num;
-			if (packet[6] === index && packet[7] === num) {
+			if (
+				readPacketByte(packet, 6, "get LED colors") === index &&
+				readPacketByte(packet, 7, "get LED colors") === num
+			) {
 				start = 8;
-				count = packet[7];
+				count = num;
 			}
 			const colors: LedColor[] = [];
 			for (let i = 0; i < count; i++) {
 				colors.push({
-					r: packet[start + i * 3],
-					g: packet[start + i * 3 + 1],
-					b: packet[start + i * 3 + 2],
+					r: readPacketByte(packet, start + i * 3, "get LED colors"),
+					g: readPacketByte(packet, start + i * 3 + 1, "get LED colors"),
+					b: readPacketByte(packet, start + i * 3 + 2, "get LED colors"),
 				});
 			}
 			return colors;
@@ -132,7 +142,7 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			cmdBuffer[0] = Math.round(brightness * 100);
 			cmdBuffer[1] = saveToFlash ? 1 : 0;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.SET_RGB_LIGHT, cmdBuffer, 2);
-			const result = packet[6];
+			const result = readPacketByte(packet, 6, "set LED brightness");
 			if (result !== 1) {
 				throw new Error("setLedBrightness failed.\n");
 			}
@@ -142,7 +152,7 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			const bus = this.bus;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.GET_RGB_LIGHT, bus.cmdBuffer, 0);
-			return packet[6] / 100;
+			return readPacketByte(packet, 6, "get LED brightness") / 100;
 		}
 	};
 

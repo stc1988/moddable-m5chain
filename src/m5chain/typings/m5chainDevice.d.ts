@@ -33,6 +33,10 @@ declare class M5ChainDevice {
 
 declare function assertObjectOption(name: string, value: unknown): void;
 declare function assertKnownConfigurationOptions(options: DeviceConfiguration, known: string[]): void;
+declare function readPacketByte(packet: Uint8Array, offset: number, operation: string): number;
+declare function readPacketUint16LE(packet: Uint8Array, offset: number, operation: string): number;
+declare function readPacketInt8(packet: Uint8Array, offset: number, operation: string): number;
+declare function readPacketInt16LE(packet: Uint8Array, offset: number, operation: string): number;
 type ComposedDeviceConstructor = DeviceConstructor<M5ChainDevice> & {
 	// biome-ignore lint/suspicious/noExplicitAny: Feature command tables are merged dynamically.
 	CMD: any;
@@ -42,4 +46,13 @@ declare function withDeviceFeatures(
 	...features: Array<(Base: any) => any>
 ): ComposedDeviceConstructor;
 
-export { assertKnownConfigurationOptions, assertObjectOption, M5ChainDevice, withDeviceFeatures };
+export {
+	assertKnownConfigurationOptions,
+	assertObjectOption,
+	M5ChainDevice,
+	readPacketByte,
+	readPacketInt8,
+	readPacketInt16LE,
+	readPacketUint16LE,
+	withDeviceFeatures,
+};
