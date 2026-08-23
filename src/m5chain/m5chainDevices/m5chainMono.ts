@@ -1,3 +1,4 @@
+import { readPacketByte, readPacketUint16LE } from "m5chainDevice";
 import M5ChainMatrixDisplay, {
 	type DisplayCoordinate,
 	SCROLL_BEHAVIOR,
@@ -71,18 +72,22 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 		const data = new Uint8Array(pixels.length + 1);
 		data[0] = pixels.length;
 		for (let i = 0; i < pixels.length; i++) {
-			assertBoolean(`pixels[${i}].on`, pixels[i].on);
-			data[i + 1] = encodeCoordinate(pixels[i].x, pixels[i].y) | (pixels[i].on ? 0x40 : 0);
+			const pixel = pixels[i];
+			if (!pixel) throw new RangeError(`pixels must contain an entry at index ${i}.`);
+			assertBoolean(`pixels[${i}].on`, pixel.on);
+			data[i + 1] = encodeCoordinate(pixel.x, pixel.y) | (pixel.on ? 0x40 : 0);
 		}
 		await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_PIXELS, data, data.length);
-			this.assertOperationSucceeded("setPixels", packet[6], true);
+			this.assertOperationSucceeded("setPixels", readPacketByte(packet, 6, "set Mono pixels"), true);
 		});
 	}
 
 	async getPixel(x: number, y: number): Promise<boolean> {
 		const values = await this.getPixels([{ x, y }]);
-		return values[0];
+		const value = values[0];
+		if (value === undefined) throw new Error("getPixel returned no pixel state.");
+		return value;
 	}
 
 	async getPixels(coordinates: readonly DisplayCoordinate[]): Promise<boolean[]> {
@@ -92,16 +97,19 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 		const data = new Uint8Array(coordinates.length + 1);
 		data[0] = coordinates.length;
 		for (let i = 0; i < coordinates.length; i++) {
-			data[i + 1] = encodeCoordinate(coordinates[i].x, coordinates[i].y);
+			const coordinate = coordinates[i];
+			if (!coordinate) throw new RangeError(`coordinates must contain an entry at index ${i}.`);
+			data[i + 1] = encodeCoordinate(coordinate.x, coordinate.y);
 		}
 		return await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.GET_PIXELS, data, data.length);
 			const values: boolean[] = [];
 			for (let i = 0; i < coordinates.length; i++) {
-				if (packet[6 + i] !== 0 && packet[6 + i] !== 1) {
-					throw new Error(`Unknown Mono pixel state: ${packet[6 + i]}`);
+				const value = readPacketByte(packet, 6 + i, "get Mono pixels");
+				if (value !== 0 && value !== 1) {
+					throw new Error(`Unknown Mono pixel state: ${value}`);
 				}
-				values.push(packet[6 + i] === 1);
+				values.push(value === 1);
 			}
 			return values;
 		});
@@ -113,13 +121,14 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 		}
 		await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.WRITE_FRAME, rows, rows.length);
-			this.assertOperationSucceeded("writeFrame", packet[6], true);
+			this.assertOperationSucceeded("writeFrame", readPacketByte(packet, 6, "write Mono frame"), true);
 		});
 	}
 
 	async readFrame(): Promise<Uint8Array> {
 		return await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.READ_FRAME, new Uint8Array(0), 0);
+			readPacketByte(packet, 13, "read Mono frame");
 			return packet.slice(6, 14);
 		});
 	}
@@ -132,7 +141,7 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 		const data = new Uint8Array([encodeCharacter(character), (x << 4) | y]);
 		await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.DRAW_CHARACTER, data, data.length);
-			this.assertOperationSucceeded("drawCharacter", packet[6], true);
+			this.assertOperationSucceeded("drawCharacter", readPacketByte(packet, 6, "draw Mono character"), true);
 		});
 	}
 
@@ -150,7 +159,7 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 		data.set(encodedText, 4);
 		await this.withScrollMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_SCROLL_TEXT, data, data.length);
-			this.assertOperationSucceeded("scrollText", packet[6], true);
+			this.assertOperationSucceeded("scrollText", readPacketByte(packet, 6, "set Mono scroll text"), true);
 			await this.applyScrollState(SCROLL_STATE.RUNNING);
 		});
 	}
@@ -163,9 +172,9 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 				new Uint8Array(0),
 				0,
 			);
-			const mode = decodeScrollMode(packet[6], MONO_DIRECTIONS);
-			const intervalMs = packet[7] | (packet[8] << 8);
-			const length = packet[9];
+			const mode = decodeScrollMode(readPacketByte(packet, 6, "get Mono scroll text"), MONO_DIRECTIONS);
+			const intervalMs = readPacketUint16LE(packet, 7, "get Mono scroll text");
+			const length = readPacketByte(packet, 9, "get Mono scroll text");
 			return {
 				text: decodeText(packet, 10, length),
 				...mode,

@@ -1,5 +1,5 @@
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import { assertObjectOption, readPacketByte, readPacketUint16LE, withDeviceFeatures } from "m5chainDevice";
 import type { LedColor } from "types";
 
 export const BUZZER_MODE = Object.freeze({
@@ -169,7 +169,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 			data[3] = options.durationMs & 0xff;
 			data[4] = (options.durationMs >> 8) & 0xff;
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.PLAY_TONE, data, data.length);
-			this.#assertOperationSucceeded("playTone", packet[6], true);
+			this.#assertOperationSucceeded("playTone", readPacketByte(packet, 6, "play tone"), true);
 		});
 	}
 
@@ -208,7 +208,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 			data[1] = options.durationMs & 0xff;
 			data[2] = (options.durationMs >> 8) & 0xff;
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.PLAY_NOTE, data, data.length);
-			this.#assertOperationSucceeded("playNote", packet[6], true);
+			this.#assertOperationSucceeded("playNote", readPacketByte(packet, 6, "play note"), true);
 		});
 	}
 
@@ -222,7 +222,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 	async getToneFrequency(): Promise<number> {
 		return await this.#withOperationLock(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.GET_TONE_FREQUENCY, new Uint8Array(0), 0);
-			return (packet[7] << 8) | packet[6];
+			return readPacketUint16LE(packet, 6, "get tone frequency");
 		});
 	}
 
@@ -236,27 +236,28 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 	async getToneDutyCycle(): Promise<number> {
 		return await this.#withOperationLock(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.GET_TONE_DUTY_CYCLE, new Uint8Array(0), 0);
-			return packet[6] / 100;
+			return readPacketByte(packet, 6, "get tone duty cycle") / 100;
 		});
 	}
 
 	async getPlaybackMode(): Promise<BuzzerMode> {
 		return await this.#withOperationLock(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.GET_BUZZER_MODE, new Uint8Array(0), 0);
-			return modeFromValue(packet[6]);
+			return modeFromValue(readPacketByte(packet, 6, "get buzzer mode"));
 		});
 	}
 
 	async isToneActive(): Promise<boolean> {
 		return await this.#withOperationLock(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.GET_TONE_STATE, new Uint8Array(0), 0);
-			switch (packet[6]) {
+			const state = readPacketByte(packet, 6, "get tone state");
+			switch (state) {
 				case 0:
 					return false;
 				case 1:
 					return true;
 				default:
-					throw new Error(`Unknown buzzer state: ${packet[6]}`);
+					throw new Error(`Unknown buzzer state: ${state}`);
 			}
 		});
 	}
@@ -268,14 +269,16 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		if (!Array.isArray(colors) || colors.length < 1) {
 			throw new RangeError("colors must contain one entry.");
 		}
-		assertIntegerInRange("colors[0].r", colors[0].r, 0, 255);
-		assertIntegerInRange("colors[0].g", colors[0].g, 0, 255);
-		assertIntegerInRange("colors[0].b", colors[0].b, 0, 255);
+		const color = colors[0];
+		if (!color) throw new RangeError("colors must contain one entry.");
+		assertIntegerInRange("colors[0].r", color.r, 0, 255);
+		assertIntegerInRange("colors[0].g", color.g, 0, 255);
+		assertIntegerInRange("colors[0].b", color.b, 0, 255);
 
 		await this.#withOperationLock(async () => {
-			const data = new Uint8Array([index, num, colors[0].r, colors[0].g, colors[0].b]);
+			const data = new Uint8Array([index, num, color.r, color.g, color.b]);
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.RGB.SET_RGB_VALUE, data, data.length);
-			this.#assertOperationSucceeded("setLedColors", packet[6]);
+			this.#assertOperationSucceeded("setLedColors", readPacketByte(packet, 6, "set buzzer LED color"));
 		});
 	}
 
@@ -286,33 +289,42 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		return await this.#withOperationLock(async () => {
 			const data = new Uint8Array([index, num]);
 			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.RGB.GET_RGB_VALUE, data, data.length);
-			this.#assertOperationSucceeded("getLedColors", packet[6]);
-			return [{ r: packet[7], g: packet[8], b: packet[9] }];
+			this.#assertOperationSucceeded("getLedColors", readPacketByte(packet, 6, "get buzzer LED color"));
+			return [
+				{
+					r: readPacketByte(packet, 7, "get buzzer LED color"),
+					g: readPacketByte(packet, 8, "get buzzer LED color"),
+					b: readPacketByte(packet, 9, "get buzzer LED color"),
+				},
+			];
 		});
 	}
 
 	async #setPlaybackMode(mode: BuzzerMode): Promise<void> {
 		const data = new Uint8Array([mode]);
 		const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.SET_BUZZER_MODE, data, data.length);
-		this.#assertOperationSucceeded("set buzzer mode", packet[6]);
+		this.#assertOperationSucceeded("set buzzer mode", readPacketByte(packet, 6, "set buzzer mode"));
 	}
 
 	async #setToneFrequency(frequencyHz: number): Promise<void> {
 		const data = new Uint8Array([frequencyHz & 0xff, (frequencyHz >> 8) & 0xff]);
 		const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.SET_TONE_FREQUENCY, data, data.length);
-		this.#assertOperationSucceeded("setToneFrequency", packet[6]);
+		this.#assertOperationSucceeded("setToneFrequency", readPacketByte(packet, 6, "set tone frequency"));
 	}
 
 	async #setToneDutyCycle(dutyCycle: number): Promise<void> {
 		const data = new Uint8Array([Math.round(dutyCycle * 100)]);
 		const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.SET_TONE_DUTY_CYCLE, data, data.length);
-		this.#assertOperationSucceeded("setToneDutyCycle", packet[6]);
+		this.#assertOperationSucceeded("setToneDutyCycle", readPacketByte(packet, 6, "set tone duty cycle"));
 	}
 
 	async #setToneState(active: boolean): Promise<void> {
 		const data = new Uint8Array([active ? 1 : 0]);
 		const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.SET_TONE_STATE, data, data.length);
-		this.#assertOperationSucceeded(active ? "startTone" : "stopTone", packet[6]);
+		this.#assertOperationSucceeded(
+			active ? "startTone" : "stopTone",
+			readPacketByte(packet, 6, active ? "start tone" : "stop tone"),
+		);
 	}
 
 	#assertOperationSucceeded(operation: string, status: number, modeMismatchPossible = false) {

@@ -1,3 +1,4 @@
+import { readPacketByte, readPacketUint16LE } from "m5chainDevice";
 import M5ChainMatrixDisplay, {
 	type DisplayCoordinate,
 	SCROLL_BEHAVIOR,
@@ -80,19 +81,23 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 		const data = new Uint8Array(pixels.length * 3 + 1);
 		data[0] = pixels.length;
 		for (let i = 0; i < pixels.length; i++) {
-			assertColor(`pixels[${i}].color`, pixels[i].color);
-			data[i * 3 + 1] = encodeCoordinate(pixels[i].x, pixels[i].y);
-			writeRgb565(data, i * 3 + 2, colorToRgb565(pixels[i].color));
+			const pixel = pixels[i];
+			if (!pixel) throw new RangeError(`pixels must contain an entry at index ${i}.`);
+			assertColor(`pixels[${i}].color`, pixel.color);
+			data[i * 3 + 1] = encodeCoordinate(pixel.x, pixel.y);
+			writeRgb565(data, i * 3 + 2, colorToRgb565(pixel.color));
 		}
 		await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_PIXELS, data, data.length);
-			this.assertOperationSucceeded("setPixels", packet[6], true);
+			this.assertOperationSucceeded("setPixels", readPacketByte(packet, 6, "set RGB pixels"), true);
 		});
 	}
 
 	async getPixel(x: number, y: number): Promise<LedColor> {
 		const values = await this.getPixels([{ x, y }]);
-		return values[0];
+		const value = values[0];
+		if (!value) throw new Error("getPixel returned no color.");
+		return value;
 	}
 
 	async getPixels(coordinates: readonly DisplayCoordinate[]): Promise<LedColor[]> {
@@ -102,13 +107,15 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 		const data = new Uint8Array(coordinates.length + 1);
 		data[0] = coordinates.length;
 		for (let i = 0; i < coordinates.length; i++) {
-			data[i + 1] = encodeCoordinate(coordinates[i].x, coordinates[i].y);
+			const coordinate = coordinates[i];
+			if (!coordinate) throw new RangeError(`coordinates must contain an entry at index ${i}.`);
+			data[i + 1] = encodeCoordinate(coordinate.x, coordinate.y);
 		}
 		return await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.GET_PIXELS, data, data.length);
 			const values: LedColor[] = [];
 			for (let i = 0; i < coordinates.length; i++) {
-				values.push(colorFromRgb565(packet[6 + i * 2] | (packet[7 + i * 2] << 8)));
+				values.push(colorFromRgb565(readPacketUint16LE(packet, 6 + i * 2, "get RGB pixels")));
 			}
 			return values;
 		});
@@ -120,12 +127,14 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 		}
 		const data = new Uint8Array(128);
 		for (let i = 0; i < colors.length; i++) {
-			assertColor(`colors[${i}]`, colors[i]);
-			writeRgb565(data, i * 2, colorToRgb565(colors[i]));
+			const color = colors[i];
+			if (!color) throw new RangeError(`colors must contain an entry at index ${i}.`);
+			assertColor(`colors[${i}]`, color);
+			writeRgb565(data, i * 2, colorToRgb565(color));
 		}
 		await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.WRITE_FRAME, data, data.length);
-			this.assertOperationSucceeded("writeFrame", packet[6], true);
+			this.assertOperationSucceeded("writeFrame", readPacketByte(packet, 6, "write RGB frame"), true);
 		});
 	}
 
@@ -134,7 +143,7 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.READ_FRAME, new Uint8Array(0), 0);
 			const colors: LedColor[] = [];
 			for (let i = 0; i < 64; i++) {
-				colors.push(colorFromRgb565(packet[6 + i * 2] | (packet[7 + i * 2] << 8)));
+				colors.push(colorFromRgb565(readPacketUint16LE(packet, 6 + i * 2, "read RGB frame")));
 			}
 			return colors;
 		});
@@ -153,7 +162,7 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 		writeRgb565(data, 2, colorToRgb565(color));
 		await this.withPixelMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.DRAW_CHARACTER, data, data.length);
-			this.assertOperationSucceeded("drawCharacter", packet[6], true);
+			this.assertOperationSucceeded("drawCharacter", readPacketByte(packet, 6, "draw RGB character"), true);
 		});
 	}
 
@@ -181,7 +190,7 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 		data.set(encodedText, 6);
 		await this.withScrollMode(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_SCROLL_TEXT, data, data.length);
-			this.assertOperationSucceeded("scrollText", packet[6], true);
+			this.assertOperationSucceeded("scrollText", readPacketByte(packet, 6, "set RGB scroll text"), true);
 			await this.applyScrollState(SCROLL_STATE.RUNNING);
 		});
 	}
@@ -194,10 +203,10 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 				new Uint8Array(0),
 				0,
 			);
-			const mode = decodeScrollMode(packet[6], RGB_DIRECTIONS);
-			const intervalMs = packet[7] | (packet[8] << 8);
-			const wireColor = packet[9] | (packet[10] << 8);
-			const length = packet[11];
+			const mode = decodeScrollMode(readPacketByte(packet, 6, "get RGB scroll text"), RGB_DIRECTIONS);
+			const intervalMs = readPacketUint16LE(packet, 7, "get RGB scroll text");
+			const wireColor = readPacketUint16LE(packet, 9, "get RGB scroll text");
+			const length = readPacketByte(packet, 11, "get RGB scroll text");
 			return {
 				text: decodeText(packet, 12, length),
 				...mode,

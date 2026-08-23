@@ -105,7 +105,11 @@ export function encodeText(text: string): Uint8Array {
 export function decodeText(data: Uint8Array, offset: number, length: number): string {
 	let text = "";
 	for (let i = 0; i < length; i++) {
-		text += String.fromCharCode(data[offset + i]);
+		const value = data[offset + i];
+		if (value === undefined) {
+			throw new Error(`Matrix text response is too short (missing byte at offset ${offset + i}).`);
+		}
+		text += String.fromCharCode(value);
 	}
 	return text;
 }

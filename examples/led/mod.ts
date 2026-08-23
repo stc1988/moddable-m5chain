@@ -14,12 +14,12 @@ type LedColor = {
 
 const LOG_PREFIX = "[examples/led]";
 const ENCODER_STEPS_PER_TURN = 36;
-const KEY_BRIGHTNESS_LEVELS = [0.1, 0.5, 1];
-const KEY_COLORS: LedColor[] = [
+const KEY_BRIGHTNESS_LEVELS = [0.1, 0.5, 1] as const;
+const KEY_COLORS = [
 	{ r: 255, g: 0, b: 0 },
 	{ r: 0, g: 255, b: 0 },
 	{ r: 0, g: 0, b: 255 },
-];
+] as const;
 const TOF_MAX_DISTANCE_MM = 2000;
 const TOF_MIN_BRIGHTNESS = 0.1;
 const LED_DEVICE_CLASSES = Object.freeze([
@@ -84,6 +84,9 @@ function attachDeviceHandlers(device: LedDevice) {
 				step = (step + 1) % (KEY_COLORS.length * KEY_BRIGHTNESS_LEVELS.length);
 				const color = KEY_COLORS[Math.floor(step / KEY_BRIGHTNESS_LEVELS.length)];
 				const brightness = KEY_BRIGHTNESS_LEVELS[step % KEY_BRIGHTNESS_LEVELS.length];
+				if (!color || brightness === undefined) {
+					throw new Error("Unable to resolve key LED settings.");
+				}
 
 				await device.setLedColor(color);
 				await device.setLedBrightness(brightness);
@@ -135,14 +138,17 @@ function hsvToRgb(hue: number, saturation: number, brightness: number): LedColor
 	const p = v * (1 - s);
 	const q = v * (1 - fraction * s);
 	const t = v * (1 - (1 - fraction) * s);
-	const [r, g, b] = [
+	const rgb = [
 		[v, t, p],
 		[q, v, p],
 		[p, v, t],
 		[p, q, v],
 		[t, p, v],
 		[v, p, q],
-	][section % 6];
+	] as const;
+	const color = rgb[section % rgb.length];
+	if (!color) throw new Error("Unable to convert HSV color.");
+	const [r, g, b] = color;
 
 	return {
 		r: Math.round(r * 255),

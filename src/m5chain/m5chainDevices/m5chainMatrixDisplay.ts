@@ -1,4 +1,4 @@
-import { assertKnownConfigurationOptions, M5ChainDevice } from "m5chainDevice";
+import { assertKnownConfigurationOptions, M5ChainDevice, readPacketByte } from "m5chainDevice";
 import {
 	assertBoolean,
 	assertUnitInterval,
@@ -93,7 +93,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 	async clear(): Promise<void> {
 		await this.withDisplayLock(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.CLEAR, new Uint8Array(0), 0);
-			this.assertOperationSucceeded("clear", packet[6]);
+			this.assertOperationSucceeded("clear", readPacketByte(packet, 6, "clear matrix display"));
 		});
 	}
 
@@ -103,14 +103,14 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 		await this.withDisplayLock(async () => {
 			const data = new Uint8Array([wireRotation, saveToFlash ? 1 : 0]);
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_ROTATION, data, data.length);
-			this.assertOperationSucceeded("setRotation", packet[6]);
+			this.assertOperationSucceeded("setRotation", readPacketByte(packet, 6, "set matrix rotation"));
 		});
 	}
 
 	async getRotation(): Promise<MatrixRotation> {
 		return await this.withDisplayLock(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.GET_ROTATION, new Uint8Array(0), 0);
-			return rotationFromWire(packet[6]);
+			return rotationFromWire(readPacketByte(packet, 6, "get matrix rotation"));
 		});
 	}
 
@@ -120,14 +120,14 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 		await this.withDisplayLock(async () => {
 			const data = new Uint8Array([this.brightnessToWire(brightness), saveToFlash ? 1 : 0]);
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_BRIGHTNESS, data, data.length);
-			this.assertOperationSucceeded("setBrightness", packet[6]);
+			this.assertOperationSucceeded("setBrightness", readPacketByte(packet, 6, "set matrix brightness"));
 		});
 	}
 
 	async getBrightness(): Promise<number> {
 		return await this.withDisplayLock(async () => {
 			const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.GET_BRIGHTNESS, new Uint8Array(0), 0);
-			return this.brightnessFromWire(packet[6]);
+			return this.brightnessFromWire(readPacketByte(packet, 6, "get matrix brightness"));
 		});
 	}
 
@@ -151,7 +151,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 				new Uint8Array(0),
 				0,
 			);
-			return scrollStateFromWire(packet[6]);
+			return scrollStateFromWire(readPacketByte(packet, 6, "get matrix scroll state"));
 		});
 	}
 
@@ -175,7 +175,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 	protected async applyScrollState(state: ScrollState): Promise<void> {
 		const data = new Uint8Array([scrollStateToWire(state)]);
 		const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_SCROLL_STATE, data, data.length);
-		this.assertOperationSucceeded("set scroll state", packet[6], true);
+		this.assertOperationSucceeded("set scroll state", readPacketByte(packet, 6, "set matrix scroll state"), true);
 	}
 
 	protected assertOperationSucceeded(operation: string, status: number, modeMismatchPossible = false) {
@@ -197,7 +197,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 		if (this.#displayMode === mode) return;
 		const data = new Uint8Array([mode]);
 		const packet = await this.bus.sendAndWait(this.id, M5ChainMatrixDisplay.CMD.SET_DISPLAY_MODE, data, data.length);
-		this.assertOperationSucceeded("set display mode", packet[6]);
+		this.assertOperationSucceeded("set display mode", readPacketByte(packet, 6, "set matrix display mode"));
 		this.#displayMode = mode;
 	}
 
