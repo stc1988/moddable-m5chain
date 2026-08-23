@@ -402,7 +402,11 @@ Format and lint:
 ```sh
 npm run format
 npm run lint
+npm run typecheck
 ```
+
+Type checking enables `noUncheckedIndexedAccess`; packet and collection indexing must either validate the requested
+entry or handle the possibility that it is absent.
 
 Verify that the preloaded library does not retain mutable objects in RAM:
 

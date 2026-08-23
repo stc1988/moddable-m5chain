@@ -13,6 +13,7 @@
 		"noEmit": true,
 		"strict": true,
 		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": true,
 		"noUncheckedSideEffectImports": true,
 		"verbatimModuleSyntax": true,
 		"paths": {
