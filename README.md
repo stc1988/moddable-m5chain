@@ -266,6 +266,9 @@ device.onSample = (sample) => {
 };
 ```
 
+The handler may return a promise. Rejections are reported through `m5chain.onError` with
+`context.source === "sample"`.
+
 `device.sample()` remains available as a synchronous accessor for the latest cached sample.
 
 Angle, JoyStick, ToF, and PIR dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.

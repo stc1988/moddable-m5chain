@@ -25,7 +25,7 @@ export type M5ChainErrorSource =
 	| "scan";
 export type M5ChainErrorContext = { source: M5ChainErrorSource; device?: M5ChainDeviceLike };
 export type M5ChainErrorHandler = (error: unknown, context: M5ChainErrorContext) => void | Promise<void>;
-export type SampleHandler<T = unknown> = ((sample: T) => void) | null;
+export type SampleHandler<T = unknown> = ((sample: T) => void | Promise<void>) | null;
 
 export interface ChainBus {
 	cmdBuffer: Uint8Array;

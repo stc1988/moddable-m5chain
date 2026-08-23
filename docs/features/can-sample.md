@@ -12,7 +12,7 @@ import type { SampleHandler } from "types";
 | Export | Description |
 | --- | --- |
 | `CanSample` | Default generic mixin export. |
-| `SampleHandler<T>` | `((sample: T) => void) \| null`, exported from `types`. |
+| `SampleHandler<T>` | `((sample: T) => void \| Promise<void>) \| null`, exported from `types`. |
 
 ## Used By
 
@@ -47,6 +47,9 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
 | `device.hasOnSample()` | Returns whether a sample callback is registered. |
 | `await device.readSample()` | Device implementation hook. Reads from the bus and returns a value to store as the latest sample, or `undefined` to skip dispatch. |
 | `device.dispatchOnSample(value)` | Stores `value` as the latest sample and passes it to the registered `onSample` handler. Object samples are passed as shallow copies. |
+
+`onSample` handlers may be synchronous or asynchronous. A rejected asynchronous handler is reported through
+`m5chain.onError` with `context.source === "sample"`.
 
 ## Sample Values
 
