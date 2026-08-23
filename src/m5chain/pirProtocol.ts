@@ -21,6 +21,14 @@ export const PIR_COMMAND = Object.freeze({
 
 const PIR_EVENT_TYPE = 0x05;
 
+function readPIRPacketByte(buffer: Uint8Array, offset: number): number {
+	const value = buffer[offset];
+	if (value === undefined) {
+		throw new Error(`PIR event packet is too short (missing byte at offset ${offset}).`);
+	}
+	return value;
+}
+
 export function pirStatusFromValue(value: number): PIRStatus {
 	switch (value) {
 		case PIR_STATUS.NO_PERSON:
@@ -33,10 +41,11 @@ export function pirStatusFromValue(value: number): PIRStatus {
 }
 
 export function pirStatusFromEventPacket(buffer: Uint8Array): PIRStatus {
-	if (buffer[7] !== PIR_EVENT_TYPE) {
-		throw new Error(`Unknown PIR event type: ${buffer[7]}`);
+	const eventType = readPIRPacketByte(buffer, 7);
+	if (eventType !== PIR_EVENT_TYPE) {
+		throw new Error(`Unknown PIR event type: ${eventType}`);
 	}
-	return pirStatusFromValue(buffer[6]);
+	return pirStatusFromValue(readPIRPacketByte(buffer, 6));
 }
 
 export function pirReportModeToValue(mode: PIRReportMode): number {

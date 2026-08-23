@@ -1,6 +1,6 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, readPacketByte, readPacketUint16LE, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export const MeasurementMode = Object.freeze({
@@ -89,13 +89,13 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		if (!(packet instanceof Uint8Array)) {
 			throw new Error(`ToF sample read failed: ${packet.__m5chain}`);
 		}
-		return (packet[7] << 8) | packet[6];
+		return readPacketUint16LE(packet, 6, "read ToF sample");
 	}
 
 	async getDistance(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_DISTANCE, bus.cmdBuffer, 0);
-		return (packet[7] << 8) | packet[6];
+		return readPacketUint16LE(packet, 6, "get ToF distance");
 	}
 	async getMeasurementDistance(): Promise<number> {
 		return await this.getDistance();
@@ -109,7 +109,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = time;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_TIME, cmdBuffer, 1);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "set ToF measurement time");
 		if (result !== 1) {
 			throw new Error("configure measurement time failed.\n");
 		}
@@ -117,7 +117,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async #getMeasurementTime(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_TIME, bus.cmdBuffer, 0);
-		return packet[6];
+		return readPacketByte(packet, 6, "get ToF measurement time");
 	}
 
 	async #setMeasurementMode(mode: MeasurementMode): Promise<void> {
@@ -125,7 +125,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = measurementModeToValue(mode);
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_MODE, cmdBuffer, 1);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "set ToF measurement mode");
 		if (result !== 1) {
 			throw new Error("configure measurement mode failed.\n");
 		}
@@ -133,7 +133,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async #getMeasurementMode(): Promise<MeasurementMode> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_MODE, bus.cmdBuffer, 0);
-		const mode = packet[6];
+		const mode = readPacketByte(packet, 6, "get ToF measurement mode");
 		switch (mode) {
 			case 0:
 				return MeasurementMode.STOP;
@@ -151,7 +151,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = measurementStatusToValue(status);
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.SET_MEASUREMENT_STATUS, cmdBuffer, 1);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "set ToF measurement status");
 		if (result !== 1) {
 			throw new Error("set measurement status failed.\n");
 		}
@@ -159,7 +159,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async getMeasurementStatus(): Promise<MeasurementStatus> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_STATUS, bus.cmdBuffer, 0);
-		const status = packet[6];
+		const status = readPacketByte(packet, 6, "get ToF measurement status");
 		switch (status) {
 			case 0:
 				return MeasurementStatus.IDLE;
@@ -173,7 +173,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async getMeasurementCompletionFlag(): Promise<MeasurementCompletionFlag> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainToF.CMD.GET_MEASUREMENT_COMPLETION_FLAG, bus.cmdBuffer, 0);
-		const flag = packet[6];
+		const flag = readPacketByte(packet, 6, "get ToF measurement completion flag");
 		switch (flag) {
 			case 0:
 				return MeasurementCompletionFlag.INCOMPLETE;

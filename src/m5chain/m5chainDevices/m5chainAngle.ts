@@ -1,6 +1,6 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, readPacketByte, readPacketUint16LE, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export const AngleRotationDirection = Object.freeze({
@@ -60,7 +60,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		if (!(packet instanceof Uint8Array)) {
 			throw new Error(`Angle sample read failed: ${packet.__m5chain}`);
 		}
-		const adc = (packet[7] << 8) | packet[6];
+		const adc = readPacketUint16LE(packet, 6, "read angle sample");
 		const value = (adc & ADC_12BIT_MAX) / ADC_12BIT_MAX;
 		return Math.round(value * 100) / 100;
 	}
@@ -68,7 +68,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async getAngle12Adc(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.GET_12ADC, bus.cmdBuffer, 0);
-		return (packet[7] << 8) | packet[6];
+		return readPacketUint16LE(packet, 6, "get 12-bit angle ADC");
 	}
 	async getAngle12Deg(): Promise<number> {
 		const adc = await this.getAngle12Adc();
@@ -83,7 +83,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async getAngle8Adc(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.GET_8ADC, bus.cmdBuffer, 0);
-		return packet[6];
+		return readPacketByte(packet, 6, "get 8-bit angle ADC");
 	}
 
 	// 0: Clockwise
@@ -93,7 +93,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		const cmdBuffer = bus.cmdBuffer;
 		cmdBuffer[0] = angleRotationDirectionToValue(direction);
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.SET_CLOCKWISE_STATUS, cmdBuffer, 1);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "set angle rotation direction");
 		if (result !== 1) {
 			throw new Error("configure angle rotation direction failed.\n");
 		}
@@ -104,7 +104,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async #getAngleRotationDirection(): Promise<AngleRotationDirection> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainAngle.CMD.GET_CLOCKWISE_STATUS, bus.cmdBuffer, 0);
-		const direction = packet[6];
+		const direction = readPacketByte(packet, 6, "get angle rotation direction");
 		switch (direction) {
 			case 0:
 				return AngleRotationDirection.CLOCKWISE;

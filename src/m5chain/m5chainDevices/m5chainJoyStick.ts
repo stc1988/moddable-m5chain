@@ -1,7 +1,15 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasKey, { type HasKeyMethods } from "hasKey";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import {
+	assertKnownConfigurationOptions,
+	assertObjectOption,
+	readPacketByte,
+	readPacketInt8,
+	readPacketInt16LE,
+	readPacketUint16LE,
+	withDeviceFeatures,
+} from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
@@ -68,8 +76,8 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 			throw new Error(`JoyStick sample read failed: ${packet.__m5chain}`);
 		}
 		return {
-			x: (packet[6] << 24) >> 24,
-			y: (packet[7] << 24) >> 24,
+			x: readPacketInt8(packet, 6, "read joystick sample"),
+			y: readPacketInt8(packet, 7, "read joystick sample"),
 		};
 	}
 
@@ -78,8 +86,8 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_16ADC, bus.cmdBuffer, 0);
 		return {
-			x: (packet[7] << 8) | packet[6],
-			y: (packet[9] << 8) | packet[8],
+			x: readPacketUint16LE(packet, 6, "get 16-bit joystick ADC"),
+			y: readPacketUint16LE(packet, 8, "get 16-bit joystick ADC"),
 		};
 	}
 	//0 ~ 255
@@ -87,18 +95,18 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_8ADC, bus.cmdBuffer, 0);
 		return {
-			x: packet[6],
-			y: packet[7],
+			x: readPacketByte(packet, 6, "get 8-bit joystick ADC"),
+			y: readPacketByte(packet, 7, "get 8-bit joystick ADC"),
 		};
 	}
 	async #getJoystickMappedRange(): Promise<JoystickMappedRange> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_RANGE, bus.cmdBuffer, 0);
 		return {
-			xMin: packet[6],
-			xMax: packet[7],
-			yMin: packet[8],
-			yMax: packet[9],
+			xMin: readPacketByte(packet, 6, "get joystick mapped range"),
+			xMax: readPacketByte(packet, 7, "get joystick mapped range"),
+			yMin: readPacketByte(packet, 8, "get joystick mapped range"),
+			yMax: readPacketByte(packet, 9, "get joystick mapped range"),
 		};
 	}
 	async #setJoystickMappedRange(xMin: number, xMax: number, yMin: number, yMax: number): Promise<void> {
@@ -109,7 +117,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		cmdBuffer[2] = yMin;
 		cmdBuffer[3] = yMax;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.SET_ADC_XY_MAPPED_RANGE, cmdBuffer, 4);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "set joystick mapped range");
 		if (result !== 1) {
 			throw new Error("configure joystick mapped range failed.\n");
 		}
@@ -118,11 +126,9 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 	async getJoystickMappedInt16Value(): Promise<JoystickValue> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_INT16_VALUE, bus.cmdBuffer, 0);
-		const x = (packet[7] << 8) | packet[6];
-		const y = (packet[9] << 8) | packet[8];
 		return {
-			x: (x << 16) >> 16,
-			y: (y << 16) >> 16,
+			x: readPacketInt16LE(packet, 6, "get mapped 16-bit joystick value"),
+			y: readPacketInt16LE(packet, 8, "get mapped 16-bit joystick value"),
 		};
 	}
 	//  -128~127
@@ -130,8 +136,8 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainJoyStick.CMD.GET_ADC_XY_MAPPED_INT8_VALUE, bus.cmdBuffer, 0);
 		return {
-			x: (packet[6] << 24) >> 24,
-			y: (packet[7] << 24) >> 24,
+			x: readPacketInt8(packet, 6, "get mapped 8-bit joystick value"),
+			y: readPacketInt8(packet, 7, "get mapped 8-bit joystick value"),
 		};
 	}
 }

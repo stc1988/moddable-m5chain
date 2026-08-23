@@ -1,7 +1,7 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasKey, { type HasKeyMethods } from "hasKey";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, readPacketByte, readPacketInt16LE, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
@@ -80,8 +80,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		if (!(packet instanceof Uint8Array)) {
 			throw new Error(`Encoder sample read failed: ${packet.__m5chain}`);
 		}
-		const value = (packet[7] << 8) | packet[6];
-		const current = (value << 16) >> 16;
+		const current = readPacketInt16LE(packet, 6, "read encoder sample");
 
 		if (this.#lastValue === undefined) {
 			this.#lastValue = current;
@@ -98,22 +97,20 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	async getEncoderValue(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_VALUE, bus.cmdBuffer, 0);
-		const value = (packet[7] << 8) | packet[6];
-		return (value << 16) >> 16;
+		return readPacketInt16LE(packet, 6, "get encoder value");
 	}
 
 	// -32768 ~32767
 	async getEncoderIncValue(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_INC_VALUE, bus.cmdBuffer, 0);
-		const value = (packet[7] << 8) | packet[6];
-		return (value << 16) >> 16;
+		return readPacketInt16LE(packet, 6, "get encoder increment value");
 	}
 
 	async resetEncoderValue(): Promise<void> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.RESET_VALUE, bus.cmdBuffer, 0);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "reset encoder value");
 		if (result !== 1) {
 			throw new Error("resetEncoderValue failed.\n");
 		}
@@ -122,7 +119,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	async resetEncoderIncValue(): Promise<void> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.RESET_INC_VALUE, bus.cmdBuffer, 0);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "reset encoder increment value");
 		if (result !== 1) {
 			throw new Error("resetEncoderIncValue failed.\n");
 		}
@@ -139,7 +136,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		cmdBuffer[0] = encoderABDirectionToValue(direct);
 		cmdBuffer[1] = saveToFlashToValue(saveToFlash);
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.SET_AB_STATUS, cmdBuffer, 2);
-		const result = packet[6];
+		const result = readPacketByte(packet, 6, "set encoder AB direction");
 		if (result !== 1) {
 			throw new Error("configure encoder AB direction failed.\n");
 		}
@@ -150,7 +147,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	async #getEncoderABDirect(): Promise<EncoderABDirection> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainEncoder.CMD.GET_AB_STATUS, bus.cmdBuffer, 0);
-		const direction = packet[6];
+		const direction = readPacketByte(packet, 6, "get encoder AB direction");
 		switch (direction) {
 			case 0:
 				return EncoderABDirection.CLOCKWISE_INCREASE;

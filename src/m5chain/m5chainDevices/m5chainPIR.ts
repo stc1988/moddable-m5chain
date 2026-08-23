@@ -1,6 +1,6 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, readPacketByte, withDeviceFeatures } from "m5chainDevice";
 import {
 	assertPIRHoldSeconds,
 	PIR_COMMAND,
@@ -82,13 +82,13 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		if (!(packet instanceof Uint8Array)) {
 			throw new Error(`PIR sample read failed: ${packet.__m5chain}`);
 		}
-		return pirStatusFromValue(packet[6]);
+		return pirStatusFromValue(readPacketByte(packet, 6, "read PIR sample"));
 	}
 
 	async getPresenceStatus(): Promise<PIRStatus> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainPIR.CMD.GET_STATUS, bus.cmdBuffer, 0);
-		return pirStatusFromValue(packet[6]);
+		return pirStatusFromValue(readPacketByte(packet, 6, "get PIR presence status"));
 	}
 
 	async isPersonDetected(): Promise<boolean> {
@@ -103,7 +103,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		const bus = this.bus;
 		bus.cmdBuffer[0] = pirReportModeToValue(mode);
 		const packet = await bus.sendAndWait(this.id, M5ChainPIR.CMD.SET_REPORT_MODE, bus.cmdBuffer, 1);
-		if (packet[6] !== 1) {
+		if (readPacketByte(packet, 6, "set PIR report mode") !== 1) {
 			throw new Error("configure PIR report mode failed.\n");
 		}
 	}
@@ -111,7 +111,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 	async #getReportMode(): Promise<PIRReportMode> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainPIR.CMD.GET_REPORT_MODE, bus.cmdBuffer, 0);
-		return pirReportModeFromValue(packet[6]);
+		return pirReportModeFromValue(readPacketByte(packet, 6, "get PIR report mode"));
 	}
 
 	async #setHoldSeconds(holdSeconds: number, saveToFlash: boolean): Promise<void> {
@@ -123,7 +123,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		bus.cmdBuffer[0] = holdSeconds;
 		bus.cmdBuffer[1] = saveToFlash ? 1 : 0;
 		const packet = await bus.sendAndWait(this.id, M5ChainPIR.CMD.SET_HOLD_SECONDS, bus.cmdBuffer, 2);
-		if (packet[6] !== 1) {
+		if (readPacketByte(packet, 6, "set PIR hold time") !== 1) {
 			throw new Error("configure PIR hold time failed.\n");
 		}
 	}
@@ -131,7 +131,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 	async #getHoldSeconds(): Promise<number> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWait(this.id, M5ChainPIR.CMD.GET_HOLD_SECONDS, bus.cmdBuffer, 0);
-		return packet[6];
+		return readPacketByte(packet, 6, "get PIR hold time");
 	}
 }
 
