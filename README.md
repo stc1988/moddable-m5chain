@@ -197,6 +197,11 @@ devices even when other device types are present on the same chain. Duplicate `D
 The `known` property is a type discriminator: registered devices have `known === true`, while `UnknownDevice` has
 `known === false`.
 
+In TypeScript, every registered class must implement the complete M5Chain runtime device contract in addition to its
+static `DEVICE_TYPE`. Custom device implementations should extend `M5ChainDevice` from `m5chainDevice`; this provides
+the required lifecycle, connection state, and common device API. A constructor that only declares `DEVICE_TYPE` is no
+longer accepted as an `M5ChainDeviceClass`.
+
 An all-device application can use the explicit aggregate registry:
 
 ```js
@@ -304,7 +309,7 @@ Packets larger than the UART transmit FIFO are written in chunks as output space
 - `device.type` numeric device type ID used by the M5Chain protocol
 - `device.known` (`false` for device types not yet supported by this library)
 - `device.connected`
-- `device.uuid` (after `init()`)
+- `device.uuid` (`undefined` until `init()` completes)
 - `await device.configure(options)` applies device and feature settings
 - `await device.readConfiguration()` reads current device and feature settings from the chain device
 - `await device.getUID(uidType = 1)` (`uidType: 0 | 1`)

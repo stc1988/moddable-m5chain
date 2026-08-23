@@ -105,7 +105,7 @@ export interface M5ChainDeviceLike {
 	readonly kind: string;
 	readonly known: boolean;
 	readonly connected: boolean;
-	readonly uuid?: string;
+	readonly uuid: string | undefined;
 	getUID(uidType?: number): Promise<string>;
 	getBootloaderVersion(): Promise<number>;
 	getFirmwareVersion(): Promise<number>;
@@ -126,7 +126,7 @@ export interface M5ChainRuntimeHooks<TSample = unknown> {
 
 export interface M5ChainRuntimeDevice<TSample = unknown> extends M5ChainDeviceLike, M5ChainRuntimeHooks<TSample> {}
 
-export type M5ChainDeviceClass<TDevice extends object = object> = {
+export type M5ChainDeviceClass<TDevice extends M5ChainRuntimeDevice = M5ChainRuntimeDevice> = {
 	readonly DEVICE_TYPE: number;
 	new (bus: ChainBus, options: DeviceFactoryOptions): TDevice;
 };
