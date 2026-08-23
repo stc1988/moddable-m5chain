@@ -33,10 +33,8 @@ export async function main() {
 
 async function showMono(mono: Extract<MatrixDevice, { kind: "mono" }>) {
 	await mono.configure({
-		display: {
-			rotation: MATRIX_ROTATION.DEG_0,
-			brightness: 0.5,
-		},
+		rotation: MATRIX_ROTATION.DEG_0,
+		brightness: 0.5,
 	});
 	await mono.writeFrame(
 		new Uint8Array([0b00111100, 0b01000010, 0b10100101, 0b10000001, 0b10100101, 0b10011001, 0b01000010, 0b00111100]),
@@ -46,10 +44,8 @@ async function showMono(mono: Extract<MatrixDevice, { kind: "mono" }>) {
 
 async function showRGB(rgb: Extract<MatrixDevice, { kind: "rgb" }>) {
 	await rgb.configure({
-		display: {
-			rotation: MATRIX_ROTATION.DEG_0,
-			brightness: 0.5,
-		},
+		rotation: MATRIX_ROTATION.DEG_0,
+		brightness: 0.5,
 	});
 	const colors: LedColor[] = [];
 	for (let y = 0; y < rgb.height; y++) {

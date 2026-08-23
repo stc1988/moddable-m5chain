@@ -43,10 +43,8 @@ if (device.type === M5ChainPIR.DEVICE_TYPE) {
 	const pir = device as M5ChainPIR;
 
 	await pir.configure({
-		pir: {
-			reportMode: PIR_REPORT_MODE.ENABLED,
-			holdSeconds: 5,
-		},
+		reportMode: PIR_REPORT_MODE.ENABLED,
+		holdSeconds: 5,
 	});
 
 	pir.onPresenceChanged = (status) => {
@@ -62,7 +60,7 @@ The device reports each PIR state change when report mode is enabled. According 
 
 | Method | Description |
 | --- | --- |
-| `await device.configure({ pir })` | Applies PIR report-mode and hold-time configuration. |
+| `await device.configure(options)` | Applies PIR report-mode and hold-time configuration. |
 | `await device.readConfiguration()` | Reads the current PIR configuration. |
 | `await device.getPresenceStatus()` | Reads `PIR_STATUS.NO_PERSON` or `PIR_STATUS.PERSON_DETECTED`. |
 | `await device.isPersonDetected()` | Returns `true` while the PIR reports a detected person. |
@@ -71,9 +69,9 @@ The device reports each PIR state change when report mode is enabled. According 
 
 | Option | Description |
 | --- | --- |
-| `pir.reportMode` | Enables or disables automatic presence-change reports. |
-| `pir.holdSeconds` | Keeps the detected state for `0` to `255` seconds. The device default is 5 seconds. |
-| `pir.saveToFlash` | Persists `pir.holdSeconds` when `true`. It requires `holdSeconds` in the same call and defaults to `false`. |
+| `reportMode` | Enables or disables automatic presence-change reports. |
+| `holdSeconds` | Keeps the detected state for `0` to `255` seconds. The device default is 5 seconds. |
+| `saveToFlash` | Persists `holdSeconds` when `true`. It requires `holdSeconds` in the same call and defaults to `false`. |
 
 Saving to flash requires a page erase. Avoid setting `saveToFlash` on frequent configuration updates because repeated writes reduce device flash life.
 

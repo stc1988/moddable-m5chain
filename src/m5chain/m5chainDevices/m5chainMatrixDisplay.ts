@@ -1,4 +1,4 @@
-import { assertKnownConfigurationOptions, assertObjectOption, M5ChainDevice } from "m5chainDevice";
+import { assertKnownConfigurationOptions, M5ChainDevice } from "m5chainDevice";
 import {
 	assertBoolean,
 	assertUnitInterval,
@@ -26,18 +26,14 @@ export {
 } from "matrixDisplayProtocol";
 
 export type MatrixDisplayConfiguration = DeviceConfiguration & {
-	display?: {
-		rotation?: MatrixRotation;
-		brightness?: number;
-		saveToFlash?: boolean;
-	};
+	rotation?: MatrixRotation;
+	brightness?: number;
+	saveToFlash?: boolean;
 };
 
 export type MatrixDisplayConfigurationSnapshot = DeviceConfigurationSnapshot & {
-	display: {
-		rotation: MatrixRotation;
-		brightness: number;
-	};
+	rotation: MatrixRotation;
+	brightness: number;
 };
 
 const DISPLAY_MODE = Object.freeze({
@@ -74,27 +70,23 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 	#operationMutex: Promise<void> = Promise.resolve();
 
 	async configure(options: MatrixDisplayConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["display"]);
+		assertKnownConfigurationOptions(options, ["rotation", "brightness", "saveToFlash"]);
 		await super.configure(options);
-		if (options.display === undefined) return;
-		assertObjectOption("options.display", options.display);
-		const saveToFlash = options.display.saveToFlash ?? false;
-		assertBoolean("options.display.saveToFlash", saveToFlash);
-		if (options.display.rotation !== undefined) {
-			await this.setRotation(options.display.rotation, saveToFlash);
+		const saveToFlash = options.saveToFlash ?? false;
+		assertBoolean("options.saveToFlash", saveToFlash);
+		if (options.rotation !== undefined) {
+			await this.setRotation(options.rotation, saveToFlash);
 		}
-		if (options.display.brightness !== undefined) {
-			await this.setBrightness(options.display.brightness, saveToFlash);
+		if (options.brightness !== undefined) {
+			await this.setBrightness(options.brightness, saveToFlash);
 		}
 	}
 
 	async readConfiguration(): Promise<MatrixDisplayConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
-			display: {
-				rotation: await this.getRotation(),
-				brightness: await this.getBrightness(),
-			},
+			rotation: await this.getRotation(),
+			brightness: await this.getBrightness(),
 		};
 	}
 

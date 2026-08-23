@@ -1,7 +1,7 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasKey, { type HasKeyMethods } from "hasKey";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
@@ -19,16 +19,12 @@ export const SaveToFlash = Object.freeze({
 export type SaveToFlash = (typeof SaveToFlash)[keyof typeof SaveToFlash];
 
 export type EncoderConfiguration = DeviceConfiguration & {
-	encoder?: {
-		abDirection?: EncoderABDirection;
-		saveToFlash?: SaveToFlash;
-	};
+	abDirection?: EncoderABDirection;
+	saveToFlash?: SaveToFlash;
 };
 
 export type EncoderConfigurationSnapshot = DeviceConfigurationSnapshot & {
-	encoder: {
-		abDirection: EncoderABDirection;
-	};
+	abDirection: EncoderABDirection;
 };
 
 function encoderABDirectionToValue(direction: EncoderABDirection): number {
@@ -62,23 +58,19 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	static SAVE_TO_FLASH = SaveToFlash;
 	#lastValue: number | undefined;
 	async configure(options: EncoderConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["key", "encoder"]);
+		assertKnownConfigurationOptions(options, ["key", "abDirection", "saveToFlash"]);
 		await super.configure(options);
-		if (options.encoder === undefined) return;
-		assertObjectOption("options.encoder", options.encoder);
-		if (options.encoder.abDirection !== undefined) {
-			await this.#setEncoderABDirect(options.encoder.abDirection, options.encoder.saveToFlash ?? SaveToFlash.DISABLE);
-		} else if (options.encoder.saveToFlash !== undefined) {
-			throw new RangeError("options.encoder.saveToFlash requires options.encoder.abDirection.");
+		if (options.abDirection !== undefined) {
+			await this.#setEncoderABDirect(options.abDirection, options.saveToFlash ?? SaveToFlash.DISABLE);
+		} else if (options.saveToFlash !== undefined) {
+			throw new RangeError("options.saveToFlash requires options.abDirection.");
 		}
 	}
 
 	async readConfiguration(): Promise<EncoderConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
-			encoder: {
-				abDirection: await this.#getEncoderABDirect(),
-			},
+			abDirection: await this.#getEncoderABDirect(),
 		};
 	}
 

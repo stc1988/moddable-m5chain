@@ -105,11 +105,9 @@ The settings can also be applied together:
 
 ```ts
 await mono.configure({
-	display: {
-		rotation: MATRIX_ROTATION.DEG_90,
-		brightness: 0.5,
-		saveToFlash: false,
-	},
+	rotation: MATRIX_ROTATION.DEG_90,
+	brightness: 0.5,
+	saveToFlash: false,
 });
 
 const configuration = await mono.readConfiguration();

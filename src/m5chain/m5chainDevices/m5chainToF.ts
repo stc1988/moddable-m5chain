@@ -1,6 +1,6 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export const MeasurementMode = Object.freeze({
@@ -23,17 +23,13 @@ export const MeasurementCompletionFlag = Object.freeze({
 export type MeasurementCompletionFlag = (typeof MeasurementCompletionFlag)[keyof typeof MeasurementCompletionFlag];
 
 export type ToFConfiguration = DeviceConfiguration & {
-	tof?: {
-		measurementTime?: number;
-		measurementMode?: MeasurementMode;
-	};
+	measurementTime?: number;
+	measurementMode?: MeasurementMode;
 };
 
 export type ToFConfigurationSnapshot = DeviceConfigurationSnapshot & {
-	tof: {
-		measurementTime: number;
-		measurementMode: MeasurementMode;
-	};
+	measurementTime: number;
+	measurementMode: MeasurementMode;
 };
 
 function measurementModeToValue(mode: MeasurementMode): number {
@@ -69,25 +65,21 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	static MEASUREMENT_STATUS = MeasurementStatus;
 	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;
 	async configure(options: ToFConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["tof"]);
+		assertKnownConfigurationOptions(options, ["measurementTime", "measurementMode"]);
 		await super.configure(options);
-		if (options.tof === undefined) return;
-		assertObjectOption("options.tof", options.tof);
-		if (options.tof.measurementTime !== undefined) {
-			await this.#setMeasurementTime(options.tof.measurementTime);
+		if (options.measurementTime !== undefined) {
+			await this.#setMeasurementTime(options.measurementTime);
 		}
-		if (options.tof.measurementMode !== undefined) {
-			await this.#setMeasurementMode(options.tof.measurementMode);
+		if (options.measurementMode !== undefined) {
+			await this.#setMeasurementMode(options.measurementMode);
 		}
 	}
 
 	async readConfiguration(): Promise<ToFConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
-			tof: {
-				measurementTime: await this.#getMeasurementTime(),
-				measurementMode: await this.#getMeasurementMode(),
-			},
+			measurementTime: await this.#getMeasurementTime(),
+			measurementMode: await this.#getMeasurementMode(),
 		};
 	}
 

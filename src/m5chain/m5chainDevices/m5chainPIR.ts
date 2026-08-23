@@ -1,6 +1,6 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
 import {
 	assertPIRHoldSeconds,
 	PIR_COMMAND,
@@ -18,18 +18,14 @@ import type { DeviceConfiguration, DeviceConfigurationSnapshot, PacketBuffer } f
 export { PIR_REPORT_MODE, PIR_STATUS, type PIRReportMode, type PIRStatus } from "pirProtocol";
 
 export type PIRConfiguration = DeviceConfiguration & {
-	pir?: {
-		reportMode?: PIRReportMode;
-		holdSeconds?: number;
-		saveToFlash?: boolean;
-	};
+	reportMode?: PIRReportMode;
+	holdSeconds?: number;
+	saveToFlash?: boolean;
 };
 
 export type PIRConfigurationSnapshot = DeviceConfigurationSnapshot & {
-	pir: {
-		reportMode: PIRReportMode;
-		holdSeconds: number;
-	};
+	reportMode: PIRReportMode;
+	holdSeconds: number;
 };
 
 export type PIRPresenceHandler = ((status: PIRStatus) => void | Promise<void>) | null;
@@ -59,28 +55,24 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 	}
 
 	async configure(options: PIRConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["pir"]);
+		assertKnownConfigurationOptions(options, ["reportMode", "holdSeconds", "saveToFlash"]);
 		await super.configure(options);
-		if (options.pir === undefined) return;
-		assertObjectOption("options.pir", options.pir);
 
-		if (options.pir.reportMode !== undefined) {
-			await this.#setReportMode(options.pir.reportMode);
+		if (options.reportMode !== undefined) {
+			await this.#setReportMode(options.reportMode);
 		}
-		if (options.pir.holdSeconds !== undefined) {
-			await this.#setHoldSeconds(options.pir.holdSeconds, options.pir.saveToFlash ?? false);
-		} else if (options.pir.saveToFlash !== undefined) {
-			throw new RangeError("options.pir.saveToFlash requires options.pir.holdSeconds.");
+		if (options.holdSeconds !== undefined) {
+			await this.#setHoldSeconds(options.holdSeconds, options.saveToFlash ?? false);
+		} else if (options.saveToFlash !== undefined) {
+			throw new RangeError("options.saveToFlash requires options.holdSeconds.");
 		}
 	}
 
 	async readConfiguration(): Promise<PIRConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
-			pir: {
-				reportMode: await this.#getReportMode(),
-				holdSeconds: await this.#getHoldSeconds(),
-			},
+			reportMode: await this.#getReportMode(),
+			holdSeconds: await this.#getHoldSeconds(),
 		};
 	}
 

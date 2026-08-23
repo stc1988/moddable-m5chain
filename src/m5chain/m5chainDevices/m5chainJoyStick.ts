@@ -19,15 +19,11 @@ export type JoystickMappedRange = {
 };
 
 export type JoystickConfiguration = DeviceConfiguration & {
-	joystick?: {
-		mappedRange?: JoystickMappedRange;
-	};
+	mappedRange?: JoystickMappedRange;
 };
 
 export type JoystickConfigurationSnapshot = DeviceConfigurationSnapshot & {
-	joystick: {
-		mappedRange: JoystickMappedRange;
-	};
+	mappedRange: JoystickMappedRange;
 };
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
@@ -44,13 +40,11 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	} as const);
 	async configure(options: JoystickConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["key", "joystick"]);
+		assertKnownConfigurationOptions(options, ["key", "mappedRange"]);
 		await super.configure(options);
-		if (options.joystick === undefined) return;
-		assertObjectOption("options.joystick", options.joystick);
-		if (options.joystick.mappedRange !== undefined) {
-			const range = options.joystick.mappedRange;
-			assertObjectOption("options.joystick.mappedRange", range);
+		if (options.mappedRange !== undefined) {
+			const range = options.mappedRange;
+			assertObjectOption("options.mappedRange", range);
 			await this.#setJoystickMappedRange(range.xMin, range.xMax, range.yMin, range.yMax);
 		}
 	}
@@ -58,9 +52,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 	async readConfiguration(): Promise<JoystickConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
-			joystick: {
-				mappedRange: await this.#getJoystickMappedRange(),
-			},
+			mappedRange: await this.#getJoystickMappedRange(),
 		};
 	}
 

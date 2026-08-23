@@ -44,10 +44,8 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 
 	await encoder.setLedColor(0, 40, 255);
 	await encoder.configure({
-		encoder: {
-			abDirection: EncoderABDirection.CLOCKWISE_INCREASE,
-			saveToFlash: SaveToFlash.DISABLE,
-		},
+		abDirection: EncoderABDirection.CLOCKWISE_INCREASE,
+		saveToFlash: SaveToFlash.DISABLE,
 	});
 	await encoder.resetEncoderValue();
 
@@ -67,7 +65,7 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 
 | Method | Description |
 | --- | --- |
-| `await device.configure({ encoder })` | Applies encoder configuration. |
+| `await device.configure(options)` | Applies encoder and key configuration. |
 | `await device.readConfiguration()` | Reads key and encoder configuration from the device. |
 | `await device.getEncoderValue()` | Reads the signed encoder value. Range: `-32768` to `32767`. |
 | `await device.getEncoderIncValue()` | Reads the signed increment value. Range: `-32768` to `32767`. |
@@ -78,8 +76,8 @@ if (device.type === M5ChainEncoder.DEVICE_TYPE) {
 
 | Option | Description |
 | --- | --- |
-| `encoder.abDirection` | Sets encoder A/B direction. Use `EncoderABDirection.CLOCKWISE_INCREASE` (`0`) or `EncoderABDirection.CLOCKWISE_DECREASE` (`1`). |
-| `encoder.saveToFlash` | Persists `encoder.abDirection` when set to `SaveToFlash.ENABLE` (`1`). |
+| `abDirection` | Sets encoder A/B direction. Use `EncoderABDirection.CLOCKWISE_INCREASE` (`0`) or `EncoderABDirection.CLOCKWISE_DECREASE` (`1`). |
+| `saveToFlash` | Persists `abDirection` when set to `SaveToFlash.ENABLE` (`1`). |
 
 ## Sample Value
 

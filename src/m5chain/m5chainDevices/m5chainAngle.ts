@@ -1,6 +1,6 @@
 import CanSample, { type CanSampleMethods } from "canSample";
 import HasLed, { type HasLedMethods } from "hasLed";
-import { assertKnownConfigurationOptions, assertObjectOption, withDeviceFeatures } from "m5chainDevice";
+import { assertKnownConfigurationOptions, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export const AngleRotationDirection = Object.freeze({
@@ -10,15 +10,11 @@ export const AngleRotationDirection = Object.freeze({
 export type AngleRotationDirection = (typeof AngleRotationDirection)[keyof typeof AngleRotationDirection];
 
 export type AngleConfiguration = DeviceConfiguration & {
-	angle?: {
-		rotationDirection?: AngleRotationDirection;
-	};
+	rotationDirection?: AngleRotationDirection;
 };
 
 export type AngleConfigurationSnapshot = DeviceConfigurationSnapshot & {
-	angle: {
-		rotationDirection: AngleRotationDirection;
-	};
+	rotationDirection: AngleRotationDirection;
 };
 
 const ADC_12BIT_MAX = 0x0fff;
@@ -44,21 +40,17 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	} as const);
 	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
 	async configure(options: AngleConfiguration = {}): Promise<void> {
-		assertKnownConfigurationOptions(options, ["angle"]);
+		assertKnownConfigurationOptions(options, ["rotationDirection"]);
 		await super.configure(options);
-		if (options.angle === undefined) return;
-		assertObjectOption("options.angle", options.angle);
-		if (options.angle.rotationDirection !== undefined) {
-			await this.#setAngleRotationDirection(options.angle.rotationDirection);
+		if (options.rotationDirection !== undefined) {
+			await this.#setAngleRotationDirection(options.rotationDirection);
 		}
 	}
 
 	async readConfiguration(): Promise<AngleConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
-			angle: {
-				rotationDirection: await this.#getAngleRotationDirection(),
-			},
+			rotationDirection: await this.#getAngleRotationDirection(),
 		};
 	}
 

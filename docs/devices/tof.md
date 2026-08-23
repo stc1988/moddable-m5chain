@@ -41,10 +41,8 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 
 	await tof.setLedColor(80, 80, 255);
 	await tof.configure({
-		tof: {
-			measurementTime: 50,
-			measurementMode: MeasurementMode.CONTINUOUS,
-		},
+		measurementTime: 50,
+		measurementMode: MeasurementMode.CONTINUOUS,
 	});
 
 	tof.onSample = (sample) => {
@@ -57,7 +55,7 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 
 | Method | Description |
 | --- | --- |
-| `await device.configure({ tof })` | Applies ToF configuration. |
+| `await device.configure(options)` | Applies ToF configuration. |
 | `await device.readConfiguration()` | Reads ToF configuration from the device. |
 | `await device.getDistance()` | Reads measured distance in millimeters. |
 | `await device.getMeasurementDistance()` | Alias for `getDistance()`. |
@@ -70,8 +68,8 @@ if (device.type === M5ChainToF.DEVICE_TYPE) {
 
 | Option | Description |
 | --- | --- |
-| `tof.measurementTime` | Sets measurement time. Range: `20` to `200` ms. |
-| `tof.measurementMode` | Sets mode. Use `MeasurementMode.STOP` (`0`), `MeasurementMode.SINGLE` (`1`), or `MeasurementMode.CONTINUOUS` (`2`). |
+| `measurementTime` | Sets measurement time. Range: `20` to `200` ms. |
+| `measurementMode` | Sets mode. Use `MeasurementMode.STOP` (`0`), `MeasurementMode.SINGLE` (`1`), or `MeasurementMode.CONTINUOUS` (`2`). |
 
 ## Sample Value
 

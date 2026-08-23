@@ -32,7 +32,7 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 	const angle = device as M5ChainAngle;
 
 	await angle.setLedColor(0, 255, 80);
-	await angle.configure({ angle: { rotationDirection: AngleRotationDirection.CLOCKWISE } });
+	await angle.configure({ rotationDirection: AngleRotationDirection.CLOCKWISE });
 
 	angle.onSample = (sample) => {
 		trace(`angle=${sample}\n`);
@@ -48,14 +48,14 @@ if (device.type === M5ChainAngle.DEVICE_TYPE) {
 | `await device.getAngle12Deg()` | Reads the angle in degrees across the device's 280-degree range. |
 | `await device.getAngle12Value()` | Reads a normalized value rounded to two decimals. Range: `0.00` to `1.00`. |
 | `await device.getAngle8Adc()` | Reads the 8-bit mapped ADC value. |
-| `await device.configure({ angle })` | Applies angle configuration. |
+| `await device.configure(options)` | Applies angle configuration. |
 | `await device.readConfiguration()` | Reads angle configuration from the device. |
 
 ## Configuration
 
 | Option | Description |
 | --- | --- |
-| `angle.rotationDirection` | Sets rotation direction. Use `AngleRotationDirection.CLOCKWISE` (`0`) or `AngleRotationDirection.COUNTERCLOCKWISE` (`1`). |
+| `rotationDirection` | Sets rotation direction. Use `AngleRotationDirection.CLOCKWISE` (`0`) or `AngleRotationDirection.COUNTERCLOCKWISE` (`1`). |
 
 ## Sample Value
 
