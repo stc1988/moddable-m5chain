@@ -31,12 +31,15 @@ import CanSample from "canSample";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 
-class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>) {
+class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	async readSample(): Promise<number> {
 		return await this.getAngle12Value();
 	}
 }
 ```
+
+The sample type belongs to the composed feature and its runtime hooks. Callers invoke `readSample()` without a type
+argument, so its result and the value accepted by `dispatchOnSample()` cannot drift apart.
 
 ## Methods
 

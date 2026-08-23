@@ -6,7 +6,7 @@ export type CanSampleMethods<T = unknown> = {
 	hasOnSample(): boolean;
 	readSample(): Promise<T | undefined>;
 	sample(): T | undefined;
-	dispatchOnSample(value: T): unknown;
+	dispatchOnSample(value: T): void | Promise<void>;
 };
 
 const CanSample = <T = unknown>() =>
