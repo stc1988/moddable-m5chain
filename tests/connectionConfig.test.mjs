@@ -20,3 +20,22 @@ test("combines mod, application, and default pins independently", () => {
 		receive: 0,
 	});
 });
+
+test("ignores invalid configured pins and falls back independently", () => {
+	assert.deepEqual(
+		resolveConnectionConfig(
+			{ m5chain: { transmit: "0", receive: -1 } },
+			{ m5chain: { transmit: 21, receive: 22 } },
+			defaults,
+		),
+		{ transmit: 21, receive: 22 },
+	);
+	assert.deepEqual(
+		resolveConnectionConfig(
+			{ m5chain: { transmit: Number.NaN, receive: Number.POSITIVE_INFINITY } },
+			{ m5chain: { transmit: 1.5 } },
+			defaults,
+		),
+		defaults,
+	);
+});

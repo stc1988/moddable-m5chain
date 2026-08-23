@@ -160,6 +160,8 @@ If you use an M5Atom series device with  [Atom Chain Base](https://docs.m5stack.
 
 Target defaults, `mc/config`, `mod/config`, and constructor options are applied in that order of increasing priority.
 `transmit` and `receive` may override either configured pin independently. Pin number `0` is supported.
+Configured pins must be non-negative integers. Invalid configured values are ignored so the next available
+configuration source can provide that pin.
 
 See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
 
@@ -192,6 +194,8 @@ await m5chain.start();
 `deviceClasses` is required and copied when the `M5Chain` instance is created. The array may be empty. A connected
 device whose type is not registered remains visible as an `UnknownDevice`; this allows one Mod to use its supported
 devices even when other device types are present on the same chain. Duplicate `DEVICE_TYPE` values are rejected.
+The `known` property is a type discriminator: registered devices have `known === true`, while `UnknownDevice` has
+`known === false`.
 
 An all-device application can use the explicit aggregate registry:
 

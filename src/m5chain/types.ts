@@ -137,7 +137,7 @@ export interface M5ChainUnknownDeviceLike extends M5ChainDeviceLike {
 }
 
 type PublicDeviceInstance<TDevice> = TDevice extends object
-	? Omit<TDevice, keyof M5ChainRuntimeHooks> & M5ChainDeviceLike
+	? Omit<TDevice, keyof M5ChainRuntimeHooks | "known"> & M5ChainDeviceLike & { readonly known: true }
 	: never;
 
 export type RegisteredM5ChainDevice<TClasses extends readonly M5ChainDeviceClass[]> =
