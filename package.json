@@ -3,10 +3,10 @@
 	"version": "1.0.0",
 	"license": "MIT",
 	"scripts": {
-		"buzzer-preview:build": "npm --prefix tools/buzzer-preview run build",
-		"buzzer-preview:dev": "npm --prefix tools/buzzer-preview run dev",
-		"format": "biome format --write README.md docs examples manifests src tests biome.json manifest.json package.json package-lock.json tsconfig.json && npm --prefix tools/buzzer-preview run format",
-		"lint": "biome check README.md docs examples manifests src tests biome.json manifest.json package.json package-lock.json tsconfig.json && npm --prefix tools/buzzer-preview run lint",
+		"buzzer-preview:build": "npm --prefix web/buzzer run build",
+		"buzzer-preview:dev": "npm --prefix web/buzzer run dev",
+		"format": "biome format --write README.md docs examples manifests src tests biome.json manifest.json package.json package-lock.json tsconfig.json && npm --prefix web/buzzer run format",
+		"lint": "biome check README.md docs examples manifests src tests biome.json manifest.json package.json package-lock.json tsconfig.json && npm --prefix web/buzzer run lint",
 		"test": "node --no-warnings --experimental-strip-types --test tests/*.test.mjs",
 		"typecheck": "tsc --noEmit"
 	},

@@ -25,7 +25,7 @@ The app uses browser-native DOM, Web Audio, and Clipboard APIs. Its only develop
 From the repository root:
 
 ```sh
-npm ci --prefix tools/buzzer-preview
+npm ci --prefix web/buzzer
 npm run buzzer-preview:dev
 ```
 
@@ -35,4 +35,4 @@ Then open the local URL shown by the development server. Build the deployable si
 npm run buzzer-preview:build
 ```
 
-The output in `tools/buzzer-preview/dist` is a static site that can be served by any static web host.
+The output in `web/buzzer/dist` is a static site that can be served by any static web host.

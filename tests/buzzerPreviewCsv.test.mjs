@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseMelodyCsv } from "../tools/buzzer-preview/src/melodyCsv.ts";
+import { parseMelodyCsv } from "../web/buzzer/src/melodyCsv.ts";
 
 const VALID_NOTES = new Set(["REST", "C5", "G4", "A_SHARP_4"]);
 
