@@ -1,0 +1,11 @@
+{
+	"include": ["$(MODDABLE)/examples/manifest_base.json", "../../manifests/host.json"],
+	"defines": {
+		"main": {
+			"async": 1
+		}
+	},
+	"modules": {
+		"*": ["./main"]
+	}
+}

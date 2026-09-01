@@ -19,7 +19,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 
 ## Features
 
-- Packet transport and matching (`sendPacket` / `sendAndWait`)
+- Web Streams-based packet transport and matching (`sendPacket` / `sendAndWait`)
 - Application-selected device classes keep unused device modules out of Mods
 - Automatic scan on startup
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
@@ -165,6 +165,38 @@ configuration source can provide that pin.
 
 See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
 
+### 5) Inject a stream transport for simulation
+
+`M5Chain` normally creates a UART-backed `ReadableStream<Uint8Array>` and `WritableStream<Uint8Array>` internally. For
+the desktop simulator or protocol tests, pass a compatible stream pair instead:
+
+```ts
+import M5Chain, { type M5ChainTransport } from "m5chain";
+
+const transport: M5ChainTransport = {
+	readable, // ReadableStream<Uint8Array>
+	writable, // WritableStream<Uint8Array>
+	close() {
+		// release mock, socket, or other transport resources
+	},
+};
+
+const m5chain = new M5Chain({
+	deviceClasses: M5CHAIN_DEVICE_CLASSES,
+	transport,
+});
+```
+
+`transport` cannot be combined with `transmit` or `receive`, and both streams must be unlocked. `M5Chain` locks both
+streams for its lifetime. Its
+`close()` method invokes the optional transport `close()` hook to release the underlying resource, then cancels or
+aborts the streams and releases their locks. Readable chunks must be `Uint8Array` values. The injected transport
+carries complete or partial UART byte chunks; the same framing, CRC, request matching, scan, and polling logic runs on
+hardware and in the simulator.
+
+See `examples/simulator` for a deterministic in-memory M5Chain device that deliberately splits response frames across
+multiple stream chunks.
+
 ## Minimal Usage
 
 ```js
@@ -230,8 +262,9 @@ const m5chain = new M5Chain({
 
 ### `m5chain.onError = (error, context) => {}`
 
-Reports scan failures, device initialization failures, synchronous exceptions, and rejected promises from application
-callbacks. `context.source` identifies the failure kind; device-specific failures also provide `context.device`.
+Reports scan failures, device initialization failures, transport failures, synchronous exceptions, and rejected
+promises from application callbacks. `context.source` identifies the failure kind; device-specific failures also
+provide `context.device`.
 
 An initial scan protocol failure also rejects `start()` so application startup can fail explicitly. A heartbeat timeout
 with no connected chain remains a successful scan with an empty device list. Background re-scan failures are reported
@@ -287,15 +320,17 @@ Polling failures are tracked per device. A device is removed from the current li
 failures without disconnecting other responsive devices.
 
 UART requests are serialized. An uncontended request starts immediately; overlapping requests are queued with their
-payload copied so later changes to the shared command buffer cannot affect them.
-Packets larger than the UART transmit FIFO are written in chunks as output space becomes available.
+payload copied so later changes to the shared command buffer cannot affect them. The writable stream supplies
+backpressure, and the UART adapter writes packets in chunks as output space becomes available.
 
 ## API
 
 ### M5Chain
 
-- `new M5Chain({ deviceClasses, transmit, receive, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
+- `new M5Chain({ deviceClasses, transmit, receive, transport, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
   - `pollingInterval` and `connectionCheckInterval` must be non-negative finite numbers.
+  - `transport` is an optional `M5ChainTransport` stream pair for simulation or custom I/O; it is mutually exclusive
+    with `transmit` and `receive`.
 - `await m5chain.start()` scans the chain and rejects if enumeration fails; no connected chain is a successful empty scan
 - `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
 - `await m5chain.close()` stops the chain and closes UART permanently
@@ -369,6 +404,7 @@ README intentionally keeps only the setup, event model, and shared API surface s
 ## Examples
 
 - `examples/host`: standalone all-device application that includes the repository's root `manifest.json`
+- `examples/simulator`: stream-transport scan test with an in-memory simulated device; runs on `-p sim`
 - `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
 - `examples/led`: Mod containing only Encoder/Angle/Key/JoyStick/ToF/PIR and their shared features
 - `examples/buzzer`: Mod containing only Buzzer, with RGB indication, timed tones, and notes

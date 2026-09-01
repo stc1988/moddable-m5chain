@@ -2,7 +2,7 @@ import { type ConnectionConfig, resolveConnectionConfig } from "connectionConfig
 import createM5ChainDevice from "createM5ChainDevice";
 import { normalizeDeviceClasses } from "deviceRegistry";
 import { readPacketByte, readPacketUint16LE } from "m5chainDevice";
-import Serial from "embedded:io/serial";
+import createSerialTransport from "serialTransport";
 import config from "mc/config";
 import Modules from "modules";
 import Timer from "timer";
@@ -11,6 +11,7 @@ import type {
 	M5ChainDeviceClass,
 	M5ChainErrorContext,
 	M5ChainErrorHandler,
+	M5ChainTransport,
 	PacketBuffer,
 	PacketMatch,
 	RegisteredM5ChainDevice,
@@ -18,6 +19,7 @@ import type {
 	WaitForPacketOptions,
 	WaitForPacketResult,
 } from "types";
+import type { ReadableStreamDefaultReader, WritableStreamDefaultWriter } from "web/streams";
 
 export type {
 	LedColor,
@@ -26,6 +28,7 @@ export type {
 	M5ChainErrorContext,
 	M5ChainErrorHandler,
 	M5ChainErrorSource,
+	M5ChainTransport,
 	M5ChainUnknownDeviceLike,
 	RegisteredM5ChainDevice,
 } from "types";
@@ -37,6 +40,7 @@ export type M5ChainOptions<TClasses extends readonly M5ChainDeviceClass[]> = {
 	debug?: boolean;
 	pollingInterval?: number;
 	connectionCheckInterval?: number;
+	transport?: M5ChainTransport;
 };
 
 declare const device: {
@@ -87,12 +91,12 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	running = false;
 	readonly maxPayloadSize: number;
 
-	#serial;
+	readonly #transport: M5ChainTransport;
+	readonly #reader: ReadableStreamDefaultReader<Uint8Array>;
+	readonly #writer: WritableStreamDefaultWriter<Uint8Array>;
+	readonly #readTask: Promise<void>;
 	cmdBuffer = new Uint8Array(256);
 	#enumBuffer = new Uint8Array(1);
-	#outputQueue: Uint8Array[] = [];
-	#outputOffset = 0;
-	#writable = 0;
 	#receiveResolve: ((result: WaitForPacketResult) => void) | null = null;
 	#receiveReject: ((reason?: unknown) => void) | null = null;
 	#receiveTimeoutId: ReturnType<typeof Timer.set> | null = null;
@@ -119,9 +123,9 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	readonly #deviceClasses: TClasses;
 	#started = false;
 	#closed = false;
+	#transportError: unknown;
 
 	constructor(options: M5ChainOptions<TClasses>) {
-		const self = this;
 		if (!options || typeof options !== "object" || Array.isArray(options)) {
 			throw new TypeError("options must be an object.");
 		}
@@ -136,144 +140,153 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		if (!Number.isFinite(this.connectionCheckInterval) || this.connectionCheckInterval < 0) {
 			throw new RangeError("connectionCheckInterval must be a non-negative number.");
 		}
-		let connectionConfig: ConnectionConfig;
-		if (options.transmit !== undefined && options.receive !== undefined) {
-			connectionConfig = { transmit: options.transmit, receive: options.receive };
+
+		if (options.transport !== undefined) {
+			if (options.transmit !== undefined || options.receive !== undefined) {
+				throw new TypeError("transport cannot be combined with transmit or receive pins.");
+			}
+			if (
+				!options.transport ||
+				typeof options.transport !== "object" ||
+				typeof options.transport.readable?.getReader !== "function" ||
+				typeof options.transport.writable?.getWriter !== "function"
+			) {
+				throw new TypeError("transport must provide readable and writable streams.");
+			}
+			if (options.transport.readable.locked || options.transport.writable.locked) {
+				throw new TypeError("transport streams must be unlocked.");
+			}
+			this.#transport = options.transport;
 		} else {
-			connectionConfig = loadConnectionConfig();
-			connectionConfig.transmit = options.transmit ?? connectionConfig.transmit;
-			connectionConfig.receive = options.receive ?? connectionConfig.receive;
+			let connectionConfig: ConnectionConfig;
+			if (options.transmit !== undefined && options.receive !== undefined) {
+				connectionConfig = { transmit: options.transmit, receive: options.receive };
+			} else {
+				connectionConfig = loadConnectionConfig();
+				connectionConfig.transmit = options.transmit ?? connectionConfig.transmit;
+				connectionConfig.receive = options.receive ?? connectionConfig.receive;
+			}
+			this.#transport = createSerialTransport(connectionConfig);
 		}
-		this.#serial = new Serial({
-			transmit: connectionConfig.transmit,
-			receive: connectionConfig.receive,
-			baud: 115200,
-			format: "buffer",
-			port: 1,
-			onReadable: function (this: Serial, bytesReadable: number) {
-				const readResult = this.read(bytesReadable);
-				if (!(readResult instanceof ArrayBuffer)) return;
-				const chunk = new Uint8Array(readResult);
-				if (chunk.length === 0) return;
 
-				// Append to rx buffer (grow if needed)
-				if (self.#rxLength + chunk.length > self.#rxBuffer.length) {
-					const next = new Uint8Array(Math.max(self.#rxBuffer.length * 2, self.#rxLength + chunk.length));
-					next.set(self.#rxBuffer.subarray(0, self.#rxLength));
-					self.#rxBuffer = next;
+		this.#reader = this.#transport.readable.getReader();
+		this.#writer = this.#transport.writable.getWriter();
+		this.#readTask = this.#readLoop();
+	}
+
+	async #readLoop() {
+		try {
+			while (true) {
+				const { value, done } = await this.#reader.read();
+				if (done) {
+					if (!this.#closed) throw new Error("M5Chain transport readable stream closed unexpectedly.");
+					return;
 				}
-				self.#rxBuffer.set(chunk, self.#rxLength);
-				self.#rxLength += chunk.length;
+				if (!(value instanceof Uint8Array)) {
+					throw new TypeError("M5Chain transport readable stream must produce Uint8Array values.");
+				}
+				if (value.byteLength > 0) this.#receiveChunk(value);
+			}
+		} catch (error: unknown) {
+			if (this.#closed) return;
+			this.#transportError = error;
+			this.#abortRequests("transport failed");
+			this.#reportError(error, { source: "transport" });
+		}
+	}
 
-				// Parse as many complete frames as possible
-				while (self.#rxLength >= 9) {
-					// Seek header 0xAA 0x55
+	#receiveChunk(chunk: Uint8Array) {
+		if (this.#rxLength + chunk.length > this.#rxBuffer.length) {
+			const next = new Uint8Array(Math.max(this.#rxBuffer.length * 2, this.#rxLength + chunk.length));
+			next.set(this.#rxBuffer.subarray(0, this.#rxLength));
+			this.#rxBuffer = next;
+		}
+		this.#rxBuffer.set(chunk, this.#rxLength);
+		this.#rxLength += chunk.length;
+
+		while (this.#rxLength >= 9) {
+			if (
+				readPacketByte(this.#rxBuffer, 0, "packet header") !== 0xaa ||
+				readPacketByte(this.#rxBuffer, 1, "packet header") !== 0x55
+			) {
+				let index = 1;
+				for (; index + 1 < this.#rxLength; index++) {
 					if (
-						readPacketByte(self.#rxBuffer, 0, "packet header") !== 0xaa ||
-						readPacketByte(self.#rxBuffer, 1, "packet header") !== 0x55
+						readPacketByte(this.#rxBuffer, index, "packet header search") === 0xaa &&
+						readPacketByte(this.#rxBuffer, index + 1, "packet header search") === 0x55
 					) {
-						let idx = 1;
-						for (; idx + 1 < self.#rxLength; idx++) {
-							if (
-								readPacketByte(self.#rxBuffer, idx, "packet header search") === 0xaa &&
-								readPacketByte(self.#rxBuffer, idx + 1, "packet header search") === 0x55
-							)
-								break;
-						}
-						// Drop bytes before the next possible header
-						self.#rxBuffer.copyWithin(0, idx, self.#rxLength);
-						self.#rxLength -= idx;
-						if (self.#rxLength < 9) break;
-					}
-
-					const length = readPacketUint16LE(self.#rxBuffer, 2, "packet length");
-					const packetSize = 4 + length + 2;
-
-					// Sanity check: header(2)+len(2)+payload+footer(2). Length includes id/cmd/data/crc.
-					if (packetSize < 9 || packetSize > 300) {
-						// Corrupted length; drop one byte and retry
-						self.#rxBuffer.copyWithin(0, 1, self.#rxLength);
-						self.#rxLength -= 1;
-						continue;
-					}
-
-					if (self.#rxLength < packetSize) {
-						// Wait for more bytes
 						break;
 					}
-
-					// Footer check
-					if (
-						readPacketByte(self.#rxBuffer, packetSize - 2, "packet footer") !== 0x55 ||
-						readPacketByte(self.#rxBuffer, packetSize - 1, "packet footer") !== 0xaa
-					) {
-						// Not a valid frame; drop one byte and retry
-						self.#rxBuffer.copyWithin(0, 1, self.#rxLength);
-						self.#rxLength -= 1;
-						continue;
-					}
-
-					const frame = self.#rxBuffer.slice(0, packetSize);
-					// Consume this frame
-					self.#rxBuffer.copyWithin(0, packetSize, self.#rxLength);
-					self.#rxLength -= packetSize;
-
-					if (self.debug) {
-						self.#log("RX Packet =>");
-						self.#dumpPacket(frame, packetSize);
-					}
-
-					const crc8 = self.#calculateCRC(frame, packetSize);
-					if (crc8 !== readPacketByte(frame, packetSize - 3, "packet CRC")) {
-						self.#log("crc8 error");
-						continue;
-					}
-
-					const packetId = readPacketByte(frame, 4, "packet id");
-					const packetCmd = readPacketByte(frame, 5, "packet command");
-
-					const shouldResolve =
-						!!self.#receiveResolve &&
-						packetId === self.#sendId &&
-						packetCmd === self.#sendCmd &&
-						(!self.#receiveMatch || self.#receiveMatch(frame, packetSize));
-
-					if (shouldResolve) {
-						self.#completeRequest(frame);
-						continue;
-					}
-
-					if (packetCmd === 0xe0) {
-						const device = self.#deviceList.find((candidate) => candidate.id === packetId);
-						if (device) {
-							self.#invokeUserCallback(() => device.onDispatchEvent?.(frame), {
-								source: "deviceEvent",
-								device,
-							});
-						} else {
-							self.#log(`Unknown device ID: ${packetId}`);
-						}
-					} else if (packetCmd === M5Chain.CMD.ENUM_PLEASE) {
-						self.#scheduleEnum();
-					} else {
-						// Late or unmatched response (e.g., response arrived after wait cleared).
-						// Silently ignore unless debug is enabled.
-						if (self.debug) {
-							self.#log(
-								`Late or unmatched response: id=${packetId}, cmd=0x${packetCmd
-									.toString(16)
-									.toUpperCase()
-									.padStart(2, "0")}`,
-							);
-						}
-					}
 				}
-			},
-			onWritable: (bytesWritable: number) => {
-				self.#writable = bytesWritable;
-				self.#drainOutput();
-			},
-		});
+				this.#rxBuffer.copyWithin(0, index, this.#rxLength);
+				this.#rxLength -= index;
+				if (this.#rxLength < 9) break;
+			}
+
+			const length = readPacketUint16LE(this.#rxBuffer, 2, "packet length");
+			const packetSize = 4 + length + 2;
+			if (packetSize < 9 || packetSize > 300) {
+				this.#rxBuffer.copyWithin(0, 1, this.#rxLength);
+				this.#rxLength -= 1;
+				continue;
+			}
+			if (this.#rxLength < packetSize) break;
+
+			if (
+				readPacketByte(this.#rxBuffer, packetSize - 2, "packet footer") !== 0x55 ||
+				readPacketByte(this.#rxBuffer, packetSize - 1, "packet footer") !== 0xaa
+			) {
+				this.#rxBuffer.copyWithin(0, 1, this.#rxLength);
+				this.#rxLength -= 1;
+				continue;
+			}
+
+			const frame = this.#rxBuffer.slice(0, packetSize);
+			this.#rxBuffer.copyWithin(0, packetSize, this.#rxLength);
+			this.#rxLength -= packetSize;
+
+			if (this.debug) {
+				this.#log("RX Packet =>");
+				this.#dumpPacket(frame, packetSize);
+			}
+
+			const crc8 = this.#calculateCRC(frame, packetSize);
+			if (crc8 !== readPacketByte(frame, packetSize - 3, "packet CRC")) {
+				this.#log("crc8 error");
+				continue;
+			}
+
+			const packetId = readPacketByte(frame, 4, "packet id");
+			const packetCmd = readPacketByte(frame, 5, "packet command");
+			const shouldResolve =
+				!!this.#receiveResolve &&
+				packetId === this.#sendId &&
+				packetCmd === this.#sendCmd &&
+				(!this.#receiveMatch || this.#receiveMatch(frame, packetSize));
+
+			if (shouldResolve) {
+				this.#completeRequest(frame);
+				continue;
+			}
+
+			if (packetCmd === 0xe0) {
+				const device = this.#deviceList.find((candidate) => candidate.id === packetId);
+				if (device) {
+					this.#invokeUserCallback(() => device.onDispatchEvent?.(frame), {
+						source: "deviceEvent",
+						device,
+					});
+				} else {
+					this.#log(`Unknown device ID: ${packetId}`);
+				}
+			} else if (packetCmd === M5Chain.CMD.ENUM_PLEASE) {
+				this.#scheduleEnum();
+			} else if (this.debug) {
+				this.#log(
+					`Late or unmatched response: id=${packetId}, cmd=0x${packetCmd.toString(16).toUpperCase().padStart(2, "0")}`,
+				);
+			}
+		}
 	}
 	#log(message: string, level = "INFO") {
 		trace(`[m5chain][${level}] ${message}\n`);
@@ -327,8 +340,18 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 	}
 
 	sendPacket(id: number, cmd: number, data: Uint8Array, size: number) {
+		const packet = this.#createPacket(id, cmd, data, size);
+		void this.#writer.write(packet).catch((error: unknown) => {
+			if (!this.#closed) this.#reportError(error, { source: "transport" });
+		});
+	}
+
+	#createPacket(id: number, cmd: number, data: Uint8Array, size: number) {
 		if (this.#closed) {
 			throw new Error("M5Chain is closed.");
+		}
+		if (this.#transportError !== undefined) {
+			throw new Error("M5Chain transport is unavailable.");
 		}
 		if (!Number.isInteger(size) || size < 0 || size > this.maxPayloadSize) {
 			throw new RangeError(`packet data size must be between 0 and ${this.maxPayloadSize} bytes.`);
@@ -359,24 +382,31 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			this.#dumpPacket(sendBuffer, sendBufferSize);
 		}
 
-		this.#outputQueue.push(sendBuffer);
-		this.#drainOutput();
+		return sendBuffer;
 	}
 
-	#drainOutput() {
-		while (this.#writable > 0 && this.#outputQueue.length > 0) {
-			const packet = this.#outputQueue[0];
-			if (!packet) break;
-			const count = Math.min(this.#writable, packet.length - this.#outputOffset);
-			this.#serial.write(packet.subarray(this.#outputOffset, this.#outputOffset + count));
-			this.#writable -= count;
-			this.#outputOffset += count;
-
-			if (this.#outputOffset === packet.length) {
-				this.#outputQueue.shift();
-				this.#outputOffset = 0;
-			}
+	#writeRequestPacket(
+		id: number,
+		cmd: number,
+		data: Uint8Array,
+		size: number,
+		requestResolve: (result: WaitForPacketResult) => void,
+	) {
+		let packet: Uint8Array;
+		try {
+			packet = this.#createPacket(id, cmd, data, size);
+		} catch (error: unknown) {
+			this.#completeRequest({ __m5chain: "abort", reason: "send failed" }, error);
+			return;
 		}
+
+		void this.#writer.write(packet).catch((error: unknown) => {
+			if (this.#receiveResolve !== requestResolve) {
+				if (!this.#closed) this.#reportError(error, { source: "transport" });
+				return;
+			}
+			this.#completeRequest({ __m5chain: "abort", reason: "send failed" }, error);
+		});
 	}
 
 	#clearPendingRequest() {
@@ -464,11 +494,7 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			}, timeoutMs);
 		}
 
-		try {
-			this.sendPacket(id, cmd, data, size);
-		} catch (error: unknown) {
-			this.#completeRequest({ __m5chain: "abort", reason: "send failed" }, error);
-		}
+		this.#writeRequestPacket(id, cmd, data, size, resolve);
 	}
 
 	#abortRequests(reason: string) {
@@ -613,6 +639,9 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		if (this.#closed) {
 			throw new Error("M5Chain is closed.");
 		}
+		if (this.#transportError !== undefined) {
+			throw new Error("M5Chain transport is unavailable.");
+		}
 		if (this.#started) return;
 		this.#started = true;
 
@@ -669,11 +698,28 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		if (this.#closed) return;
 		this.#closed = true;
 		await this.stop();
-		this.#outputQueue.length = 0;
-		this.#outputOffset = 0;
-		this.#writable = 0;
-		this.#serial.close();
+
+		let closeError: unknown;
+		try {
+			await this.#transport.close?.();
+		} catch (error: unknown) {
+			closeError = error;
+		}
+		try {
+			await this.#reader.cancel("M5Chain closed");
+		} catch (error: unknown) {
+			closeError ??= error;
+		}
+		try {
+			await this.#writer.abort("M5Chain closed");
+		} catch (error: unknown) {
+			closeError ??= error;
+		}
+		await this.#readTask;
+		this.#reader.releaseLock();
+		this.#writer.releaseLock();
 		this.#rxLength = 0;
+		if (closeError !== undefined) throw closeError;
 	}
 
 	get closed(): boolean {

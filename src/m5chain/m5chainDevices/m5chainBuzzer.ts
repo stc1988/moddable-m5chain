@@ -1,95 +1,31 @@
+import {
+	BUZZER_MODE,
+	BUZZER_NOTE,
+	type BuzzerMode,
+	type BuzzerNote,
+	type ContinuousToneOptions,
+	type MelodyOptions,
+	type MelodyStep,
+	type NoteOptions,
+	prepareMelody,
+	type ToneOptions,
+} from "buzzerProtocol";
 import HasLed, { type HasLedMethods } from "hasLed";
 import { assertObjectOption, readPacketByte, readPacketUint16LE, withDeviceFeatures } from "m5chainDevice";
+import Timer from "timer";
 import type { LedColor } from "types";
 
-export const BUZZER_MODE = Object.freeze({
-	AUTO: 0,
-	MANUAL: 1,
-	NOTE: 2,
-} as const);
-export type BuzzerMode = (typeof BUZZER_MODE)[keyof typeof BUZZER_MODE];
-
-export const BUZZER_NOTE = Object.freeze({
-	REST: 0,
-	C3: 1,
-	C_SHARP_3: 2,
-	D3: 3,
-	D_SHARP_3: 4,
-	E3: 5,
-	F3: 6,
-	F_SHARP_3: 7,
-	G3: 8,
-	G_SHARP_3: 9,
-	A3: 10,
-	A_SHARP_3: 11,
-	B3: 12,
-	C4: 13,
-	C_SHARP_4: 14,
-	D4: 15,
-	D_SHARP_4: 16,
-	E4: 17,
-	F4: 18,
-	F_SHARP_4: 19,
-	G4: 20,
-	G_SHARP_4: 21,
-	A4: 22,
-	A_SHARP_4: 23,
-	B4: 24,
-	C5: 25,
-	C_SHARP_5: 26,
-	D5: 27,
-	D_SHARP_5: 28,
-	E5: 29,
-	F5: 30,
-	F_SHARP_5: 31,
-	G5: 32,
-	G_SHARP_5: 33,
-	A5: 34,
-	A_SHARP_5: 35,
-	B5: 36,
-	C6: 37,
-	C_SHARP_6: 38,
-	D6: 39,
-	D_SHARP_6: 40,
-	E6: 41,
-	F6: 42,
-	F_SHARP_6: 43,
-	G6: 44,
-	G_SHARP_6: 45,
-	A6: 46,
-	A_SHARP_6: 47,
-	B6: 48,
-	C7: 49,
-	C_SHARP_7: 50,
-	D7: 51,
-	D_SHARP_7: 52,
-	E7: 53,
-	F7: 54,
-	F_SHARP_7: 55,
-	G7: 56,
-	G_SHARP_7: 57,
-	A7: 58,
-	A_SHARP_7: 59,
-	B7: 60,
-	C8: 61,
-} as const);
-export type BuzzerNote = (typeof BUZZER_NOTE)[keyof typeof BUZZER_NOTE];
-
-export type ToneOptions = {
-	frequencyHz: number;
-	durationMs: number;
-	dutyCycle?: number;
-};
-
-export type ContinuousToneOptions = {
-	frequencyHz: number;
-	dutyCycle?: number;
-};
-
-export type NoteOptions = {
-	note: BuzzerNote;
-	durationMs: number;
-};
+export {
+	BUZZER_MODE,
+	BUZZER_NOTE,
+	type BuzzerMode,
+	type BuzzerNote,
+	type ContinuousToneOptions,
+	type MelodyOptions,
+	type MelodyStep,
+	type NoteOptions,
+	type ToneOptions,
+} from "buzzerProtocol";
 
 const MIN_FREQUENCY_HZ = 100;
 const MAX_FREQUENCY_HZ = 10_000;
@@ -151,6 +87,10 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 	} as const);
 
 	#operationMutex: Promise<void> = Promise.resolve();
+	#melodyRunId = 0;
+	#activeMelodyRunId: number | null = null;
+	#melodyDelayTimer: ReturnType<typeof Timer.set> | null = null;
+	#melodyDelayResolve: (() => void) | null = null;
 
 	async playTone(options: ToneOptions): Promise<void> {
 		assertObjectOption("options", options);
@@ -159,6 +99,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		assertIntegerInRange("frequencyHz", options.frequencyHz, MIN_FREQUENCY_HZ, MAX_FREQUENCY_HZ);
 		assertIntegerInRange("durationMs", options.durationMs, 0, MAX_DURATION_MS);
 		assertDutyCycle(dutyCycle);
+		this.#cancelMelody();
 
 		await this.#withOperationLock(async () => {
 			await this.#setPlaybackMode(BUZZER_MODE.AUTO);
@@ -179,6 +120,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		const dutyCycle = options.dutyCycle ?? DEFAULT_DUTY_CYCLE;
 		assertIntegerInRange("frequencyHz", options.frequencyHz, MIN_FREQUENCY_HZ, MAX_FREQUENCY_HZ);
 		assertDutyCycle(dutyCycle);
+		this.#cancelMelody();
 
 		await this.#withOperationLock(async () => {
 			await this.#setPlaybackMode(BUZZER_MODE.MANUAL);
@@ -189,6 +131,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 	}
 
 	async stopTone(): Promise<void> {
+		this.#cancelMelody();
 		await this.#withOperationLock(async () => {
 			await this.#setPlaybackMode(BUZZER_MODE.MANUAL);
 			await this.#setToneState(false);
@@ -200,16 +143,55 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		assertKnownOptions(options, ["note", "durationMs"]);
 		assertIntegerInRange("note", options.note, BUZZER_NOTE.REST, BUZZER_NOTE.C8);
 		assertIntegerInRange("durationMs", options.durationMs, 0, MAX_DURATION_MS);
+		this.#cancelMelody();
 
 		await this.#withOperationLock(async () => {
 			await this.#setPlaybackMode(BUZZER_MODE.NOTE);
-			const data = new Uint8Array(3);
-			data[0] = options.note;
-			data[1] = options.durationMs & 0xff;
-			data[2] = (options.durationMs >> 8) & 0xff;
-			const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.PLAY_NOTE, data, data.length);
-			this.#assertOperationSucceeded("playNote", readPacketByte(packet, 6, "play note"), true);
+			await this.#playNote(options.note, options.durationMs);
 		});
+	}
+
+	async playMelody(melody: readonly MelodyStep[], options: MelodyOptions): Promise<void> {
+		const prepared = prepareMelody(melody, options);
+		this.#cancelMelody();
+		const runId = this.#melodyRunId;
+		this.#activeMelodyRunId = runId;
+
+		try {
+			await this.#withOperationLock(async () => {
+				if (runId !== this.#melodyRunId) return;
+				await this.#setPlaybackMode(BUZZER_MODE.NOTE);
+			});
+
+			for (const step of prepared.steps) {
+				if (runId !== this.#melodyRunId) return;
+				const deadline = Date.now() + step.durationMs;
+				await this.#withOperationLock(async () => {
+					if (runId !== this.#melodyRunId) return;
+					await this.#playNote(step.note, step.toneDurationMs);
+				});
+				if (runId !== this.#melodyRunId) return;
+				await this.#waitForMelody(runId, Math.max(0, deadline - Date.now()));
+			}
+		} finally {
+			if (this.#activeMelodyRunId === runId) this.#activeMelodyRunId = null;
+		}
+	}
+
+	async stopMelody(): Promise<void> {
+		const wasActive = this.#activeMelodyRunId !== null;
+		this.#cancelMelody();
+		if (!wasActive) return;
+
+		await this.#withOperationLock(async () => {
+			await this.#setPlaybackMode(BUZZER_MODE.NOTE);
+			await this.#playNote(BUZZER_NOTE.REST, 0);
+		});
+	}
+
+	_markDisconnected(): void {
+		this.#cancelMelody();
+		super._markDisconnected();
 	}
 
 	async setToneFrequency(frequencyHz: number): Promise<void> {
@@ -304,6 +286,42 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		const data = new Uint8Array([mode]);
 		const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.SET_BUZZER_MODE, data, data.length);
 		this.#assertOperationSucceeded("set buzzer mode", readPacketByte(packet, 6, "set buzzer mode"));
+	}
+
+	async #playNote(note: BuzzerNote, durationMs: number): Promise<void> {
+		const data = new Uint8Array(3);
+		data[0] = note;
+		data[1] = durationMs & 0xff;
+		data[2] = (durationMs >> 8) & 0xff;
+		const packet = await this.bus.sendAndWait(this.id, M5ChainBuzzer.CMD.PLAY_NOTE, data, data.length);
+		this.#assertOperationSucceeded("playNote", readPacketByte(packet, 6, "play note"), true);
+	}
+
+	#cancelMelody(): void {
+		this.#melodyRunId += 1;
+		this.#activeMelodyRunId = null;
+		if (this.#melodyDelayTimer !== null) {
+			Timer.clear(this.#melodyDelayTimer);
+			this.#melodyDelayTimer = null;
+		}
+		const resolve = this.#melodyDelayResolve;
+		this.#melodyDelayResolve = null;
+		resolve?.();
+	}
+
+	async #waitForMelody(runId: number, durationMs: number): Promise<void> {
+		if (durationMs <= 0 || runId !== this.#melodyRunId) return;
+		await new Promise<void>((resolve) => {
+			const finish = () => {
+				if (this.#melodyDelayResolve === finish) {
+					this.#melodyDelayResolve = null;
+					this.#melodyDelayTimer = null;
+				}
+				resolve();
+			};
+			this.#melodyDelayResolve = finish;
+			this.#melodyDelayTimer = Timer.set(finish, durationMs);
+		});
 	}
 
 	async #setToneFrequency(frequencyHz: number): Promise<void> {

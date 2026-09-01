@@ -2,6 +2,7 @@ import type {
 	M5ChainDeviceClass,
 	M5ChainRuntimeDevice,
 	M5ChainRuntimeHooks,
+	M5ChainTransport,
 	RegisteredM5ChainDevice,
 	SampleHandler,
 } from "types";
@@ -11,6 +12,10 @@ type Expect<T extends true> = T;
 
 type SampleHandlerResult = ReturnType<Exclude<SampleHandler<number>, null>>;
 type _SampleHandlerReturnsVoidOrPromise = Expect<Equal<SampleHandlerResult, void | Promise<void>>>;
+
+declare const transport: M5ChainTransport;
+transport.readable.getReader().releaseLock();
+transport.writable.getWriter().releaseLock();
 
 declare const sampleHooks: M5ChainRuntimeHooks<number>;
 
