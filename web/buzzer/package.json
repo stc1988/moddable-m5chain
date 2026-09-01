@@ -9,8 +9,8 @@
 		"dev": "vite",
 		"build": "tsc --noEmit && vite build",
 		"preview": "vite preview",
-		"format": "biome format --write index.html src biome.json package.json tsconfig.json",
-		"lint": "biome check index.html src biome.json package.json tsconfig.json"
+		"format": "biome format --write index.html src biome.json package.json tsconfig.json vite.config.ts",
+		"lint": "biome check index.html src biome.json package.json tsconfig.json vite.config.ts"
 	},
 	"dependencies": {},
 	"devDependencies": {

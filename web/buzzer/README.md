@@ -36,3 +36,9 @@ npm run buzzer-preview:build
 ```
 
 The output in `web/buzzer/dist` is a static site that can be served by any static web host.
+
+## GitHub Pages
+
+The application is published at `https://stc1988.github.io/moddable-m5chain/buzzer/`. Its Vite base path must remain
+aligned with that location. The repository-wide workflow documented in `web/README.md` builds and deploys this app
+together with the site index and any future web applications.
