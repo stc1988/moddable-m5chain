@@ -2,6 +2,7 @@
 	"include": [
 		"./manifest_chain_base.json",
 		"$(MODDABLE)/modules/io/manifest.json",
+		"$(MODDABLE)/modules/web/streams/all/manifest.json",
 		"$(MODULES)/base/modules/manifest.json"
 	],
 	"modules": {
@@ -11,6 +12,7 @@
 		"deviceRegistry": "./deviceRegistry",
 		"m5chainDevice": "./m5chainDevices/m5chainDevice",
 		"m5chainUnknownDevice": "./m5chainDevices/m5chainUnknownDevice",
+		"serialTransport": "./serialTransport",
 		"types": "./types"
 	},
 	"preload": [
@@ -19,6 +21,7 @@
 		"createM5ChainDevice",
 		"deviceRegistry",
 		"m5chainDevice",
-		"m5chainUnknownDevice"
+		"m5chainUnknownDevice",
+		"serialTransport"
 	]
 }

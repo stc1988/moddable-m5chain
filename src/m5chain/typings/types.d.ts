@@ -1,9 +1,16 @@
+import type { ReadableStream, WritableStream } from "web/streams";
+
 export type PacketBuffer = Uint8Array;
 export type PacketMatch = (buffer: PacketBuffer, size: number) => boolean;
 export type TimeoutWaitResult = { __m5chain: "timeout"; id: number | string; cmd: number };
 export type AbortWaitResult = { __m5chain: "abort"; reason: string };
 export type WaitForPacketResult = PacketBuffer | TimeoutWaitResult | AbortWaitResult;
 export type WaitForPacketOptions = { timeoutMs?: number; match?: PacketMatch };
+export interface M5ChainTransport {
+	readonly readable: ReadableStream<Uint8Array>;
+	readonly writable: WritableStream<Uint8Array>;
+	close?(): void | Promise<void>;
+}
 export type DeviceFactoryOptions = { id: number; type: number };
 export type LedColor = { r: number; g: number; b: number };
 export type KeyTriggerInterval = { doubleClickMs?: number; longPressMs?: number };
@@ -22,7 +29,8 @@ export type M5ChainErrorSource =
 	| "deviceInitialization"
 	| "deviceListChanged"
 	| "sample"
-	| "scan";
+	| "scan"
+	| "transport";
 export type M5ChainErrorContext = { source: M5ChainErrorSource; device?: M5ChainDeviceLike };
 export type M5ChainErrorHandler = (error: unknown, context: M5ChainErrorContext) => void | Promise<void>;
 export type SampleHandler<T = unknown> = ((sample: T) => void | Promise<void>) | null;

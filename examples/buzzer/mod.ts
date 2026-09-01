@@ -1,6 +1,5 @@
 import M5ChainBuzzer, { BUZZER_NOTE } from "m5chainBuzzer";
 import M5Chain, { type RegisteredM5ChainDevice } from "m5chain";
-import Timer from "timer";
 
 const LOG_PREFIX = "[examples/buzzer]";
 const BUZZER_DEVICE_CLASSES = Object.freeze([M5ChainBuzzer]);
@@ -24,23 +23,18 @@ export async function main() {
 
 		log(`buzzer id=${buzzer.id} ready`);
 		await buzzer.setLedColor(255, 0, 0);
-		await buzzer.playTone({
-			frequencyHz: 1000,
-			dutyCycle: 0.5,
-			durationMs: 500,
-		});
-		await delay(600);
-		await buzzer.playNote({
-			note: BUZZER_NOTE.C4,
-			durationMs: 250,
-		});
+		await buzzer.playMelody(
+			[
+				{ note: BUZZER_NOTE.C5, beats: 1.5 },
+				{ note: BUZZER_NOTE.G4, beats: 0.5 },
+				{ note: BUZZER_NOTE.REST, beats: 1 },
+				{ note: BUZZER_NOTE.E4, beats: 1 },
+			],
+			{ tempoBpm: 120 },
+		);
 	};
 
 	await m5chain.start();
-}
-
-function delay(milliseconds: number) {
-	return new Promise<void>((resolve) => Timer.set(() => resolve(), milliseconds));
 }
 
 function findBuzzer(devices: readonly BuzzerDevice[]) {

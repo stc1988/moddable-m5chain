@@ -1,6 +1,7 @@
 import type {
 	M5ChainDeviceClass,
 	M5ChainErrorHandler,
+	M5ChainTransport,
 	PacketBuffer,
 	RegisteredM5ChainDevice,
 	WaitForPacketOptions,
@@ -14,6 +15,7 @@ export type {
 	M5ChainErrorContext,
 	M5ChainErrorHandler,
 	M5ChainErrorSource,
+	M5ChainTransport,
 	M5ChainUnknownDeviceLike,
 	RegisteredM5ChainDevice,
 } from "types";
@@ -25,6 +27,7 @@ export type M5ChainOptions<TClasses extends readonly M5ChainDeviceClass[]> = {
 	debug?: boolean;
 	pollingInterval?: number;
 	connectionCheckInterval?: number;
+	transport?: M5ChainTransport;
 };
 
 export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {

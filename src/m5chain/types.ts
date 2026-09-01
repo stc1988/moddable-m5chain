@@ -1,3 +1,5 @@
+import type { ReadableStream, WritableStream } from "web/streams";
+
 export type PacketBuffer = Uint8Array;
 
 export type PacketMatch = (buffer: PacketBuffer, size: number) => boolean;
@@ -19,6 +21,12 @@ export type WaitForPacketOptions = {
 	timeoutMs?: number;
 	match?: PacketMatch;
 };
+
+export interface M5ChainTransport {
+	readonly readable: ReadableStream<Uint8Array>;
+	readonly writable: WritableStream<Uint8Array>;
+	close?(): void | Promise<void>;
+}
 
 export type DeviceFactoryOptions = {
 	id: number;
@@ -67,7 +75,8 @@ export type M5ChainErrorSource =
 	| "deviceInitialization"
 	| "deviceListChanged"
 	| "sample"
-	| "scan";
+	| "scan"
+	| "transport";
 
 export type M5ChainErrorContext = {
 	source: M5ChainErrorSource;
