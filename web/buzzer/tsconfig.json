@@ -1,0 +1,13 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["DOM", "DOM.Iterable", "ES2022"],
+		"strict": true,
+		"noEmit": true,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"skipLibCheck": true,
+		"useDefineForClassFields": true
+	},
+	"include": ["src"]
+}

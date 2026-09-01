@@ -10,7 +10,8 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 
 ## Key Features
 
-- Packet framing + parsing via `sendPacket` / `waitForPacket`
+- UART is adapted to `ReadableStream<Uint8Array>` and `WritableStream<Uint8Array>`; packet framing and parsing remain in `M5Chain`
+- Applications may inject an `M5ChainTransport` stream pair for desktop simulation and protocol tests
 - Application-selected, type-based device instantiation via `deviceClasses` and `createM5ChainDevice`
 - Automatic re-scan when `ENUM_PLEASE (0xFC)` arrives (debounced)
 - Feature composition via `withDeviceFeatures(...)`
@@ -22,6 +23,7 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 ### Core
 
 - `src/m5chain/m5chain.ts` (bus communication, scan/re-scan, poll loop, dispatch)
+- `src/m5chain/serialTransport.ts` (ECMA-419 Serial -> Web Streams adapter)
 - `src/m5chain/createM5ChainDevice.ts` (registered device type -> class mapping)
 - `src/m5chain/m5chainDevices/m5chainDevice.ts` (base class + feature composition)
 - `src/m5chain/m5chainDevices/m5chainBus.ts` (bus-typed device placeholder)
@@ -97,6 +99,17 @@ Keep the two type surfaces synchronized:
 Applications pass supported device classes to `new M5Chain({ deviceClasses })`. `createM5ChainDevice` selects a
 registered class by `DEVICE_TYPE` and returns an instance; unregistered types become `UnknownDevice`. Each concrete
 class composes feature mixins via `withDeviceFeatures(...)`.
+
+### Stream Transport
+
+`M5Chain` consumes an `M5ChainTransport` containing a `ReadableStream<Uint8Array>` and
+`WritableStream<Uint8Array>`. Unless an application injects that transport, `serialTransport.ts` adapts ECMA-419
+Serial callbacks to the same stream pair. The readable loop performs the existing frame buffering, CRC validation,
+request matching, and event dispatch. The writable stream owns UART FIFO backpressure.
+
+Keep packet parsing in `M5Chain`; this project does not add a TransformStream stage because it has only one protocol
+consumer and must minimize heap and Promise overhead. Injected transports must accept partial frame chunks and are
+closed by `M5Chain.close()`.
 
 ### Mixins
 
