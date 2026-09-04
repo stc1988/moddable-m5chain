@@ -1,5 +1,6 @@
 import "./styles.css";
 import { parseMelodyCsv } from "./melodyCsv";
+import { createBuzzerTools, type ModelContext, type PreviewSettings, registerBuzzerTools } from "./webmcp";
 
 type PreviewMode = "tone" | "note" | "melody" | "continuous";
 
@@ -15,15 +16,7 @@ type MelodyStep = {
 	beats: number;
 };
 
-type PreviewState = {
-	mode: PreviewMode;
-	frequencyHz: number;
-	dutyPercent: number;
-	durationMs: number;
-	noteConstant: string;
-	previewVolume: number;
-	tempoBpm: number;
-	gatePercent: number;
+type PreviewState = PreviewSettings & {
 	melody: MelodyStep[];
 };
 
@@ -639,14 +632,20 @@ csvInput.addEventListener("input", () => {
 	setCsvStatus("Ready to import.");
 });
 
+function importMelodyCsv(csv: string): void {
+	const imported = parseMelodyCsv(csv, VALID_NOTE_CONSTANTS);
+	stopPreview(false);
+	state.melody = imported;
+	state.mode = "melody";
+	csvInput.value = csv;
+	setCsvStatus(`${imported.length} steps imported.`);
+	setStatus("CSV melody imported");
+	render();
+}
+
 importCsvButton.addEventListener("click", () => {
 	try {
-		const imported = parseMelodyCsv(csvInput.value, VALID_NOTE_CONSTANTS);
-		stopPreview(false);
-		state.melody = imported;
-		setCsvStatus(`${imported.length} steps imported.`);
-		setStatus("CSV melody imported");
-		render();
+		importMelodyCsv(csvInput.value);
 	} catch (error) {
 		setCsvStatus(error instanceof Error ? error.message : "CSV could not be imported.", true);
 	}
@@ -718,3 +717,43 @@ window.addEventListener("pagehide", () => {
 });
 
 render();
+
+const webmcpLifetime = new AbortController();
+const webmcpTools = createBuzzerTools(
+	{
+		getState: () => ({
+			...state,
+			melody: state.melody.map((step) => ({ ...step })),
+			playing: !stopButton.disabled,
+			status: audioStatus.textContent?.trim() ?? "",
+			audioReady: audioContext?.state === "running",
+			estimatedDurationMs:
+				state.mode === "continuous" ? null : state.mode === "melody" ? melodyDurationMs() : state.durationMs,
+			generatedCode: buildCode(),
+		}),
+		configure: (settings) => {
+			stopPreview(false);
+			Object.assign(state, settings);
+			setStatus("Ready to preview");
+			render();
+		},
+		importCsv: importMelodyCsv,
+		preview: () => {
+			if (document.hidden) throw new Error("Open this tab before starting a preview.");
+			if (audioContext?.state !== "running")
+				throw new Error("Click Preview on the page once to enable browser audio, then retry.");
+			void playPreview();
+		},
+		stop: () => stopPreview(),
+	},
+	NOTES.map((note) => note.constant),
+);
+
+void registerBuzzerTools(
+	(document as Document & { modelContext?: ModelContext }).modelContext,
+	webmcpTools,
+	webmcpLifetime.signal,
+).catch((error: unknown) => {
+	webmcpLifetime.abort();
+	console.warn("WebMCP tools could not be registered", error);
+});
