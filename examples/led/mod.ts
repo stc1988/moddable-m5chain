@@ -14,7 +14,7 @@ type LedColor = {
 
 const LOG_PREFIX = "[examples/led]";
 const ENCODER_STEPS_PER_TURN = 36;
-const KEY_BRIGHTNESS_LEVELS = [0.1, 0.5, 1] as const;
+const KEY_BRIGHTNESS_LEVELS = [26, 128, 255] as const;
 const KEY_COLORS = [
 	{ r: 255, g: 0, b: 0 },
 	{ r: 0, g: 255, b: 0 },

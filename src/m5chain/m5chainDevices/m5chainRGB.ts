@@ -217,12 +217,12 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 	}
 
 	protected brightnessToWire(brightness: number): number {
-		return Math.round(brightness * 100);
+		return Math.round((brightness * 100) / 255);
 	}
 
 	protected brightnessFromWire(value: number): number {
 		assertIntegerInRange("RGB brightness", value, 0, 100);
-		return value / 100;
+		return Math.round((value * 255) / 100);
 	}
 }
 

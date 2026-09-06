@@ -101,12 +101,14 @@ black scrolling color is not representable by the protocol.
 
 ```ts
 await rgb.setRotation(MATRIX_ROTATION.DEG_90);
-await rgb.setBrightness(0.5);
+await rgb.setBrightness(128);
 await rgb.clear();
 ```
 
-Brightness uses a normalized `0` through `1` value and maps to the protocol's `0` through `100` percent range. M5Stack
-recommends approximately 50% brightness to limit heat and power consumption.
+Brightness uses an integer `0` through `255` value and maps to the protocol's `0` through `100` percent range. M5Stack
+recommends approximately 50% brightness (`128`) to limit heat and power consumption.
+Setters round to the nearest protocol level; getters return `Math.round(level * 255 / 100)`.
+See [brightness migration](../features/has-led.md#brightness-units-and-migration) for the previous `0` to `1` API.
 
 `setRotation()` and `setBrightness()` accept an optional second `saveToFlash` boolean. It defaults to `false`. Avoid
 frequent Flash writes.
@@ -116,7 +118,7 @@ The settings can also be applied together:
 ```ts
 await rgb.configure({
 	rotation: MATRIX_ROTATION.DEG_90,
-	brightness: 0.5,
+	brightness: 128,
 	saveToFlash: false,
 });
 

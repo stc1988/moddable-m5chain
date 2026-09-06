@@ -1,7 +1,7 @@
 import { assertKnownConfigurationOptions, M5ChainDevice, readPacketByte } from "m5chainDevice";
 import {
 	assertBoolean,
-	assertUnitInterval,
+	assertIntegerInRange,
 	type MatrixRotation,
 	rotationFromWire,
 	rotationToWire,
@@ -27,6 +27,7 @@ export {
 
 export type MatrixDisplayConfiguration = DeviceConfiguration & {
 	rotation?: MatrixRotation;
+	/** Brightness is an integer from 0 (off) to 255 (maximum). */
 	brightness?: number;
 	saveToFlash?: boolean;
 };
@@ -115,7 +116,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 	}
 
 	async setBrightness(brightness: number, saveToFlash = false): Promise<void> {
-		assertUnitInterval("brightness", brightness);
+		assertIntegerInRange("brightness", brightness, 0, 255);
 		assertBoolean("saveToFlash", saveToFlash);
 		await this.withDisplayLock(async () => {
 			const data = new Uint8Array([this.brightnessToWire(brightness), saveToFlash ? 1 : 0]);

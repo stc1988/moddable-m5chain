@@ -363,6 +363,8 @@ device implementations. The `m5chainDevices` all-device aggregate also exports i
 
 Available on: Encoder / Angle / Key / JoyStick / ToF / PIR / Buzzer
 
+RGB channels and LED brightness use integers from `0` to `255`; operations remain asynchronous.
+Brightness previously used `0` to `1`: migrate `0.5` to `128` and `1` to `255`, including matrix brightness settings.
 See [HasLed API](docs/features/has-led.md).
 
 ### Key Features (`HasKey`)

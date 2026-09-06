@@ -7,6 +7,7 @@ export type HasLedMethods = {
 	getLedColor(): Promise<LedColor>;
 	setLedColors(index: number, num: number, colors: LedColor[]): Promise<void>;
 	getLedColors(index: number, num: number): Promise<LedColor[]>;
+	/** Brightness is an integer from 0 (off) to 255 (maximum). */
 	setLedBrightness(brightness: number, saveToFlash?: boolean): Promise<void>;
 	getLedBrightness(): Promise<number>;
 };
@@ -23,12 +24,6 @@ type RgbCommandSet = {
 function assertIntegerInRange(name: string, value: number, min: number, max: number) {
 	if (typeof value !== "number" || Number.isNaN(value) || value !== Math.floor(value) || value < min || value > max) {
 		throw new RangeError(`${name} must be an integer between ${min} and ${max}.`);
-	}
-}
-
-function assertUnitInterval(name: string, value: number) {
-	if (typeof value !== "number" || Number.isNaN(value) || value < 0 || value > 1) {
-		throw new RangeError(`${name} must be between 0 and 1.`);
 	}
 }
 
@@ -132,14 +127,14 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		}
 
 		async setLedBrightness(brightness: number, saveToFlash = false) {
-			assertUnitInterval("brightness", brightness);
+			assertIntegerInRange("brightness", brightness, 0, 255);
 			if (saveToFlash !== true && saveToFlash !== false) {
 				throw new RangeError("saveToFlash must be a boolean.");
 			}
 			const bus = this.bus;
 			const cmdBuffer = bus.cmdBuffer;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
-			cmdBuffer[0] = Math.round(brightness * 100);
+			cmdBuffer[0] = Math.round((brightness * 100) / 255);
 			cmdBuffer[1] = saveToFlash ? 1 : 0;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.SET_RGB_LIGHT, cmdBuffer, 2);
 			const result = readPacketByte(packet, 6, "set LED brightness");
@@ -152,7 +147,9 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			const bus = this.bus;
 			const commands = (this.constructor as typeof Base & { CMD: RgbCommandSet }).CMD;
 			const packet = await bus.sendAndWait(this.id, commands.RGB.GET_RGB_LIGHT, bus.cmdBuffer, 0);
-			return readPacketByte(packet, 6, "get LED brightness") / 100;
+			const brightness = readPacketByte(packet, 6, "get LED brightness");
+			assertIntegerInRange("LED brightness response", brightness, 0, 100);
+			return Math.round((brightness * 255) / 100);
 		}
 	};
 

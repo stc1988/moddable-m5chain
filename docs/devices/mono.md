@@ -91,12 +91,14 @@ from `0` through `65535`. Defaults are left, loop, and 100 ms/pixel.
 
 ```ts
 await mono.setRotation(MATRIX_ROTATION.DEG_90);
-await mono.setBrightness(0.5);
+await mono.setBrightness(128);
 await mono.clear();
 ```
 
-Brightness uses the library-wide normalized `0` through `1` range. Chain Mono has protocol levels `0` through `7`, so
-values are rounded to the nearest level and `getBrightness()` returns that level divided by 7.
+Brightness uses the library-wide integer `0` through `255` range. Chain Mono has protocol levels `0` through `7`, so
+values are rounded to the nearest level and `getBrightness()` returns `Math.round(level * 255 / 7)`.
+For example, setting `128` reads back as `146` (level 4).
+See [brightness migration](../features/has-led.md#brightness-units-and-migration) for the previous `0` to `1` API.
 
 `setRotation()` and `setBrightness()` accept an optional second `saveToFlash` boolean. It defaults to `false`. Avoid
 frequent Flash writes.
@@ -106,7 +108,7 @@ The settings can also be applied together:
 ```ts
 await mono.configure({
 	rotation: MATRIX_ROTATION.DEG_90,
-	brightness: 0.5,
+	brightness: 128,
 	saveToFlash: false,
 });
 

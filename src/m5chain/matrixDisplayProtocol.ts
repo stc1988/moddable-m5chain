@@ -58,12 +58,6 @@ export function assertIntegerInRange(name: string, value: number, min: number, m
 	}
 }
 
-export function assertUnitInterval(name: string, value: number) {
-	if (typeof value !== "number" || Number.isNaN(value) || value < 0 || value > 1) {
-		throw new RangeError(`${name} must be between 0 and 1.`);
-	}
-}
-
 export function assertBoolean(name: string, value: boolean) {
 	if (value !== true && value !== false) {
 		throw new TypeError(`${name} must be a boolean.`);

@@ -30,7 +30,7 @@ import type { LedColor } from "types";
 
 ```ts
 await device.setLedColor({ r: 255, g: 0, b: 0 });
-await device.setLedBrightness(0.5);
+await device.setLedBrightness(128);
 const color = await device.getLedColor();
 ```
 
@@ -45,8 +45,8 @@ LED color and brightness are output state, not device configuration. They are in
 | `await device.getLedColor()` | Reads LED 0. Returns `{ r, g, b }` with `0` to `255` values. |
 | `await device.setLedColors(index, num, colors)` | Sets `num` LEDs starting at `index`. `colors` is an array of `{ r, g, b }`. |
 | `await device.getLedColors(index, num)` | Reads `num` LED colors starting at `index`. Returns `LedColor[]`. |
-| `await device.setLedBrightness(brightness, saveToFlash = false)` | Sets brightness. `brightness` must be from `0` to `1`; `saveToFlash` must be a boolean. |
-| `await device.getLedBrightness()` | Reads brightness as a `0` to `1` number. |
+| `await device.setLedBrightness(brightness, saveToFlash = false)` | Sets brightness. `brightness` must be an integer from `0` to `255`; `saveToFlash` must be a boolean. |
+| `await device.getLedBrightness()` | Reads brightness as an integer from `0` to `255`. |
 
 `setLedColors()` and `getLedColors()` reject requests that cannot fit in one transport packet. With the default
 transport buffer, the maximum is 81 colors per call.
@@ -58,3 +58,16 @@ Chain PIR and Chain Buzzer each have one RGB LED and therefore accept only `inde
 `HasLed` contributes RGB command IDs under `CMD.RGB`. It expects the composed device class to provide `id`, `bus`, and the base command contract from `M5ChainDevice`.
 
 The implementation validates LED indexes, LED counts, RGB channel values, brightness, and `saveToFlash` before sending commands to the bus.
+
+## Brightness units and migration
+
+RGB channels and brightness use integers from `0` to `255`, matching the Moddable SDK NeoPixel LED value scale.
+The methods remain asynchronous and await the device response. No `flush()` is needed.
+
+Brightness previously used `0` to `1`. Convert existing values with `Math.round(oldBrightness * 255)`:
+`0.5` becomes `128`, and full brightness `1` becomes `255`. The value `1` now means near-minimum brightness.
+This also applies to Mono/RGB matrix `setBrightness()` and `configure({ brightness })`.
+
+The device protocol has brightness levels `0` to `100`. Setters round to the nearest level; getters convert
+that level back with `Math.round(level * 255 / 100)`. For example, setting `128` reads back as `128`,
+while setting `1` reads back as `0`. RGB matrices use the same conversion; Mono matrices have eight levels.

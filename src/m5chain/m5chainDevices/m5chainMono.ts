@@ -184,12 +184,12 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 	}
 
 	protected brightnessToWire(brightness: number): number {
-		return Math.round(brightness * 7);
+		return Math.round((brightness * 7) / 255);
 	}
 
 	protected brightnessFromWire(value: number): number {
 		assertIntegerInRange("Mono brightness", value, 0, 7);
-		return value / 7;
+		return Math.round((value * 255) / 7);
 	}
 }
 
