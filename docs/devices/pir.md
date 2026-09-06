@@ -25,7 +25,7 @@ import M5ChainPIR, {
 | `PIR_REPORT_MODE` | Automatic report settings: `DISABLED = 0`, `ENABLED = 1`. |
 | `PIRConfiguration` | Type accepted by `configure()`. |
 | `PIRConfigurationSnapshot` | Type returned by `readConfiguration()`. |
-| `PIRPresenceHandler` | Handler type used by `onPresenceChanged`. |
+| `PIRPresenceHandler` | Handler type used by `onChanged`. |
 
 ## Capabilities
 
@@ -47,7 +47,7 @@ if (device.type === M5ChainPIR.DEVICE_TYPE) {
 		holdSeconds: 5,
 	});
 
-	pir.onPresenceChanged = (status) => {
+	pir.onChanged = (status) => {
 		const detected = status === PIR_STATUS.PERSON_DETECTED;
 		trace(`person detected=${detected}\n`);
 	};
@@ -78,4 +78,4 @@ Saving to flash requires a page erase. Avoid setting `saveToFlash` on frequent c
 ## Sample Value
 
 `onSample` receives the latest `PIRStatus` on every poll. `sample()` returns the latest cached value. Use
-`onPresenceChanged` when the device's change-driven automatic report is preferable to periodic polling.
+`onChanged` when the device's change-driven automatic report is preferable to periodic polling.

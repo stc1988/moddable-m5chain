@@ -12,7 +12,7 @@ It handles device enumeration, initialization, event dispatch, and polling.
 | [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | — | `onPush` | [Key API](docs/devices/key.md) |
 | [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | `{ x, y }` in `-128` to `127` | `onPush` | [JoyStick API](docs/devices/joystick.md) |
 | [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Distance in mm | — | [ToF API](docs/devices/tof.md) |
-| [PIR](https://docs.m5stack.com/en/chain/Chain_PIR) | `0x0009` | Yes | No | Yes | Presence status | `onPresenceChanged` | [PIR API](docs/devices/pir.md) |
+| [PIR](https://docs.m5stack.com/en/chain/Chain_PIR) | `0x0009` | Yes | No | Yes | Presence status | `onChanged` | [PIR API](docs/devices/pir.md) |
 | [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer) | `0x000B` | Yes | No | No | — | — | [Buzzer API](docs/devices/buzzer.md) |
 | [Mono](https://docs.m5stack.com/en/chain/Chain_Mono) | `0x000D` | No | No | No | — | — | [Mono API](docs/devices/mono.md) |
 | [RGB](https://docs.m5stack.com/en/chain/Chain_RGB) | `0x000E` | No | No | No | — | — | [RGB API](docs/devices/rgb.md) |
@@ -311,7 +311,7 @@ The handler may return a promise. Rejections are reported through `m5chain.onErr
 
 Angle, JoyStick, ToF, and PIR dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
 
-### `pir.onPresenceChanged = (status) => {}`
+### `pir.onChanged = (status) => {}`
 
 Available on Chain PIR. When PIR report mode is enabled, the device sends a change-driven event with
 `PIR_STATUS.NO_PERSON` or `PIR_STATUS.PERSON_DETECTED`. See the [PIR API](docs/devices/pir.md).

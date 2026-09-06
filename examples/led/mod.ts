@@ -116,7 +116,7 @@ function attachDeviceHandlers(device: LedDevice) {
 			break;
 
 		case "pir":
-			device.onPresenceChanged = async (status) => {
+			device.onChanged = async (status) => {
 				const detected = status === PIR_STATUS.PERSON_DETECTED;
 				log(`${deviceLabel(device)} person detected=${detected}`);
 				await device.setLedColor(detected ? 0 : 255, detected ? 255 : 0, 0);
