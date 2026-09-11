@@ -49,11 +49,14 @@ export type KeyConfiguration<TMode = number> = {
 	triggerInterval?: KeyTriggerInterval;
 };
 
-export type DeviceConfiguration = {
+export type DeviceConfiguration = object;
+export type DeviceConfigurationSnapshot = object;
+
+export type KeyDeviceConfiguration = {
 	key?: KeyConfiguration;
 };
 
-export type DeviceConfigurationSnapshot = {
+export type KeyDeviceConfigurationSnapshot = {
 	key?: {
 		mode: number;
 		triggerInterval: {
@@ -146,7 +149,8 @@ export interface M5ChainUnknownDeviceLike extends M5ChainDeviceLike {
 }
 
 type PublicDeviceInstance<TDevice> = TDevice extends object
-	? Omit<TDevice, keyof M5ChainRuntimeHooks | "known"> & M5ChainDeviceLike & { readonly known: true }
+	? Omit<TDevice, keyof M5ChainRuntimeHooks | "known"> &
+			Omit<M5ChainDeviceLike, keyof TDevice> & { readonly known: true }
 	: never;
 
 type DeviceSample<TDevice> = TDevice extends { readSample(): Promise<infer TResult> }

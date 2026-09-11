@@ -6,7 +6,7 @@ const SIMULATED_DEVICE_TYPE = 0x1234;
 
 class SimulatedDevice extends M5ChainDevice {
 	static DEVICE_TYPE = SIMULATED_DEVICE_TYPE;
-	readonly kind = "simulated" as const;
+	override readonly kind = "simulated" as const;
 }
 
 class MockM5ChainTransport implements M5ChainTransport {

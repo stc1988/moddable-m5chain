@@ -5,6 +5,7 @@ import type {
 	DeviceConstructor,
 	DeviceDisconnectHandler,
 	DeviceFactoryOptions,
+	DeviceMixin,
 } from "types";
 
 function readPacketByte(packet: Uint8Array, offset: number, operation: string): number {
@@ -164,6 +165,14 @@ type ComposedDeviceConstructor = DeviceConstructor<M5ChainDevice> & {
 	CMD: any;
 };
 
+type FeatureMethods<T> = T extends DeviceMixin<infer TAdded, M5ChainDevice> ? TAdded : never;
+type IntersectFeatures<T> = (T extends unknown ? (value: T) => void : never) extends (value: infer TResult) => void
+	? TResult
+	: never;
+function withDeviceFeatures<const TFeatures extends readonly DeviceMixin<object, M5ChainDevice>[]>(
+	...features: TFeatures
+): DeviceConstructor<M5ChainDevice & IntersectFeatures<FeatureMethods<TFeatures[number]>>> &
+	Pick<ComposedDeviceConstructor, "CMD">;
 function withDeviceFeatures(
 	// biome-ignore lint/suspicious/noExplicitAny: Features accept and return progressively extended constructors.
 	...features: Array<(Base: any) => any>

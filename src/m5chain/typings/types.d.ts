@@ -1,28 +1,77 @@
 import type { ReadableStream, WritableStream } from "web/streams";
 
 export type PacketBuffer = Uint8Array;
+
 export type PacketMatch = (buffer: PacketBuffer, size: number) => boolean;
-export type TimeoutWaitResult = { __m5chain: "timeout"; id: number | string; cmd: number };
-export type AbortWaitResult = { __m5chain: "abort"; reason: string };
+
+export type TimeoutWaitResult = {
+	__m5chain: "timeout";
+	id: number | string;
+	cmd: number;
+};
+
+export type AbortWaitResult = {
+	__m5chain: "abort";
+	reason: string;
+};
+
 export type WaitForPacketResult = PacketBuffer | TimeoutWaitResult | AbortWaitResult;
-export type WaitForPacketOptions = { timeoutMs?: number; match?: PacketMatch };
+
+export type WaitForPacketOptions = {
+	timeoutMs?: number;
+	match?: PacketMatch;
+};
+
 export interface M5ChainTransport {
 	readonly readable: ReadableStream<Uint8Array>;
 	readonly writable: WritableStream<Uint8Array>;
 	close?(): void | Promise<void>;
 }
-export type DeviceFactoryOptions = { id: number; type: number };
-export type LedColor = { r: number; g: number; b: number };
-export type KeyTriggerInterval = { doubleClickMs?: number; longPressMs?: number };
-export type KeyConfiguration<TMode = number> = { mode?: TMode; triggerInterval?: KeyTriggerInterval };
-export type DeviceConfiguration = { key?: KeyConfiguration };
-export type DeviceConfigurationSnapshot = {
-	key?: { mode: number; triggerInterval: { doubleClickMs: number; longPressMs: number } };
+
+export type DeviceFactoryOptions = {
+	id: number;
+	type: number;
 };
+
+export type LedColor = {
+	r: number;
+	g: number;
+	b: number;
+};
+
+export type KeyTriggerInterval = {
+	doubleClickMs?: number;
+	longPressMs?: number;
+};
+
+export type KeyConfiguration<TMode = number> = {
+	mode?: TMode;
+	triggerInterval?: KeyTriggerInterval;
+};
+
+export type DeviceConfiguration = object;
+export type DeviceConfigurationSnapshot = object;
+
+export type KeyDeviceConfiguration = {
+	key?: KeyConfiguration;
+};
+
+export type KeyDeviceConfigurationSnapshot = {
+	key?: {
+		mode: number;
+		triggerInterval: {
+			doubleClickMs: number;
+			longPressMs: number;
+		};
+	};
+};
+
 export type DeviceListChangeHandler<TDevice extends M5ChainDeviceLike = M5ChainDeviceLike> = (
 	devices: readonly TDevice[],
 ) => void | Promise<void>;
+
 export type DeviceDisconnectHandler = (() => void | Promise<void>) | null;
+
 export type M5ChainErrorSource =
 	| "deviceDisconnected"
 	| "deviceEvent"
@@ -31,8 +80,14 @@ export type M5ChainErrorSource =
 	| "sample"
 	| "scan"
 	| "transport";
-export type M5ChainErrorContext = { source: M5ChainErrorSource; device?: M5ChainDeviceLike };
+
+export type M5ChainErrorContext = {
+	source: M5ChainErrorSource;
+	device?: M5ChainDeviceLike;
+};
+
 export type M5ChainErrorHandler = (error: unknown, context: M5ChainErrorContext) => void | Promise<void>;
+
 export type SampleHandler<T = unknown> = ((sample: T) => void | Promise<void>) | null;
 
 export interface ChainBus {
@@ -70,6 +125,7 @@ export interface M5ChainDeviceLike {
 	readConfiguration?(): Promise<DeviceConfigurationSnapshot>;
 	onDisconnected?: DeviceDisconnectHandler;
 }
+
 export interface M5ChainRuntimeHooks<TSample = unknown> {
 	readonly bus: ChainBus;
 	init(): Promise<void>;
@@ -79,33 +135,43 @@ export interface M5ChainRuntimeHooks<TSample = unknown> {
 	readSample?(): Promise<TSample | undefined>;
 	dispatchOnSample?(value: TSample): void | Promise<void>;
 }
+
 export interface M5ChainRuntimeDevice<TSample = unknown> extends M5ChainDeviceLike, M5ChainRuntimeHooks<TSample> {}
 
 export type M5ChainDeviceClass<TDevice extends M5ChainRuntimeDevice = M5ChainRuntimeDevice> = {
 	readonly DEVICE_TYPE: number;
 	new (bus: ChainBus, options: DeviceFactoryOptions): TDevice;
 };
+
 export interface M5ChainUnknownDeviceLike extends M5ChainDeviceLike {
 	readonly kind: "unknown";
 	readonly known: false;
 }
+
 type PublicDeviceInstance<TDevice> = TDevice extends object
-	? Omit<TDevice, keyof M5ChainRuntimeHooks | "known"> & M5ChainDeviceLike & { readonly known: true }
+	? Omit<TDevice, keyof M5ChainRuntimeHooks | "known"> &
+			Omit<M5ChainDeviceLike, keyof TDevice> & { readonly known: true }
 	: never;
+
 type DeviceSample<TDevice> = TDevice extends { readSample(): Promise<infer TResult> }
 	? Exclude<TResult, undefined>
 	: unknown;
+
 type RuntimeDeviceInstance<TDevice> = TDevice extends object
 	? TDevice & M5ChainRuntimeDevice<DeviceSample<TDevice>>
 	: never;
+
 export type RegisteredM5ChainDevice<TClasses extends readonly M5ChainDeviceClass[]> =
 	| PublicDeviceInstance<InstanceType<TClasses[number]>>
 	| M5ChainUnknownDeviceLike;
+
 export type RegisteredM5ChainRuntimeDevice<TClasses extends readonly M5ChainDeviceClass[]> =
 	| RuntimeDeviceInstance<InstanceType<TClasses[number]>>
 	| (M5ChainUnknownDeviceLike & M5ChainRuntimeDevice);
+
 // biome-ignore lint/suspicious/noExplicitAny: TypeScript mixin constructors require any[].
 export type DeviceConstructor<TInstance = object> = new (...args: any[]) => TInstance;
+
 export type DeviceMixin<TAdded extends object, TConstraint extends object = object> = <
 	TBase extends DeviceConstructor<TConstraint>,
 >(

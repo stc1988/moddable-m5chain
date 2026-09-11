@@ -1,10 +1,10 @@
 import { assertObjectOption, type M5ChainDevice, readPacketByte } from "m5chainDevice";
 import type {
-	DeviceConfiguration,
-	DeviceConfigurationSnapshot,
 	DeviceConstructor,
 	DeviceMixin,
 	KeyConfiguration,
+	KeyDeviceConfiguration,
+	KeyDeviceConfigurationSnapshot,
 	PacketBuffer,
 } from "types";
 
@@ -103,8 +103,8 @@ export type HasKeyMethods = {
 	onPush: KeyHandler;
 	onDispatchEvent(buffer: PacketBuffer): void;
 	isKeyPressed(): Promise<boolean>;
-	configure(options?: DeviceConfiguration): Promise<void>;
-	readConfiguration(): Promise<DeviceConfigurationSnapshot>;
+	configure(options?: KeyDeviceConfiguration): Promise<void>;
+	readConfiguration(): Promise<KeyDeviceConfigurationSnapshot>;
 };
 
 type KeyCommandSet = {
@@ -146,12 +146,12 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			return (this.constructor as typeof Base & { CMD: KeyCommandSet }).CMD;
 		}
 
-		async configure(options: DeviceConfiguration = {}): Promise<void> {
+		override async configure(options: KeyDeviceConfiguration = {}): Promise<void> {
 			await super.configure(options);
 			await this.#configureKey(options.key);
 		}
 
-		async readConfiguration(): Promise<DeviceConfigurationSnapshot> {
+		override async readConfiguration(): Promise<KeyDeviceConfigurationSnapshot> {
 			return {
 				...(await super.readConfiguration()),
 				key: {

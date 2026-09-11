@@ -1,5 +1,5 @@
-import CanSample, { type CanSampleMethods } from "canSample";
-import HasLed, { type HasLedMethods } from "hasLed";
+import CanSample from "canSample";
+import HasLed from "hasLed";
 import { assertKnownConfigurationOptions, readPacketByte, withDeviceFeatures } from "m5chainDevice";
 import {
 	assertPIRHoldSeconds,
@@ -30,13 +30,12 @@ export type PIRConfigurationSnapshot = DeviceConfigurationSnapshot & {
 
 export type PIRPresenceHandler = ((status: PIRStatus) => void | Promise<void>) | null;
 
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
 class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
-	static DEVICE_TYPE = 0x0009;
-	readonly kind = "pir" as const;
+	static readonly DEVICE_TYPE = 0x0009;
+	override readonly kind = "pir" as const;
 	static PIR_STATUS = PIR_STATUS;
 	static PIR_REPORT_MODE = PIR_REPORT_MODE;
-	static CMD = Object.freeze({
+	static override CMD = Object.freeze({
 		...super.CMD,
 		...PIR_COMMAND,
 	} as const);
@@ -54,7 +53,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		return this.#onChanged;
 	}
 
-	async configure(options: PIRConfiguration = {}): Promise<void> {
+	override async configure(options: PIRConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["reportMode", "holdSeconds", "saveToFlash"]);
 		await super.configure(options);
 
@@ -68,7 +67,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		}
 	}
 
-	async readConfiguration(): Promise<PIRConfigurationSnapshot> {
+	override async readConfiguration(): Promise<PIRConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
 			reportMode: await this.#getReportMode(),
@@ -76,7 +75,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		};
 	}
 
-	async readSample(): Promise<PIRStatus | undefined> {
+	override async readSample(): Promise<PIRStatus | undefined> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(this.id, M5ChainPIR.CMD.GET_STATUS, bus.cmdBuffer, 0);
 		if (!(packet instanceof Uint8Array)) {
@@ -134,7 +133,5 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		return readPacketByte(packet, 6, "get PIR hold time");
 	}
 }
-
-interface M5ChainPIR extends HasLedMethods, CanSampleMethods<PIRStatus> {}
 
 export default M5ChainPIR;

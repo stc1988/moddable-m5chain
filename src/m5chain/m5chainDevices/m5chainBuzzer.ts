@@ -10,7 +10,7 @@ import {
 	prepareMelody,
 	type ToneOptions,
 } from "buzzerProtocol";
-import HasLed, { type HasLedMethods } from "hasLed";
+import HasLed from "hasLed";
 import { assertObjectOption, readPacketByte, readPacketUint16LE, withDeviceFeatures } from "m5chainDevice";
 import Timer from "timer";
 import type { LedColor } from "types";
@@ -66,13 +66,12 @@ function modeFromValue(value: number): BuzzerMode {
 	}
 }
 
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
 class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
-	static DEVICE_TYPE = 0x000b;
-	readonly kind = "buzzer" as const;
+	static readonly DEVICE_TYPE = 0x000b;
+	override readonly kind = "buzzer" as const;
 	static BUZZER_MODE = BUZZER_MODE;
 	static BUZZER_NOTE = BUZZER_NOTE;
-	static CMD = Object.freeze({
+	static override CMD = Object.freeze({
 		...super.CMD,
 		SET_BUZZER_MODE: 0x30,
 		GET_BUZZER_MODE: 0x31,
@@ -189,7 +188,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		});
 	}
 
-	_markDisconnected(): void {
+	override _markDisconnected(): void {
 		this.#cancelMelody();
 		super._markDisconnected();
 	}
@@ -244,7 +243,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		});
 	}
 
-	async setLedColors(index: number, num: number, colors: LedColor[]): Promise<void> {
+	override async setLedColors(index: number, num: number, colors: LedColor[]): Promise<void> {
 		if (index !== 0 || num !== 1) {
 			throw new RangeError("Chain Buzzer has one RGB LED; index must be 0 and num must be 1.");
 		}
@@ -264,7 +263,7 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		});
 	}
 
-	async getLedColors(index: number, num: number): Promise<LedColor[]> {
+	override async getLedColors(index: number, num: number): Promise<LedColor[]> {
 		if (index !== 0 || num !== 1) {
 			throw new RangeError("Chain Buzzer has one RGB LED; index must be 0 and num must be 1.");
 		}
@@ -368,7 +367,5 @@ class M5ChainBuzzer extends withDeviceFeatures(HasLed) {
 		}
 	}
 }
-
-interface M5ChainBuzzer extends HasLedMethods {}
 
 export default M5ChainBuzzer;

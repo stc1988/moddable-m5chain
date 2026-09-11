@@ -1,5 +1,5 @@
-import CanSample, { type CanSampleMethods } from "canSample";
-import HasLed, { type HasLedMethods } from "hasLed";
+import CanSample from "canSample";
+import HasLed from "hasLed";
 import { assertKnownConfigurationOptions, readPacketByte, readPacketUint16LE, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
@@ -27,11 +27,10 @@ function angleRotationDirectionToValue(direction: AngleRotationDirection): numbe
 	return direction;
 }
 
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
 class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
-	static DEVICE_TYPE = 0x0002;
-	readonly kind = "angle" as const;
-	static CMD = Object.freeze({
+	static readonly DEVICE_TYPE = 0x0002;
+	override readonly kind = "angle" as const;
+	static override CMD = Object.freeze({
 		...super.CMD,
 		GET_12ADC: 0x30 /**< Command to get the latest 12-bit ADC value */,
 		GET_8ADC: 0x31 /**< Command to get the latest 8-bit mapped ADC value */,
@@ -39,7 +38,7 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		GET_CLOCKWISE_STATUS: 0x33 /**< Command to get the current clockwise direction status */,
 	} as const);
 	static ANGLE_ROTATION_DIRECTION = AngleRotationDirection;
-	async configure(options: AngleConfiguration = {}): Promise<void> {
+	override async configure(options: AngleConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["rotationDirection"]);
 		await super.configure(options);
 		if (options.rotationDirection !== undefined) {
@@ -47,14 +46,14 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		}
 	}
 
-	async readConfiguration(): Promise<AngleConfigurationSnapshot> {
+	override async readConfiguration(): Promise<AngleConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
 			rotationDirection: await this.#getAngleRotationDirection(),
 		};
 	}
 
-	async readSample(): Promise<number | undefined> {
+	override async readSample(): Promise<number | undefined> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(this.id, M5ChainAngle.CMD.GET_12ADC, bus.cmdBuffer, 0);
 		if (!(packet instanceof Uint8Array)) {
@@ -115,7 +114,5 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		}
 	}
 }
-
-interface M5ChainAngle extends HasLedMethods, CanSampleMethods<number> {}
 
 export default M5ChainAngle;

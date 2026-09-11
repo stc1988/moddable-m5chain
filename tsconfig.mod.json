@@ -1,22 +1,7 @@
 {
-	"include": ["src/**/*", "examples/**/*", "tests/**/*.ts"],
+	"extends": "./tsconfig.json",
+	"include": ["tests/**/*.ts"],
 	"compilerOptions": {
-		"incremental": false,
-		"outDir": "dist",
-		"lib": ["es2025", "esnext.disposable"],
-		"module": "preserve",
-		"moduleResolution": "bundler",
-		"sourceMap": true,
-		"target": "es2025",
-		"allowJs": true,
-		"checkJs": true,
-		"noEmit": true,
-		"strict": true,
-		"noImplicitOverride": true,
-		"exactOptionalPropertyTypes": true,
-		"noUncheckedIndexedAccess": true,
-		"noUncheckedSideEffectImports": true,
-		"verbatimModuleSyntax": true,
 		"paths": {
 			"*": [
 				"./node_modules/@moddable/typings/*",
@@ -43,12 +28,10 @@
 			"embedded:network/dns/resolver/*": ["./node_modules/@moddable/typings/embedded_network/dns/resolver/*"],
 			"embedded:network/interface/*": ["./node_modules/@moddable/typings/embedded_network/interface/*"],
 			"embedded:storage/*": ["./node_modules/@moddable/typings/embedded/storage/*"],
-			"embedded:provider/*": ["./node_modules/@moddable/typings/embedded_provider/*"]
-		},
-		"types": [
-			"./node_modules/@moddable/typings/xs",
-			"./node_modules/@moddable/typings/mcpack",
-			"./node_modules/@moddable/typings/global"
-		]
+			"embedded:provider/*": ["./node_modules/@moddable/typings/embedded_provider/*"],
+			"m5chain": ["./src/m5chain/typings/m5chain.d.ts"],
+			"m5chainDevice": ["./src/m5chain/typings/m5chainDevice.d.ts"],
+			"types": ["./src/m5chain/typings/types.d.ts"]
+		}
 	}
 }

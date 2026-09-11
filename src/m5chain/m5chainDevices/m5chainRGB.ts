@@ -67,8 +67,8 @@ const RGB_DIRECTIONS: WireDirectionMap = Object.freeze({
 });
 
 class M5ChainRGB extends M5ChainMatrixDisplay {
-	static DEVICE_TYPE = 0x000e;
-	readonly kind = "rgb" as const;
+	static readonly DEVICE_TYPE = 0x000e;
+	override readonly kind = "rgb" as const;
 
 	async setPixel(x: number, y: number, color: LedColor): Promise<void> {
 		await this.setPixels([{ x, y, color }]);

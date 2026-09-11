@@ -2,8 +2,8 @@ import { M5ChainDevice } from "m5chainDevice";
 import type { ChainBus, DeviceFactoryOptions } from "types";
 
 class M5ChainUnknownDevice extends M5ChainDevice {
-	readonly kind = "unknown" as const;
-	readonly known = false;
+	override readonly kind = "unknown" as const;
+	override readonly known = false;
 	#type: number;
 
 	constructor(bus: ChainBus, options: DeviceFactoryOptions) {
@@ -11,7 +11,7 @@ class M5ChainUnknownDevice extends M5ChainDevice {
 		this.#type = options.type;
 	}
 
-	get type(): number {
+	override get type(): number {
 		return this.#type;
 	}
 }

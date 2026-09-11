@@ -440,7 +440,8 @@ npm run lint
 npm run typecheck
 ```
 
-Type checking enables `noUncheckedIndexedAccess`; packet and collection indexing must either validate the requested
+Type checking runs the same type tests against the Host implementation and the Mod declarations using
+`tsconfig.mod.json`. It enables `noImplicitOverride` and `noUncheckedIndexedAccess`; packet and collection indexing must either validate the requested
 entry or handle the possibility that it is absent.
 
 Verify that the preloaded library does not retain mutable objects in RAM:
@@ -452,6 +453,16 @@ mcconfig -d -m -p esp32/m5atom_matrix -t build ./manifest.json
 The XS linker output should contain no `not frozen` warnings for `m5chain`. Module-level lookup tables, exported
 constant objects, and class command tables must remain frozen so preloaded instances can stay in flash. See
 [Using XS Preload to Optimize Applications](https://github.com/Moddable-OpenSource/moddable/blob/public/documentation/xs/preload.md).
+
+### Type-safe device APIs
+
+TypeScript rejects combining a custom `transport` with UART pins. Key settings belong to
+`KeyDeviceConfiguration` and `KeyDeviceConfigurationSnapshot`, used only by key-capable devices.
+Device-specific configuration types expose the settings accepted by that device. Fixed `DEVICE_TYPE` fields
+are `static readonly`.
+
+`withDeviceFeatures(...)` preserves the methods and sample types of the supplied mixins, so device classes
+do not need a matching interface declaration to advertise those methods. Overrides must use `override`.
 
 ## License
 

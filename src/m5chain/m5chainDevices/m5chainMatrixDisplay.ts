@@ -44,7 +44,7 @@ const DISPLAY_MODE = Object.freeze({
 type DisplayMode = (typeof DISPLAY_MODE)[keyof typeof DISPLAY_MODE];
 
 abstract class M5ChainMatrixDisplay extends M5ChainDevice {
-	static CMD = Object.freeze({
+	static override CMD = Object.freeze({
 		...M5ChainDevice.CMD,
 		SET_DISPLAY_MODE: 0x10,
 		GET_DISPLAY_MODE: 0x11,
@@ -70,7 +70,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 	#displayMode: DisplayMode | undefined;
 	#operationMutex: Promise<void> = Promise.resolve();
 
-	async configure(options: MatrixDisplayConfiguration = {}): Promise<void> {
+	override async configure(options: MatrixDisplayConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["rotation", "brightness", "saveToFlash"]);
 		await super.configure(options);
 		const saveToFlash = options.saveToFlash ?? false;
@@ -83,7 +83,7 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 		}
 	}
 
-	async readConfiguration(): Promise<MatrixDisplayConfigurationSnapshot> {
+	override async readConfiguration(): Promise<MatrixDisplayConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
 			rotation: await this.getRotation(),

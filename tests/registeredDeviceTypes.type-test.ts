@@ -1,3 +1,6 @@
+import CanSample from "canSample";
+import HasLed from "hasLed";
+import { withDeviceFeatures } from "m5chainDevice";
 import type {
 	M5ChainDeviceClass,
 	M5ChainRuntimeDevice,
@@ -54,3 +57,33 @@ declare class IncompleteDevice {
 
 // @ts-expect-error Registered device classes must implement the runtime device contract.
 type _IncompleteDeviceRegistry = RegisteredM5ChainDevice<readonly [typeof IncompleteDevice]>;
+
+import M5ChainAngle from "m5chainAngle";
+import M5ChainEncoder from "m5chainEncoder";
+import M5Chain from "m5chain";
+
+const chain = new M5Chain({ deviceClasses: [M5ChainAngle, M5ChainEncoder], transport });
+// @ts-expect-error Custom transport and UART pins are mutually exclusive.
+new M5Chain({ deviceClasses: [], transport, transmit: 1 });
+// @ts-expect-error Device IDs are fixed.
+M5ChainEncoder.DEVICE_TYPE = 2;
+type _EncoderIdIsLiteral = Expect<Equal<typeof M5ChainEncoder.DEVICE_TYPE, 1>>;
+for (const device of chain.devices) {
+	if (device.kind === "angle") {
+		await device.configure({ rotationDirection: 0 });
+		// @ts-expect-error Angle has no key settings.
+		await device.configure({ key: { mode: 1 } });
+	}
+	if (device.kind === "encoder") {
+		await device.configure({ key: { mode: 1 } });
+	}
+}
+const SampleDevice = withDeviceFeatures(HasLed, CanSample<number>());
+declare const sampled: InstanceType<typeof SampleDevice>;
+const latest: number | undefined = sampled.sample();
+void latest;
+await sampled.setLedColor(1, 2, 3);
+// @ts-expect-error Composition must preserve the sample type.
+sampled.dispatchOnSample("wrong");
+// @ts-expect-error No key feature was composed.
+sampled.isKeyPressed();

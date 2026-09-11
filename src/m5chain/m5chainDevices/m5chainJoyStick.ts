@@ -1,6 +1,6 @@
-import CanSample, { type CanSampleMethods } from "canSample";
-import HasKey, { type HasKeyMethods } from "hasKey";
-import HasLed, { type HasLedMethods } from "hasLed";
+import CanSample from "canSample";
+import HasKey from "hasKey";
+import HasLed from "hasLed";
 import {
 	assertKnownConfigurationOptions,
 	assertObjectOption,
@@ -10,7 +10,7 @@ import {
 	readPacketUint16LE,
 	withDeviceFeatures,
 } from "m5chainDevice";
-import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
+import type { KeyDeviceConfiguration, KeyDeviceConfigurationSnapshot } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -26,19 +26,18 @@ export type JoystickMappedRange = {
 	yMax: number;
 };
 
-export type JoystickConfiguration = DeviceConfiguration & {
+export type JoystickConfiguration = KeyDeviceConfiguration & {
 	mappedRange?: JoystickMappedRange;
 };
 
-export type JoystickConfigurationSnapshot = DeviceConfigurationSnapshot & {
+export type JoystickConfigurationSnapshot = KeyDeviceConfigurationSnapshot & {
 	mappedRange: JoystickMappedRange;
 };
 
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
 class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<JoystickValue>()) {
-	static DEVICE_TYPE = 0x0004;
-	readonly kind = "joystick" as const;
-	static CMD = Object.freeze({
+	static readonly DEVICE_TYPE = 0x0004;
+	override readonly kind = "joystick" as const;
+	static override CMD = Object.freeze({
 		...super.CMD,
 		GET_16ADC: 0x30 /**< Command to get 16-bit ADC values */,
 		GET_8ADC: 0x31 /**< Command to get 8-bit ADC values */,
@@ -47,7 +46,7 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		GET_ADC_XY_MAPPED_INT16_VALUE: 0x34 /**< Command to get 16-bit mapped values for X and Y */,
 		GET_ADC_XY_MAPPED_INT8_VALUE: 0x35 /**< Command to get 8-bit mapped values for X and Y */,
 	} as const);
-	async configure(options: JoystickConfiguration = {}): Promise<void> {
+	override async configure(options: JoystickConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["key", "mappedRange"]);
 		await super.configure(options);
 		if (options.mappedRange !== undefined) {
@@ -57,14 +56,14 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		}
 	}
 
-	async readConfiguration(): Promise<JoystickConfigurationSnapshot> {
+	override async readConfiguration(): Promise<JoystickConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
 			mappedRange: await this.#getJoystickMappedRange(),
 		};
 	}
 
-	async readSample(): Promise<JoystickValue | undefined> {
+	override async readSample(): Promise<JoystickValue | undefined> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(
 			this.id,
@@ -141,7 +140,5 @@ class M5ChainJoyStick extends withDeviceFeatures(HasLed, HasKey, CanSample<Joyst
 		};
 	}
 }
-
-interface M5ChainJoyStick extends HasLedMethods, HasKeyMethods, CanSampleMethods<JoystickValue> {}
 
 export default M5ChainJoyStick;

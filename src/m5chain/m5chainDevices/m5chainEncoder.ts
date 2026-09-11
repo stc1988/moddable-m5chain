@@ -1,8 +1,8 @@
-import CanSample, { type CanSampleMethods } from "canSample";
-import HasKey, { type HasKeyMethods } from "hasKey";
-import HasLed, { type HasLedMethods } from "hasLed";
+import CanSample from "canSample";
+import HasKey from "hasKey";
+import HasLed from "hasLed";
 import { assertKnownConfigurationOptions, readPacketByte, readPacketInt16LE, withDeviceFeatures } from "m5chainDevice";
-import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
+import type { KeyDeviceConfiguration, KeyDeviceConfigurationSnapshot } from "types";
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMode, type KeyStatus } from "hasKey";
 
@@ -18,12 +18,12 @@ export const SaveToFlash = Object.freeze({
 } as const);
 export type SaveToFlash = (typeof SaveToFlash)[keyof typeof SaveToFlash];
 
-export type EncoderConfiguration = DeviceConfiguration & {
+export type EncoderConfiguration = KeyDeviceConfiguration & {
 	abDirection?: EncoderABDirection;
 	saveToFlash?: SaveToFlash;
 };
 
-export type EncoderConfigurationSnapshot = DeviceConfigurationSnapshot & {
+export type EncoderConfigurationSnapshot = KeyDeviceConfigurationSnapshot & {
 	abDirection: EncoderABDirection;
 };
 
@@ -41,11 +41,10 @@ function saveToFlashToValue(saveToFlash: SaveToFlash): number {
 	return saveToFlash;
 }
 
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
 class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>()) {
-	static DEVICE_TYPE = 0x0001;
-	readonly kind = "encoder" as const;
-	static CMD = Object.freeze({
+	static readonly DEVICE_TYPE = 0x0001;
+	override readonly kind = "encoder" as const;
+	static override CMD = Object.freeze({
 		...super.CMD,
 		GET_VALUE: 0x10 /**< Get encoder value. */,
 		GET_INC_VALUE: 0x11 /**< Get encoder increment value. */,
@@ -57,7 +56,7 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 	static ENCODER_AB_DIRECTION = EncoderABDirection;
 	static SAVE_TO_FLASH = SaveToFlash;
 	#lastValue: number | undefined;
-	async configure(options: EncoderConfiguration = {}): Promise<void> {
+	override async configure(options: EncoderConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["key", "abDirection", "saveToFlash"]);
 		await super.configure(options);
 		if (options.abDirection !== undefined) {
@@ -67,14 +66,14 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		}
 	}
 
-	async readConfiguration(): Promise<EncoderConfigurationSnapshot> {
+	override async readConfiguration(): Promise<EncoderConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
 			abDirection: await this.#getEncoderABDirect(),
 		};
 	}
 
-	async readSample(): Promise<number | undefined> {
+	override async readSample(): Promise<number | undefined> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(this.id, M5ChainEncoder.CMD.GET_VALUE, bus.cmdBuffer, 0);
 		if (!(packet instanceof Uint8Array)) {
@@ -158,7 +157,5 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 		}
 	}
 }
-
-interface M5ChainEncoder extends HasLedMethods, HasKeyMethods, CanSampleMethods<number> {}
 
 export default M5ChainEncoder;

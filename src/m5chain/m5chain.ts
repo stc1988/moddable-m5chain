@@ -35,13 +35,13 @@ export type {
 
 export type M5ChainOptions<TClasses extends readonly M5ChainDeviceClass[]> = {
 	deviceClasses: TClasses;
-	transmit?: number;
-	receive?: number;
 	debug?: boolean;
 	pollingInterval?: number;
 	connectionCheckInterval?: number;
-	transport?: M5ChainTransport;
-};
+} & (
+	| { transport: M5ChainTransport; transmit?: never; receive?: never }
+	| { transport?: never; transmit?: number; receive?: number }
+);
 
 declare const device: {
 	I2C: {

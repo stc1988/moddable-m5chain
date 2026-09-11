@@ -58,8 +58,8 @@ const MONO_DIRECTIONS: WireDirectionMap = Object.freeze({
 });
 
 class M5ChainMono extends M5ChainMatrixDisplay {
-	static DEVICE_TYPE = 0x000d;
-	readonly kind = "mono" as const;
+	static readonly DEVICE_TYPE = 0x000d;
+	override readonly kind = "mono" as const;
 
 	async setPixel(x: number, y: number, on = true): Promise<void> {
 		await this.setPixels([{ x, y, on }]);

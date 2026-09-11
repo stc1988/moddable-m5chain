@@ -5,6 +5,7 @@ import type {
 	DeviceConstructor,
 	DeviceDisconnectHandler,
 	DeviceFactoryOptions,
+	DeviceMixin,
 } from "types";
 
 declare class M5ChainDevice {
@@ -41,10 +42,14 @@ type ComposedDeviceConstructor = DeviceConstructor<M5ChainDevice> & {
 	// biome-ignore lint/suspicious/noExplicitAny: Feature command tables are merged dynamically.
 	CMD: any;
 };
-declare function withDeviceFeatures(
-	// biome-ignore lint/suspicious/noExplicitAny: Features accept and return progressively extended constructors.
-	...features: Array<(Base: any) => any>
-): ComposedDeviceConstructor;
+type FeatureMethods<T> = T extends DeviceMixin<infer TAdded, M5ChainDevice> ? TAdded : never;
+type IntersectFeatures<T> = (T extends unknown ? (value: T) => void : never) extends (value: infer TResult) => void
+	? TResult
+	: never;
+declare function withDeviceFeatures<const TFeatures extends readonly DeviceMixin<object, M5ChainDevice>[]>(
+	...features: TFeatures
+): DeviceConstructor<M5ChainDevice & IntersectFeatures<FeatureMethods<TFeatures[number]>>> &
+	Pick<ComposedDeviceConstructor, "CMD">;
 
 export {
 	assertKnownConfigurationOptions,

@@ -1,5 +1,5 @@
-import CanSample, { type CanSampleMethods } from "canSample";
-import HasLed, { type HasLedMethods } from "hasLed";
+import CanSample from "canSample";
+import HasLed from "hasLed";
 import { assertKnownConfigurationOptions, readPacketByte, readPacketUint16LE, withDeviceFeatures } from "m5chainDevice";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
@@ -46,11 +46,10 @@ function measurementStatusToValue(status: MeasurementStatus): number {
 	return status;
 }
 
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Runtime mixins install the merged feature methods.
 class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
-	static DEVICE_TYPE = 0x0005;
-	readonly kind = "tof" as const;
-	static CMD = Object.freeze({
+	static readonly DEVICE_TYPE = 0x0005;
+	override readonly kind = "tof" as const;
+	static override CMD = Object.freeze({
 		...super.CMD,
 		GET_DISTANCE: 0x50 /**< Get the measured distance in millimeters. */,
 		SET_MEASUREMENT_TIME: 0x51 /**< Set the measurement time in milliseconds. */,
@@ -64,7 +63,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 	static MEASUREMENT_MODE = MeasurementMode;
 	static MEASUREMENT_STATUS = MeasurementStatus;
 	static MEASUREMENT_COMPLETION_FLAG = MeasurementCompletionFlag;
-	async configure(options: ToFConfiguration = {}): Promise<void> {
+	override async configure(options: ToFConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["measurementTime", "measurementMode"]);
 		await super.configure(options);
 		if (options.measurementTime !== undefined) {
@@ -75,7 +74,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		}
 	}
 
-	async readConfiguration(): Promise<ToFConfigurationSnapshot> {
+	override async readConfiguration(): Promise<ToFConfigurationSnapshot> {
 		return {
 			...(await super.readConfiguration()),
 			measurementTime: await this.#getMeasurementTime(),
@@ -83,7 +82,7 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		};
 	}
 
-	async readSample(): Promise<number | undefined> {
+	override async readSample(): Promise<number | undefined> {
 		const bus = this.bus;
 		const packet = await bus.sendAndWaitForResult(this.id, M5ChainToF.CMD.GET_DISTANCE, bus.cmdBuffer, 0);
 		if (!(packet instanceof Uint8Array)) {
@@ -190,7 +189,5 @@ class M5ChainToF extends withDeviceFeatures(HasLed, CanSample<number>()) {
 		await this.#setMeasurementStatus(MeasurementStatus.MEASURING);
 	}
 }
-
-interface M5ChainToF extends HasLedMethods, CanSampleMethods<number> {}
 
 export default M5ChainToF;
