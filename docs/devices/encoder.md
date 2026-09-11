@@ -36,11 +36,14 @@ These exports can also be used as TypeScript types.
 
 ## Usage
 
+Register this class in `deviceClasses`. Use the following inside an async `onDeviceListChanged` handler
+while iterating its `devices` list; see the [complete pattern](README.md#import-pattern).
+
 ```ts
 import M5ChainEncoder, { EncoderABDirection, KEY_EVENT, SaveToFlash } from "m5chainEncoder";
 
-if (device.type === M5ChainEncoder.DEVICE_TYPE) {
-	const encoder = device as M5ChainEncoder;
+if (device.kind === "encoder") {
+	const encoder = device;
 
 	await encoder.setLedColor(0, 40, 255);
 	await encoder.configure({

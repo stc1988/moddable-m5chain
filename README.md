@@ -1,9 +1,124 @@
 # moddable-m5chain
 
-`moddable-m5chain` is a Moddable SDK module for controlling M5Chain devices over UART.  
-It handles device enumeration, initialization, event dispatch, and polling.
+Control M5Chain devices from a Moddable SDK application over UART. Register the device classes you need,
+then read sensors, handle events, and control LEDs, buzzers, or matrix displays.
 
-## Device Capability Matrix
+## Quick start
+
+This example uses an M5Atom Matrix with an Atom Chain Base and a Chain Encoder. Connect the Encoder to the
+base and the M5Atom to your computer over USB. Set up the Moddable SDK and its ESP32 toolchain first;
+`MODDABLE` must point to the SDK and its tools must be on `PATH`.
+
+Create these two files in a new application directory.
+
+**`manifest.json`**
+
+```json
+{
+	"include": [
+		"$(MODDABLE)/examples/manifest_base.json",
+		{
+			"git": "https://github.com/stc1988/moddable-m5chain.git",
+			"branch": "main"
+		}
+	],
+	"defines": { "main": { "async": 1 } },
+	"modules": { "*": "./main" }
+}
+```
+
+**`main.ts`**
+
+```ts
+import M5Chain from "m5chain";
+import M5ChainEncoder from "m5chainEncoder";
+
+const m5chain = new M5Chain({ deviceClasses: [M5ChainEncoder] });
+
+m5chain.onError = (error, context) => {
+	trace(`${context.source}: ${error}\n`);
+};
+
+m5chain.onDeviceListChanged = (devices) => {
+	trace(`found ${devices.length} device(s)\n`);
+	for (const device of devices) {
+		trace(`id=${device.id} kind=${device.kind}\n`);
+		if (device.kind === "encoder") {
+			device.onSample = (delta) => trace(`encoder delta=${delta}\n`);
+		}
+	}
+};
+
+try {
+	await m5chain.start();
+} catch (error) {
+	trace(`startup failed: ${error}\n`);
+	await m5chain.close();
+}
+```
+
+From that application directory, build, flash, and open the debugger:
+
+```sh
+mcconfig -d -m -p esp32/m5atom_matrix ./manifest.json
+```
+
+The **xsbug debugger** shows `found 1 device(s)` and `id=1 kind=encoder`. Turn the Encoder to see
+`encoder delta=...` messages. The initial encoder reading establishes the baseline; later changes produce deltas.
+`trace()` output appears in the debugger, not the shell. The application keeps running after `start()` completes.
+
+The manifest uses the moving `main` branch. For repeatable builds, use a published release tag when available;
+see [installation options](docs/setup.md). This example includes all device modules for convenience, while
+`deviceClasses` selects which connected devices this application recognizes.
+
+## Choose an installation
+
+| Use case | Start here |
+| --- | --- |
+| Standalone application | [Quick start](#quick-start) |
+| Include only selected device modules | [Selective Git manifests](docs/setup.md#include-the-library-from-git) |
+| Install a Mod into a shared Host | [Host and Mod setup](docs/setup.md#include-the-library-in-a-shared-mod-host) |
+| Develop using a local checkout | [Local manifests](docs/setup.md#use-a-local-checkout-while-developing) |
+| Run without M5Chain hardware | [Stream transport and simulator](docs/setup.md#inject-a-stream-transport-for-simulation) |
+
+Atom Chain Base pins are supplied for supported M5Atom targets. Other targets default to their Grove-compatible
+pins. Override `transmit` and `receive` in the constructor when needed; see [pin configuration](docs/setup.md#pin-configuration).
+
+## Using devices
+
+Include each required device manifest and register its class in `deviceClasses`. The array is required and may be
+empty. A connected type that you did not register appears as `kind === "unknown"` and `known === false`.
+Use `device.kind` to select the device API without a TypeScript cast.
+
+- **Sampling:** set the target device's `onSample` handler to start reading it. `sample()` returns its latest cached
+  value, or `undefined` before a sample is available; calling it does not communicate with the device. Clear the
+  handler with `null` to stop sampling that device. See [sampling](docs/features/can-sample.md).
+- **Key events:** use `onPush` for click/long-press events and `isKeyPressed()` for the current pressed state.
+  Configure active key reporting when using events. See [key settings](docs/features/has-key.md).
+- **LED output:** color channels and brightness are integers from `0` to `255`. Await operations such as
+  `setLedColor()`; see [LED methods](docs/features/has-led.md).
+- **Reconnection:** a re-scan replaces device instances. Attach handlers to the new instances inside
+  `onDeviceListChanged`, as in the quick start. Old instances have `connected === false` and cannot access the bus.
+
+Connection monitoring runs even when no device is being sampled. No connected chain is a successful empty scan;
+check wiring, pins, and `deviceClasses` if the list is empty or contains only unknown devices.
+
+## Errors and cleanup
+
+Set `onError` before starting, and catch a rejected `start()` as shown above. Await and handle failures from
+operations your application calls directly, such as `configure()` or `setLedColor()`.
+
+| Method | Effect |
+| --- | --- |
+| `await m5chain.start()` | Scan and start monitoring; attach handlers to the returned device list through `onDeviceListChanged`. |
+| `await m5chain.stop()` | Stop monitoring and sampling, disconnect current instances; a later `start()` creates new instances. |
+| `await m5chain.close()` | Release the transport permanently; create another M5Chain instance to use the bus again. |
+
+Call `await m5chain.close()` from your application's shutdown path. Do not close immediately after a successful
+`start()` if you want to continue receiving events. Use `device.onDisconnected` to release resources associated
+with a particular instance. See the [API and lifecycle reference](docs/api.md) for options, defaults, and events.
+
+## Supported devices
 
 | Device | Type ID | `HasLed` | `HasKey` | `CanSample` | Polled Sample (`onSample`) | Device Event Callback | API Guide |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -17,452 +132,22 @@ It handles device enumeration, initialization, event dispatch, and polling.
 | [Mono](https://docs.m5stack.com/en/chain/Chain_Mono) | `0x000D` | No | No | No | — | — | [Mono API](docs/devices/mono.md) |
 | [RGB](https://docs.m5stack.com/en/chain/Chain_RGB) | `0x000E` | No | No | No | — | — | [RGB API](docs/devices/rgb.md) |
 
-## Features
 
-- Web Streams-based packet transport and matching (`sendPacket` / `sendAndWait`)
-- Application-selected device classes keep unused device modules out of Mods
-- Automatic scan on startup
-- Automatic re-scan when `ENUM_PLEASE (0xFC)` is received (debounced)
-- Connection monitoring detects topology changes even without sample polling, including devices attached after startup
-- Feature composition with mixins ([LED](docs/features/has-led.md), [Key](docs/features/has-key.md), [Sample](docs/features/can-sample.md))
-- Poll loop runs only when at least one device has `onSample` set
+## Examples and reference
 
-## Setup
+From a checkout of this repository:
 
-### 1) Include the library from Git
+- [Standalone Host](examples/host): discover all supported devices.
+- [Basic Mod](examples/basic): discovery, device information, and event handlers.
+- [LED Mod](examples/led), [Buzzer Mod](examples/buzzer), [Matrix Mod](examples/matrix): output examples.
+- [Simulator](examples/simulator): scan an in-memory device without hardware.
 
-The repository root manifest is the standalone, all-device entry point. Until the first release tag is available, use
-the `main` branch:
+See [Host/Mod run commands](docs/setup.md#run-a-mod-example) and [simulator run commands](docs/setup.md#inject-a-stream-transport-for-simulation).
 
-```json
-{
-	"include": [
-		{
-			"git": "https://github.com/stc1988/moddable-m5chain.git",
-			"branch": "main"
-		}
-	]
-}
-```
-
-For reproducible builds, replace `branch` with a published release tag when one is available:
-
-```json
-{
-	"include": [
-		{
-			"git": "https://github.com/stc1988/moddable-m5chain.git",
-			"tag": "v1.0.0"
-		}
-	]
-}
-```
-
-Release tags are intended to be immutable. Branch builds follow ongoing development and may include breaking changes.
-If a cached branch build does not update, clean the application build before rebuilding; Moddable stores cloned
-repositories with the project's temporary build files.
-
-The root manifest includes every supported device. To reduce the application size, select only the required device
-manifests in an inline Git manifest. This example includes Encoder and ToF:
-
-```json
-{
-	"include": [
-		"$(MODDABLE)/examples/manifest_base.json",
-		{
-			"git": "https://github.com/stc1988/moddable-m5chain.git",
-			"branch": "main",
-			"manifest": {
-				"include": [
-					"./manifests/host.json",
-					"./manifests/devices/encoder.json",
-					"./manifests/devices/tof.json"
-				]
-			}
-		}
-	]
-}
-```
-
-Available public device manifests are `angle.json`, `buzzer.json`, `encoder.json`, `joystick.json`, `key.json`,
-`mono.json`, `pir.json`, `rgb.json`, and `tof.json` under `manifests/devices/`. `manifests/devices/all.json` includes every device.
-Device manifests automatically include their required LED, key, sample, or matrix features.
-
-### 2) Include the library in a shared Mod host
-
-The Host owns the M5Chain transport, scan, polling, base-device, and UnknownDevice implementation. Include only the
-core Host manifest:
-
-```json
-{
-	"include": [
-		{
-			"git": "https://github.com/stc1988/moddable-m5chain.git",
-			"branch": "main",
-			"manifest": "./manifests/host.json"
-		}
-	]
-}
-```
-
-Each Mod includes the declaration-only core surface plus only the device implementations it uses. For an Encoder and
-ToF Mod:
-
-```json
-{
-	"include": [
-		"$(MODDABLE)/examples/manifest_mod.json",
-		"$(MODDABLE)/examples/manifest_typings.json",
-		{
-			"git": "https://github.com/stc1988/moddable-m5chain.git",
-			"branch": "main",
-			"manifest": {
-				"include": [
-					"./manifests/mod-base.json",
-					"./manifests/devices/encoder.json",
-					"./manifests/devices/tof.json"
-				]
-			}
-		}
-	],
-	"modules": {
-		"*": "./mod"
-	}
-}
-```
-
-`manifests/mod-all.json` is the all-device convenience entry point for a Mod. It also includes the Moddable TypeScript
-declarations, so an all-device Mod only needs `$(MODDABLE)/examples/manifest_mod.json` plus that Git manifest.
-
-### 3) Use a local checkout while developing
-
-Do not edit the temporary clone created by Git include because a clean build deletes it. This repository's examples
-use local relative paths to the same public manifests, for example:
-
-```json
-{
-	"include": [
-		"path/to/moddable-m5chain/manifests/host.json",
-		"path/to/moddable-m5chain/manifests/devices/encoder.json"
-	]
-}
-```
-
-The files under `manifests/` are the stable public manifest entry points. Files under `src/m5chain/` are internal and
-may move as the implementation evolves.
-
-### 4) Pin configuration
-
-When no M5Chain pin configuration is present, the UART pins default to the target's Grove-compatible
-`device.I2C.default.data` and `device.I2C.default.clock` pins.
-
-If you use an M5Atom series device with  [Atom Chain Base](https://docs.m5stack.com/ja/accessory/Atomic_ToChain_Base), automatically provides a `config.m5chain` pin configuration.
-
-Target defaults, `mc/config`, `mod/config`, and constructor options are applied in that order of increasing priority.
-`transmit` and `receive` may override either configured pin independently. Pin number `0` is supported.
-Configured pins must be non-negative integers. Invalid configured values are ignored so the next available
-configuration source can provide that pin.
-
-See [Minimal Usage](#minimal-usage) for the concrete usage pattern.
-
-### 5) Inject a stream transport for simulation
-
-`M5Chain` normally creates a UART-backed `ReadableStream<Uint8Array>` and `WritableStream<Uint8Array>` internally. For
-the desktop simulator or protocol tests, pass a compatible stream pair instead:
-
-```ts
-import M5Chain, { type M5ChainTransport } from "m5chain";
-
-const transport: M5ChainTransport = {
-	readable, // ReadableStream<Uint8Array>
-	writable, // WritableStream<Uint8Array>
-	close() {
-		// release mock, socket, or other transport resources
-	},
-};
-
-const m5chain = new M5Chain({
-	deviceClasses: M5CHAIN_DEVICE_CLASSES,
-	transport,
-});
-```
-
-`transport` cannot be combined with `transmit` or `receive`, and both streams must be unlocked. `M5Chain` locks both
-streams for its lifetime. Its
-`close()` method invokes the optional transport `close()` hook to release the underlying resource, then cancels or
-aborts the streams and releases their locks. Readable chunks must be `Uint8Array` values. The injected transport
-carries complete or partial UART byte chunks; the same framing, CRC, request matching, scan, and polling logic runs on
-hardware and in the simulator.
-
-See `examples/simulator` for a deterministic in-memory M5Chain device that deliberately splits response frames across
-multiple stream chunks.
-
-## Minimal Usage
-
-```js
-import M5Chain from "m5chain";
-import M5ChainEncoder from "m5chainEncoder";
-import M5ChainToF from "m5chainToF";
-
-const m5chain = new M5Chain({
-	deviceClasses: [M5ChainEncoder, M5ChainToF],
-	debug: false,
-	pollingInterval: 30, // ms
-	connectionCheckInterval: 1000, // ms; set to 0 to disable
-});
-
-m5chain.onDeviceListChanged = (devices) => {
-	for (const device of devices) {
-		trace(`id=${device.id} kind=${device.kind} uid=${device.uuid}\n`);
-	}
-};
-
-await m5chain.start();
-```
-
-`deviceClasses` is required and copied when the `M5Chain` instance is created. The array may be empty. A connected
-device whose type is not registered remains visible as an `UnknownDevice`; this allows one Mod to use its supported
-devices even when other device types are present on the same chain. Duplicate `DEVICE_TYPE` values are rejected.
-The `known` property is a type discriminator: registered devices have `known === true`, while `UnknownDevice` has
-`known === false`.
-
-In TypeScript, every registered class must implement the complete M5Chain runtime device contract in addition to its
-static `DEVICE_TYPE`. Custom device implementations should extend `M5ChainDevice` from `m5chainDevice`; this provides
-the required lifecycle, connection state, and common device API. A constructor that only declares `DEVICE_TYPE` is no
-longer accepted as an `M5ChainDeviceClass`.
-
-An all-device application can use the explicit aggregate registry:
-
-```js
-import M5Chain from "m5chain";
-import { M5CHAIN_DEVICE_CLASSES } from "m5chainDevices";
-
-const m5chain = new M5Chain({
-	deviceClasses: M5CHAIN_DEVICE_CLASSES,
-});
-```
-
-## Event Model
-
-### `m5chain.onDeviceListChanged = (devices) => {}`
-
-- Called after the initial scan completes in `start()`
-- Called again after re-scan when the chain sends `ENUM_PLEASE` or connection monitoring detects a topology change
-- `devices` is the current connected device list
-
-### `device.onDisconnected = () => {}`
-
-- Called before a disconnected device instance is removed or replaced during re-scan
-- Works for devices without `onSample`, such as Key, through connection monitoring
-- The disconnected instance has `device.connected === false` and can no longer access the bus
-- Set to `null` to remove the handler
-
-### `m5chain.onError = (error, context) => {}`
-
-Reports scan failures, device initialization failures, transport failures, synchronous exceptions, and rejected
-promises from application callbacks. `context.source` identifies the failure kind; device-specific failures also
-provide `context.device`.
-
-An initial scan protocol failure also rejects `start()` so application startup can fail explicitly. A heartbeat timeout
-with no connected chain remains a successful scan with an empty device list. Background re-scan failures are reported
-through `onError` without stopping connection monitoring.
-
-### `device.onPush = (status) => {}`
-
-Available on devices with `HasKey` (Encoder / Key / JoyStick).
-
-- `status` is a key event, not the pressed/released state
-- Use `KEY_EVENT.SINGLE_CLICK`, `KEY_EVENT.DOUBLE_CLICK`, or `KEY_EVENT.LONG_PRESS`
-
-```js
-import { KEY_EVENT } from "m5chainEncoder";
-
-device.onPush = async (keyEvent) => {
-	if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
-		await device.setLedColor(255, 0, 0);
-	}
-};
-```
-
-`KEY_EVENT`, `KEY_MODE`, `KEY_STATUS`, and their TypeScript types are exported from the key-capable device modules:
-`m5chainEncoder`, `m5chainKey`, and `m5chainJoyStick`.
-
-### `device.onSample = (sample) => {}`
-
-Available on devices with `CanSample` (Encoder / Angle / JoyStick / ToF / PIR).
-
-If any device has `onSample` set, bus polling starts. It stops when all `onSample` handlers are `null`.
-
-The callback receives the newly acquired sample:
-
-```js
-device.onSample = (sample) => {
-	trace(`sample=${sample}\n`);
-};
-```
-
-The handler may return a promise. Rejections are reported through `m5chain.onError` with
-`context.source === "sample"`.
-
-`device.sample()` remains available as a synchronous accessor for the latest cached sample.
-
-Angle, JoyStick, ToF, and PIR dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
-
-### `pir.onChanged = (status) => {}`
-
-Available on Chain PIR. When PIR report mode is enabled, the device sends a change-driven event with
-`PIR_STATUS.NO_PERSON` or `PIR_STATUS.PERSON_DETECTED`. See the [PIR API](docs/devices/pir.md).
-
-Polling failures are tracked per device. A device is removed from the current list after three consecutive sample-read
-failures without disconnecting other responsive devices.
-
-UART requests are serialized. An uncontended request starts immediately; overlapping requests are queued with their
-payload copied so later changes to the shared command buffer cannot affect them. The writable stream supplies
-backpressure, and the UART adapter writes packets in chunks as output space becomes available.
-
-## API
-
-### M5Chain
-
-- `new M5Chain({ deviceClasses, transmit, receive, transport, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
-  - `pollingInterval` and `connectionCheckInterval` must be non-negative finite numbers.
-  - `transport` is an optional `M5ChainTransport` stream pair for simulation or custom I/O; it is mutually exclusive
-    with `transmit` and `receive`.
-- `await m5chain.start()` scans the chain and rejects if enumeration fails; no connected chain is a successful empty scan
-- `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
-- `await m5chain.close()` stops the chain and closes UART permanently
-- `m5chain.closed`
-- `m5chain.devices` read-only snapshot of the current device array
-
-### Common Device API (`M5ChainDevice`)
-
-- `device.id`
-- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `pir`, `buzzer`, `mono`, `rgb`, or `unknown`)
-- `device.type` numeric device type ID used by the M5Chain protocol
-- `device.known` (`false` for device types not registered in this instance's `deviceClasses`, including unsupported types)
-- `device.connected`
-- `device.uuid` (`undefined` until `init()` completes)
-- `await device.configure(options)` applies device and feature settings
-- `await device.readConfiguration()` reads current device and feature settings from the chain device
-- `await device.getUID(uidType = 1)` (`uidType: 0 | 1`)
-- `await device.getBootloaderVersion()`
-- `await device.getFirmwareVersion()`
-
-Unknown device types remain in the device list as `M5ChainUnknownDevice`. They expose the common device API, allowing
-applications to keep using recognized devices on the same chain and to report unsupported type IDs.
-
-`M5Chain` derives its connected-device union from the classes passed in `deviceClasses`, plus `UnknownDevice`. The
-`RegisteredM5ChainDevice`, `M5ChainDeviceClass`, `M5ChainDeviceLike`, and generic `M5ChainOptions` types are exported from
-`m5chain`. These application-facing types omit bus transport, initialization, event dispatch, and polling hooks used by
-device implementations. The `m5chainDevices` all-device aggregate also exports its inferred `M5ChainDevice` union.
-
-### LED Features (`HasLed`)
-
-Available on: Encoder / Angle / Key / JoyStick / ToF / PIR / Buzzer
-
-RGB channels and LED brightness use integers from `0` to `255`; operations remain asynchronous.
-Brightness previously used `0` to `1`: migrate `0.5` to `128` and `1` to `255`, including matrix brightness settings.
-See [HasLed API](docs/features/has-led.md).
-
-### Key Features (`HasKey`)
-
-Available on: Encoder / Key / JoyStick
-
-See [HasKey API](docs/features/has-key.md).
-
-### Sample Features (`CanSample`)
-
-Available on: Encoder / Angle / JoyStick / ToF / PIR
-
-See [CanSample API](docs/features/can-sample.md).
-
-### Device-specific APIs
-
-Device-specific usage, TypeScript exports, and method details are split into focused pages:
-
-- [Device API index](docs/devices/README.md)
-- [Encoder API](docs/devices/encoder.md)
-- [Angle API](docs/devices/angle.md)
-- [Key API](docs/devices/key.md)
-- [JoyStick API](docs/devices/joystick.md)
-- [ToF API](docs/devices/tof.md)
-- [PIR API](docs/devices/pir.md)
-- [Buzzer API](docs/devices/buzzer.md)
-- [Mono API](docs/devices/mono.md)
-- [RGB API](docs/devices/rgb.md)
-
-Feature mixin details are also split into focused pages:
-
-- [Feature API index](docs/features/README.md)
-- [HasLed API](docs/features/has-led.md)
-- [HasKey API](docs/features/has-key.md)
-- [CanSample API](docs/features/can-sample.md)
-
-README intentionally keeps only the setup, event model, and shared API surface so device and feature pages can grow without making the first-read path hard to scan.
-
-## Examples
-
-- `examples/host`: standalone all-device application that includes the repository's root `manifest.json`
-- `examples/simulator`: stream-transport scan test with an in-memory simulated device; runs on `-p sim`
-- `examples/basic`: device discovery, info read, disconnect handling, and type-safe event subscription with `device.kind`
-- `examples/led`: Mod containing only Encoder/Angle/Key/JoyStick/ToF/PIR and their shared features
-- `examples/buzzer`: Mod containing only Buzzer, with RGB indication, timed tones, and notes
-- `examples/matrix`: Mod containing only Mono/RGB and their shared matrix protocol
-
-Build and run the standalone host application:
-
-```sh
-mcconfig -d -m -p esp32/m5atom_matrix ./examples/host/manifest.json
-```
-
-The other examples are device-selective Mods loaded by the shared `examples/manifest.json` host. The shared host
-contains the M5Chain transport, scan, polling, base-device, and UnknownDevice code; concrete device implementations
-come from each Mod.
-That host reserves 6144 XS heap slots so the library and a loaded Mod fit in the fixed-size slot heap. Applications
-using their own Mod host should make the equivalent adjustment in the host manifest, not the Mod manifest:
-
-```json
-"creation": {
-	"heap": {
-		"initial": 6144,
-		"incremental": 0
-	}
-}
-```
-
-## Development
-
-Format and lint:
-
-```sh
-npm run format
-npm run lint
-npm run typecheck
-```
-
-Type checking runs the same type tests against the Host implementation and the Mod declarations using
-`tsconfig.mod.json`. It enables `noImplicitOverride` and `noUncheckedIndexedAccess`; packet and collection indexing must either validate the requested
-entry or handle the possibility that it is absent.
-
-Verify that the preloaded library does not retain mutable objects in RAM:
-
-```sh
-mcconfig -d -m -p esp32/m5atom_matrix -t build ./manifest.json
-```
-
-The XS linker output should contain no `not frozen` warnings for `m5chain`. Module-level lookup tables, exported
-constant objects, and class command tables must remain frozen so preloaded instances can stay in flash. See
-[Using XS Preload to Optimize Applications](https://github.com/Moddable-OpenSource/moddable/blob/public/documentation/xs/preload.md).
-
-### Type-safe device APIs
-
-TypeScript rejects combining a custom `transport` with UART pins. Key settings belong to
-`KeyDeviceConfiguration` and `KeyDeviceConfigurationSnapshot`, used only by key-capable devices.
-Device-specific configuration types expose the settings accepted by that device. Fixed `DEVICE_TYPE` fields
-are `static readonly`.
-
-`withDeviceFeatures(...)` preserves the methods and sample types of the supplied mixins, so device classes
-do not need a matching interface declaration to advertise those methods. Overrides must use `override`.
+- [M5Chain API and lifecycle](docs/api.md)
+- [Device API guides](docs/devices/README.md)
+- [Shared LED, key, and sample APIs](docs/features/README.md)
+- [Library development and custom devices](docs/development.md)
 
 ## License
 

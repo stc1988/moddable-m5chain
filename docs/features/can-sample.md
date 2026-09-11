@@ -5,13 +5,11 @@
 ## TypeScript Exports
 
 ```ts
-import CanSample from "canSample";
 import type { SampleHandler } from "types";
 ```
 
 | Export | Description |
 | --- | --- |
-| `CanSample` | Default generic mixin export. |
 | `SampleHandler<T>` | `((sample: T) => void \| Promise<void>) \| null`, exported from `types`. |
 
 ## Used By
@@ -22,34 +20,12 @@ import type { SampleHandler } from "types";
 - ToF
 - PIR
 
-## Composition
-
-Pass the sample value type when composing a device class.
-
-```ts
-import CanSample from "canSample";
-import HasLed from "hasLed";
-import { withDeviceFeatures } from "m5chainDevice";
-
-class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
-	async readSample(): Promise<number> {
-		return await this.getAngle12Value();
-	}
-}
-```
-
-The sample type belongs to the composed feature and its runtime hooks. Callers invoke `readSample()` without a type
-argument, so its result and the value accepted by `dispatchOnSample()` cannot drift apart.
-
 ## Methods
 
 | Method | Description |
 | --- | --- |
 | `device.onSample = (sample) => {}` | Registers a callback that receives each newly acquired sample. Set to `null` to clear it. |
 | `device.sample()` | Returns the latest sampled value, or `undefined` before the first sample. Object samples are returned as shallow copies. |
-| `device.hasOnSample()` | Returns whether a sample callback is registered. |
-| `await device.readSample()` | Device implementation hook. Reads from the bus and returns a value to store as the latest sample, or `undefined` to skip dispatch. |
-| `device.dispatchOnSample(value)` | Stores `value` as the latest sample and passes it to the registered `onSample` handler. Object samples are passed as shallow copies. |
 
 `onSample` handlers may be synchronous or asynchronous. A rejected asynchronous handler is reported through
 `m5chain.onError` with `context.source === "sample"`.
@@ -70,4 +46,7 @@ Angle, JoyStick, ToF, and PIR dispatch `onSample` with the latest sampled value 
 
 The bus poll loop starts when at least one connected device has `onSample` set. It stops when all sample handlers are `null`.
 
-`CanSample` notifies the bus only when the active/inactive state changes, so replacing one non-null handler with another does not restart the loop. The bus still uses an internal poll loop to read samples from serial devices at `pollingInterval`.
+Only devices with their own `onSample` handler are polled. Calling `sample()` alone does not start polling
+or issue a UART request. For a one-time read, use the device-specific method such as `getDistance()`.
+
+See [sample implementation hooks](../development.md#sample-implementation-hooks) when writing a custom device.

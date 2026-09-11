@@ -30,11 +30,14 @@ The Key device has no additional device-specific methods.
 
 ## Usage
 
+Register this class in `deviceClasses`. Use the following inside an async `onDeviceListChanged` handler
+while iterating its `devices` list; see the [complete pattern](README.md#import-pattern).
+
 ```ts
 import M5ChainKey, { KEY_EVENT, KEY_MODE } from "m5chainKey";
 
-if (device.type === M5ChainKey.DEVICE_TYPE) {
-	const key = device as M5ChainKey;
+if (device.kind === "key") {
+	const key = device;
 
 	await key.setLedColor(255, 255, 255);
 	await key.configure({ key: { mode: KEY_MODE.ACTIVE } });

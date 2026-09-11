@@ -33,11 +33,14 @@ These exports can also be used as TypeScript types.
 
 ## Usage
 
+Register this class in `deviceClasses`. Use the following inside an async `onDeviceListChanged` handler
+while iterating its `devices` list; see the [complete pattern](README.md#import-pattern).
+
 ```ts
 import M5ChainToF, { MeasurementMode } from "m5chainToF";
 
-if (device.type === M5ChainToF.DEVICE_TYPE) {
-	const tof = device as M5ChainToF;
+if (device.kind === "tof") {
+	const tof = device;
 
 	await tof.setLedColor(80, 80, 255);
 	await tof.configure({

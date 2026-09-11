@@ -5,27 +5,25 @@
 ## TypeScript Exports
 
 ```ts
-import HasKey, {
+import {
 	KEY_EVENT,
 	KEY_MODE,
 	KEY_STATUS,
 	type KeyEvent,
-	type KeyHandler,
 	type KeyMode,
 	type KeyStatus,
-} from "hasKey";
+} from "m5chainKey";
 ```
 
 `KEY_EVENT`, `KEY_MODE`, and `KEY_STATUS` values can also be used through their TypeScript types.
 
 | Export | Description |
 | --- | --- |
-| `HasKey` | Default mixin export. |
 | `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
 | `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
 | `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
 | `KeyEvent` | Type of values passed to `onPush`. |
-| `KeyHandler` | `((keyEvent: KeyEvent) => void \| Promise<void>) \| null`. |
+| `KeyHandler` | `((keyEvent: KeyEvent) => void \| Promise<void>) \| null`, available from `hasKey` for custom device implementations. |
 | `KeyMode` | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
 | `KeyStatus` | Type of key status values used internally by key state reads. |
 
@@ -76,4 +74,4 @@ device.onPush = (keyEvent) => {
 
 `onPush` receives a key event, not a pressed/released state. For current pressed state, use `isKeyPressed()`.
 
-The bus dispatches key event packets to `onDispatchEvent(buffer)`, and `HasKey` converts `buffer[6]` into a `KeyEvent` before calling `onPush`.
+Async handlers are supported; rejected promises are reported through `m5chain.onError`.

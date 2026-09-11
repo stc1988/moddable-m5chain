@@ -5,14 +5,12 @@
 ## TypeScript Exports
 
 ```ts
-import HasLed from "hasLed";
-import type { LedColor } from "types";
+import type { LedColor } from "m5chain";
 ```
 
 | Export | Description |
 | --- | --- |
-| `HasLed` | Default mixin export. |
-| `LedColor` | `{ r: number; g: number; b: number }`, exported from `types`. |
+| `LedColor` | `{ r: number; g: number; b: number }`, exported from `m5chain`. |
 
 ## Used By
 
@@ -36,7 +34,7 @@ const color = await device.getLedColor();
 
 LED color and brightness are output state, not device configuration. They are intentionally not accepted by `configure()`.
 
-## Mixin Methods
+## Methods
 
 | Method | Description |
 | --- | --- |
@@ -52,12 +50,6 @@ LED color and brightness are output state, not device configuration. They are in
 transport buffer, the maximum is 81 colors per call.
 
 Chain PIR and Chain Buzzer each have one RGB LED and therefore accept only `index = 0` and `num = 1`.
-
-## Implementation Notes
-
-`HasLed` contributes RGB command IDs under `CMD.RGB`. It expects the composed device class to provide `id`, `bus`, and the base command contract from `M5ChainDevice`.
-
-The implementation validates LED indexes, LED counts, RGB channel values, brightness, and `saveToFlash` before sending commands to the bus.
 
 ## Brightness units and migration
 

@@ -25,11 +25,14 @@ import M5ChainAngle, { AngleRotationDirection, type AngleConfiguration, type Ang
 
 ## Usage
 
+Register this class in `deviceClasses`. Use the following inside an async `onDeviceListChanged` handler
+while iterating its `devices` list; see the [complete pattern](README.md#import-pattern).
+
 ```ts
 import M5ChainAngle, { AngleRotationDirection } from "m5chainAngle";
 
-if (device.type === M5ChainAngle.DEVICE_TYPE) {
-	const angle = device as M5ChainAngle;
+if (device.kind === "angle") {
+	const angle = device;
 
 	await angle.setLedColor(0, 255, 80);
 	await angle.configure({ rotationDirection: AngleRotationDirection.CLOCKWISE });

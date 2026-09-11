@@ -44,11 +44,14 @@ import M5ChainJoyStick, {
 
 ## Usage
 
+Register this class in `deviceClasses`. Use the following inside an async `onDeviceListChanged` handler
+while iterating its `devices` list; see the [complete pattern](README.md#import-pattern).
+
 ```ts
 import M5ChainJoyStick, { KEY_EVENT, KEY_MODE } from "m5chainJoyStick";
 
-if (device.type === M5ChainJoyStick.DEVICE_TYPE) {
-	const joystick = device as M5ChainJoyStick;
+if (device.kind === "joystick") {
+	const joystick = device;
 
 	await joystick.setLedColor(0, 180, 255);
 	await joystick.configure({

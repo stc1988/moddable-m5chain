@@ -36,11 +36,14 @@ import M5ChainPIR, {
 
 ## Usage
 
+Register this class in `deviceClasses`. Use the following inside an async `onDeviceListChanged` handler
+while iterating its `devices` list; see the [complete pattern](README.md#import-pattern).
+
 ```ts
 import M5ChainPIR, { PIR_REPORT_MODE, PIR_STATUS } from "m5chainPIR";
 
-if (device.type === M5ChainPIR.DEVICE_TYPE) {
-	const pir = device as M5ChainPIR;
+if (device.kind === "pir") {
+	const pir = device;
 
 	await pir.configure({
 		reportMode: PIR_REPORT_MODE.ENABLED,
