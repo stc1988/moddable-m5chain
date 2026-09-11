@@ -22,7 +22,7 @@ import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 
-class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>) {
+class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number>()) {
 	// Device-specific implementation.
 }
 ```

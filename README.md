@@ -203,12 +203,9 @@ multiple stream chunks.
 import M5Chain from "m5chain";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainToF from "m5chainToF";
-import config from "mc/config";
 
 const m5chain = new M5Chain({
 	deviceClasses: [M5ChainEncoder, M5ChainToF],
-	transmit: config.m5chain.transmit,
-	receive: config.m5chain.receive,
 	debug: false,
 	pollingInterval: 30, // ms
 	connectionCheckInterval: 1000, // ms; set to 0 to disable
@@ -342,7 +339,7 @@ backpressure, and the UART adapter writes packets in chunks as output space beco
 - `device.id`
 - `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `pir`, `buzzer`, `mono`, `rgb`, or `unknown`)
 - `device.type` numeric device type ID used by the M5Chain protocol
-- `device.known` (`false` for device types not yet supported by this library)
+- `device.known` (`false` for device types not registered in this instance's `deviceClasses`, including unsupported types)
 - `device.connected`
 - `device.uuid` (`undefined` until `init()` completes)
 - `await device.configure(options)` applies device and feature settings

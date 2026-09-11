@@ -26,7 +26,7 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 - `src/m5chain/serialTransport.ts` (ECMA-419 Serial -> Web Streams adapter)
 - `src/m5chain/createM5ChainDevice.ts` (registered device type -> class mapping)
 - `src/m5chain/m5chainDevices/m5chainDevice.ts` (base class + feature composition)
-- `src/m5chain/m5chainDevices/m5chainBus.ts` (bus-typed device placeholder)
+- `src/m5chain/m5chainDevices/m5chainUnknownDevice.ts` (placeholder for unregistered device types)
 
 ### Device Types
 
@@ -36,6 +36,11 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 - `src/m5chain/m5chainDevices/m5chainJoyStick.ts`
 - `src/m5chain/m5chainDevices/m5chainToF.ts`
 - `src/m5chain/m5chainDevices/m5chainPIR.ts`
+- `src/m5chain/m5chainDevices/m5chainBuzzer.ts`
+- `src/m5chain/m5chainDevices/m5chainMono.ts`
+- `src/m5chain/m5chainDevices/m5chainRGB.ts`
+
+Mono and RGB share `src/m5chain/m5chainDevices/m5chainMatrixDisplay.ts` for matrix display operations.
 
 ### Feature Mixins
 
@@ -46,6 +51,10 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 ### Manifests / Config
 
 - `manifest.json` (standalone all-device entry point)
+- `manifests/host.json` (public core Host entry point)
+- `manifests/mod-base.json` (public Host-provided core typings for Mods)
+- `manifests/mod-all.json` (public all-device Mod entry point)
+- `manifests/devices/*.json` (public device entry points)
 - `src/m5chain/manifest_mod.json` (all-device Mod convenience manifest)
 - `src/m5chain/manifest_mod_base.json` (Host-provided core typings for Mods)
 - `src/m5chain/manifest_devices_all.json`
@@ -58,6 +67,10 @@ For general Moddable SDK development and validation rules, follow `$MODDABLE/AGE
 
 - `examples/basic/mod.ts`
 - `examples/led/mod.ts`
+- `examples/buzzer/mod.ts`
+- `examples/matrix/mod.ts`
+- `examples/host/main.ts` (standalone all-device application)
+- `examples/simulator/main.ts` (in-memory stream-transport scan test)
 
 ### Device Protocol PDFs
 
@@ -97,8 +110,9 @@ Keep the two type surfaces synchronized:
 ### Device Creation
 
 Applications pass supported device classes to `new M5Chain({ deviceClasses })`. `createM5ChainDevice` selects a
-registered class by `DEVICE_TYPE` and returns an instance; unregistered types become `UnknownDevice`. Each concrete
-class composes feature mixins via `withDeviceFeatures(...)`.
+registered class by `DEVICE_TYPE` and returns an instance; unregistered types become `UnknownDevice`.
+`deviceClasses` is required, may be empty, and is copied at construction. Devices with LED, key, or sample features
+compose them via `withDeviceFeatures(...)`; Mono and RGB extend the shared matrix display base class.
 
 ### Stream Transport
 
@@ -149,7 +163,7 @@ sequenceDiagram
   participant App
   participant M5Chain
   participant UART
-  App->>M5Chain: new M5Chain({ transmit, receive })
+  App->>M5Chain: new M5Chain({ deviceClasses })
   App->>M5Chain: start()
   M5Chain->>UART: HEARTBEAT
   UART-->>M5Chain: ok
@@ -158,6 +172,8 @@ sequenceDiagram
   loop each device id
     M5Chain->>UART: GET_DEVICE_TYPE(id)
     UART-->>M5Chain: type
+  end
+  loop each discovered device type
     M5Chain->>M5Chain: createM5ChainDevice(type)
     M5Chain->>UART: GET_UID (device.init)
     UART-->>M5Chain: uid
@@ -173,8 +189,8 @@ sequenceDiagram
   participant M5Chain
   Device-->>M5Chain: ENUM_PLEASE (0xFC)
   M5Chain->>M5Chain: debounce (500ms)
-  M5Chain->>M5Chain: stop poll loop
   M5Chain->>M5Chain: call onDisconnected() for old devices
+  M5Chain->>M5Chain: stop poll loop
   M5Chain->>M5Chain: scan again
   M5Chain-->>App: onDeviceListChanged(devices)
 ```
@@ -188,7 +204,9 @@ sequenceDiagram
   loop while at least one device.hasOnSample()
     M5Chain->>Device: readSample()
     Device-->>M5Chain: value or undefined
-    M5Chain-->>Device: dispatchOnSample(value)
+    opt value is not undefined
+      M5Chain-->>Device: dispatchOnSample(value)
+    end
   end
 ```
 
@@ -196,16 +214,19 @@ sequenceDiagram
 
 ```js
 import M5Chain from "m5chain";
+import M5ChainEncoder from "m5chainEncoder";
 
-const m5chain = new M5Chain({ transmit, receive });
+const m5chain = new M5Chain({ deviceClasses: [M5ChainEncoder] });
 
 m5chain.onDeviceListChanged = (devices) => {
 	for (const device of devices) {
-		// attach device-specific callbacks by device.type
+		if (device.kind === "encoder") {
+			device.onSample = (delta) => trace(`encoder delta=${delta}\n`);
+		}
 	}
 };
 
-m5chain.start();
+await m5chain.start();
 ```
 
 ## Implementation Requests

@@ -25,7 +25,7 @@ import HasKey, {
 | `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
 | `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
 | `KeyEvent` | Type of values passed to `onPush`. |
-| `KeyHandler` | `((keyEvent: KeyEvent) => void) \| null`. |
+| `KeyHandler` | `((keyEvent: KeyEvent) => void \| Promise<void>) \| null`. |
 | `KeyMode` | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
 | `KeyStatus` | Type of key status values used internally by key state reads. |
 
