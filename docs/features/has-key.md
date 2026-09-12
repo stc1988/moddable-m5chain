@@ -22,7 +22,7 @@ import {
 | `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
 | `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
 | `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
-| `KeyEvent` | Type of values passed to `onPush`. |
+| `KeyEvent` | Type of values passed to `onKeyEvent`. |
 | `KeyHandler` | `((keyEvent: KeyEvent) => void \| Promise<void>) \| null`, available from `hasKey` for custom device implementations. |
 | `KeyMode` | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
 | `KeyStatus` | Type of key status values used internally by key state reads. |
@@ -46,7 +46,7 @@ import { KEY_EVENT, KEY_MODE } from "m5chainEncoder";
 
 await device.configure({ key: { mode: KEY_MODE.ACTIVE } });
 
-device.onPush = (keyEvent) => {
+device.onKeyEvent = (keyEvent) => {
 	if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
 		trace("single click\n");
 	}
@@ -68,10 +68,10 @@ device.onPush = (keyEvent) => {
 | `await device.configure({ key })` | Applies key configuration. |
 | `await device.readConfiguration()` | Reads key mode and trigger interval from the device. |
 | `await device.isKeyPressed()` | Reads whether the key is currently pressed. |
-| `device.onPush = (keyEvent) => {}` | Handles active key reports. Set to `null` to clear the handler. |
+| `device.onKeyEvent = (keyEvent) => {}` | Handles active key reports. Set to `null` to clear the handler. |
 
 ## Event Notes
 
-`onPush` receives a key event, not a pressed/released state. For current pressed state, use `isKeyPressed()`.
+`onKeyEvent` receives a key event, not a pressed/released state. For current pressed state, use `isKeyPressed()`.
 
 Async handlers are supported; rejected promises are reported through `m5chain.onError`.

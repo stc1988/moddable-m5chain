@@ -40,17 +40,17 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 		...PIR_COMMAND,
 	} as const);
 
-	#onChanged: PIRPresenceHandler = null;
+	#onPresenceChanged: PIRPresenceHandler = null;
 
-	set onChanged(fn: PIRPresenceHandler) {
+	set onPresenceChanged(fn: PIRPresenceHandler) {
 		if (fn !== null && typeof fn !== "function") {
-			throw new Error("onChanged must be a function or null");
+			throw new Error("onPresenceChanged must be a function or null");
 		}
-		this.#onChanged = fn;
+		this.#onPresenceChanged = fn;
 	}
 
-	get onChanged(): PIRPresenceHandler {
-		return this.#onChanged;
+	get onPresenceChanged(): PIRPresenceHandler {
+		return this.#onPresenceChanged;
 	}
 
 	override async configure(options: PIRConfiguration = {}): Promise<void> {
@@ -95,7 +95,7 @@ class M5ChainPIR extends withDeviceFeatures(HasLed, CanSample<PIRStatus>()) {
 	}
 
 	onDispatchEvent(buffer: PacketBuffer) {
-		return this.#onChanged?.(pirStatusFromEventPacket(buffer));
+		return this.#onPresenceChanged?.(pirStatusFromEventPacket(buffer));
 	}
 
 	async #setReportMode(mode: PIRReportMode): Promise<void> {

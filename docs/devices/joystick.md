@@ -27,7 +27,7 @@ import M5ChainJoyStick, {
 | `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
 | `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
 | `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
-| `KeyEvent` | Type of values passed to `onPush`. |
+| `KeyEvent` | Type of values passed to `onKeyEvent`. |
 | `KeyMode` | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
 | `KeyStatus` | Type of key status values used internally by key state reads. |
 | `JoystickConfiguration` | Type accepted by `configure()`. |
@@ -59,7 +59,7 @@ if (device.kind === "joystick") {
 		mappedRange: { xMin: -100, xMax: 100, yMin: -100, yMax: 100 },
 	});
 
-	joystick.onPush = (keyEvent) => {
+	joystick.onKeyEvent = (keyEvent) => {
 		if (keyEvent === KEY_EVENT.LONG_PRESS) {
 			trace("joystick long press\n");
 		}

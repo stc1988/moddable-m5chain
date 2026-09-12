@@ -93,7 +93,7 @@ Use `device.kind` to select the device API without a TypeScript cast.
 - **Sampling:** set the target device's `onSample` handler to start reading it. `sample()` returns its latest cached
   value, or `undefined` before a sample is available; calling it does not communicate with the device. Clear the
   handler with `null` to stop sampling that device. See [sampling](docs/features/can-sample.md).
-- **Key events:** use `onPush` for click/long-press events and `isKeyPressed()` for the current pressed state.
+- **Key events:** use `onKeyEvent` for click/long-press events and `isKeyPressed()` for the current pressed state.
   Configure active key reporting when using events. See [key settings](docs/features/has-key.md).
 - **LED output:** color channels and brightness are integers from `0` to `255`. Await operations such as
   `setLedColor()`; see [LED methods](docs/features/has-led.md).
@@ -122,12 +122,12 @@ with a particular instance. See the [API and lifecycle reference](docs/api.md) f
 
 | Device | Type ID | `HasLed` | `HasKey` | `CanSample` | Polled Sample (`onSample`) | Device Event Callback | API Guide |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Delta value | `onPush` | [Encoder API](docs/devices/encoder.md) |
+| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder) | `0x0001` | Yes | Yes | Yes | Delta value | `onKeyEvent` | [Encoder API](docs/devices/encoder.md) |
 | [Angle](https://docs.m5stack.com/en/chain/Chain_Angle) | `0x0002` | Yes | No | Yes | Normalized `0.00`-`1.00` | — | [Angle API](docs/devices/angle.md) |
-| [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | — | `onPush` | [Key API](docs/devices/key.md) |
-| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | `{ x, y }` in `-128` to `127` | `onPush` | [JoyStick API](docs/devices/joystick.md) |
+| [Key](https://docs.m5stack.com/en/chain/Chain_Key) | `0x0003` | Yes | Yes | No | — | `onKeyEvent` | [Key API](docs/devices/key.md) |
+| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick) | `0x0004` | Yes | Yes | Yes | `{ x, y }` in `-128` to `127` | `onKeyEvent` | [JoyStick API](docs/devices/joystick.md) |
 | [ToF](https://docs.m5stack.com/en/chain/Chain_ToF) | `0x0005` | Yes | No | Yes | Distance in mm | — | [ToF API](docs/devices/tof.md) |
-| [PIR](https://docs.m5stack.com/en/chain/Chain_PIR) | `0x0009` | Yes | No | Yes | Presence status | `onChanged` | [PIR API](docs/devices/pir.md) |
+| [PIR](https://docs.m5stack.com/en/chain/Chain_PIR) | `0x0009` | Yes | No | Yes | Presence status | `onPresenceChanged` | [PIR API](docs/devices/pir.md) |
 | [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer) | `0x000B` | Yes | No | No | — | — | [Buzzer API](docs/devices/buzzer.md) |
 | [Mono](https://docs.m5stack.com/en/chain/Chain_Mono) | `0x000D` | No | No | No | — | — | [Mono API](docs/devices/mono.md) |
 | [RGB](https://docs.m5stack.com/en/chain/Chain_RGB) | `0x000E` | No | No | No | — | — | [RGB API](docs/devices/rgb.md) |

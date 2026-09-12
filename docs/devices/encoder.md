@@ -21,7 +21,7 @@ These exports can also be used as TypeScript types.
 | --- | --- |
 | `M5ChainEncoder` | Default class export. |
 | `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
-| `KeyEvent` | Type of values passed to `onPush`. |
+| `KeyEvent` | Type of values passed to `onKeyEvent`. |
 | `EncoderABDirection` | Encoder A/B direction values: `CLOCKWISE_INCREASE = 0`, `CLOCKWISE_DECREASE = 1`. |
 | `SaveToFlash` | Persistence values: `DISABLE = 0`, `ENABLE = 1`. |
 | `EncoderConfiguration` | Type accepted by `configure()`. |
@@ -52,7 +52,7 @@ if (device.kind === "encoder") {
 	});
 	await encoder.resetEncoderValue();
 
-	encoder.onPush = async (keyEvent) => {
+	encoder.onKeyEvent = async (keyEvent) => {
 		if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
 			await encoder.resetEncoderValue();
 		}

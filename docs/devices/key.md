@@ -16,7 +16,7 @@ import M5ChainKey, { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyMod
 | `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
 | `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
 | `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
-| `KeyEvent` | Type of values passed to `onPush`. |
+| `KeyEvent` | Type of values passed to `onKeyEvent`. |
 | `KeyMode` | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
 | `KeyStatus` | Type of key status values used internally by key state reads. |
 
@@ -42,7 +42,7 @@ if (device.kind === "key") {
 	await key.setLedColor(255, 255, 255);
 	await key.configure({ key: { mode: KEY_MODE.ACTIVE } });
 
-	key.onPush = async (keyEvent) => {
+	key.onKeyEvent = async (keyEvent) => {
 		if (keyEvent === KEY_EVENT.DOUBLE_CLICK) {
 			await key.setLedColor(255, 0, 0);
 		}
@@ -57,7 +57,7 @@ if (device.kind === "key") {
 | `await device.configure({ key })` | Applies key configuration. |
 | `await device.readConfiguration()` | Reads key configuration from the device. |
 | `await device.isKeyPressed()` | Reads whether the key is currently pressed. |
-| `device.onPush = (keyEvent) => {}` | Handles key events when active reporting is enabled. |
+| `device.onKeyEvent = (keyEvent) => {}` | Handles key events when active reporting is enabled. |
 
 ## Configuration
 

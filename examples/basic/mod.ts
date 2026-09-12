@@ -36,7 +36,7 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 
 	switch (device.kind) {
 		case "encoder":
-			device.onPush = (event) => logKeyEvent(device, event);
+			device.onKeyEvent = (event) => logKeyEvent(device, event);
 			device.onSample = (sample) => {
 				log(`${deviceLabel(device)} delta=${sample}`);
 			};
@@ -49,11 +49,11 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 			break;
 
 		case "key":
-			device.onPush = (event) => logKeyEvent(device, event);
+			device.onKeyEvent = (event) => logKeyEvent(device, event);
 			break;
 
 		case "joystick":
-			device.onPush = (event) => logKeyEvent(device, event);
+			device.onKeyEvent = (event) => logKeyEvent(device, event);
 			device.onSample = (sample) => {
 				log(`${deviceLabel(device)} x=${sample.x} y=${sample.y}`);
 			};
@@ -66,7 +66,7 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 			break;
 
 		case "pir":
-			device.onChanged = (status) => {
+			device.onPresenceChanged = (status) => {
 				const detected = status === PIR_STATUS.PERSON_DETECTED;
 				log(`${deviceLabel(device)} person detected=${detected}`);
 			};

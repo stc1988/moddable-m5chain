@@ -100,7 +100,7 @@ function keyStatusFromValue(value: number): KeyStatus {
 }
 
 export type HasKeyMethods = {
-	onPush: KeyHandler;
+	onKeyEvent: KeyHandler;
 	onDispatchEvent(buffer: PacketBuffer): void;
 	isKeyPressed(): Promise<boolean>;
 	configure(options?: KeyDeviceConfiguration): Promise<void>;
@@ -129,17 +129,17 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 			}),
 		} as const);
 
-		#onPush: KeyHandler = null;
+		#onKeyEvent: KeyHandler = null;
 
-		set onPush(fn: KeyHandler) {
+		set onKeyEvent(fn: KeyHandler) {
 			if (fn !== null && typeof fn !== "function") {
-				throw new Error("onPush must be a function or null");
+				throw new Error("onKeyEvent must be a function or null");
 			}
-			this.#onPush = fn;
+			this.#onKeyEvent = fn;
 		}
 
-		get onPush(): KeyHandler {
-			return this.#onPush;
+		get onKeyEvent(): KeyHandler {
+			return this.#onKeyEvent;
 		}
 
 		get #commands() {
@@ -163,7 +163,7 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 
 		onDispatchEvent(buffer: PacketBuffer) {
 			const keyEvent = keyEventFromValue(readPacketByte(buffer, 6, "key event"));
-			return this.onPush?.(keyEvent);
+			return this.onKeyEvent?.(keyEvent);
 		}
 
 		async isKeyPressed(): Promise<boolean> {

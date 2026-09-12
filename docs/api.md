@@ -82,7 +82,7 @@ An initial scan protocol failure also rejects `start()` so application startup c
 with no connected chain remains a successful scan with an empty device list. Background re-scan failures are reported
 through `onError` without stopping connection monitoring.
 
-### `device.onPush = (status) => {}`
+### `device.onKeyEvent = (keyEvent) => {}`
 
 Available on devices with `HasKey` (Encoder / Key / JoyStick).
 
@@ -92,7 +92,7 @@ Available on devices with `HasKey` (Encoder / Key / JoyStick).
 ```js
 import { KEY_EVENT } from "m5chainEncoder";
 
-device.onPush = async (keyEvent) => {
+device.onKeyEvent = async (keyEvent) => {
 	if (keyEvent === KEY_EVENT.SINGLE_CLICK) {
 		await device.setLedColor(255, 0, 0);
 	}
@@ -123,7 +123,7 @@ The handler may return a promise. Rejections are reported through `m5chain.onErr
 
 Angle, JoyStick, ToF, and PIR dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
 
-### `pir.onChanged = (status) => {}`
+### `pir.onPresenceChanged = (status) => {}`
 
 Available on Chain PIR. When PIR report mode is enabled, the device sends a change-driven event with
 `PIR_STATUS.NO_PERSON` or `PIR_STATUS.PERSON_DETECTED`. See the [PIR API](devices/pir.md).

@@ -77,7 +77,7 @@ function attachDeviceHandlers(device: LedDevice) {
 		case "key": {
 			let step = 0;
 
-			device.onPush = async (event) => {
+			device.onKeyEvent = async (event) => {
 				log(`${deviceLabel(device)} key event=${event}`);
 				if (event !== KEY_EVENT.SINGLE_CLICK) return;
 
@@ -116,7 +116,7 @@ function attachDeviceHandlers(device: LedDevice) {
 			break;
 
 		case "pir":
-			device.onChanged = async (status) => {
+			device.onPresenceChanged = async (status) => {
 				const detected = status === PIR_STATUS.PERSON_DETECTED;
 				log(`${deviceLabel(device)} person detected=${detected}`);
 				await device.setLedColor(detected ? 0 : 255, detected ? 255 : 0, 0);
