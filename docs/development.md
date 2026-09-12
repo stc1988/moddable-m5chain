@@ -6,8 +6,8 @@ Run the commands below from the repository root.
 ## Contribution policy
 
 - Optimize the public API for application developers while keeping the implementation maintainable.
-- Do not make a breaking public API change unless it is explicitly requested or clearly justified by the task.
-  Update affected documentation and examples and describe the migration.
+- Do not make a breaking public API change without explicit user approval. Update affected documentation and
+  examples and describe the migration.
 - Update public documentation and examples when a public API or observable behavior changes. Internal-only changes do
   not require unrelated documentation edits.
 - Preserve the stable public manifest entry points under `manifests/`; files under `src/m5chain/` are internal.
@@ -26,16 +26,24 @@ mcconfig -dn -m -p esp32/m5atom_matrix -t build ./examples/manifest.json
 mcrun -dn -m -p esp32/m5atom_matrix -t build ./examples/basic/manifest.json
 ```
 
-Type checking runs the same type tests against the Host implementation and the Mod declarations using
-`tsconfig.mod.json`. It enables `noImplicitOverride` and `noUncheckedIndexedAccess`; packet and collection indexing must either validate the requested
-entry or handle the possibility that it is absent.
+The default TypeScript configuration checks the implementation, examples, and TypeScript tests. The
+`tsconfig.mod.json` configuration checks the tests again with the core module specifiers mapped to the Mod-facing
+declarations. Both configurations enable `noImplicitOverride` and `noUncheckedIndexedAccess`; packet and collection
+indexing must either validate the requested entry or handle the possibility that it is absent.
 
-The Host build's XS linker output should contain no `not frozen` warnings for `m5chain`. Module-level lookup tables, exported
-constant objects, and class command tables must remain frozen so preloaded instances can stay in flash. See
+The Host and Mod build output should contain no `not frozen` warnings for preloaded M5Chain modules. Module-level
+lookup tables, exported constant objects, and class command tables must remain frozen so preloaded instances can stay
+in flash. See
 [Using XS Preload to Optimize Applications](https://github.com/Moddable-OpenSource/moddable/blob/public/documentation/xs/preload.md).
 
+After changing a manifest's `modules`, `include`, or `preload`, inspect the generated `manifest_flat.json` under the
+corresponding `build/tmp/` directory. Confirm that the expected modules and preload entries are present. A successful
+build alone does not prove that an imported module was supplied by the resolved manifests; a missing module may fail
+only when the import is evaluated at runtime.
+
 Documentation-only and web-only changes do not require unrelated device builds. Run the formatter, linter, tests, and
-builds relevant to the affected files, and report hardware behavior that remains unverified.
+builds relevant to the affected files, and report hardware behavior that remains unverified. For changes under
+`web/buzzer/`, run `npm run buzzer-preview:build` in addition to formatting and linting.
 
 ## Host and Mod type boundary
 
@@ -69,7 +77,8 @@ cancels or aborts the streams, and releases their locks.
 Packets use an `AA 55` header, a two-byte little-endian length, `id`, `cmd`, payload data, CRC8, and a `55 AA` footer.
 A pending request is completed only by a response matching both its device ID and command, plus any request-specific
 matcher. UART requests are serialized; queued request payloads are copied before later writes can reuse the shared
-command buffer.
+command buffer. An uncontended request starts immediately; overlapping requests wait in the queue. The UART adapter
+writes each stream chunk in smaller pieces as FIFO capacity becomes available.
 
 ## Device creation and sampling
 
@@ -115,12 +124,6 @@ class M5ChainEncoder extends withDeviceFeatures(HasLed, HasKey, CanSample<number
 ```
 
 The order matters when a feature depends on commands from the composed class. Existing device classes should be used as the reference pattern.
-
-## Transport internals
-
-UART requests are serialized. An uncontended request starts immediately; overlapping requests are queued with their
-payload copied so later changes to the shared command buffer cannot affect them. The writable stream supplies
-backpressure, and the UART adapter writes packets in chunks as output space becomes available.
 
 ## Sample implementation hooks
 
