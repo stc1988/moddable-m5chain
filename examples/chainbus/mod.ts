@@ -5,6 +5,7 @@ const LOG_PREFIX = "[examples/chainbus]";
 
 // Safe operations run by default. Set the optional tests below to match the connected hardware.
 const I2C_FREQUENCY: ChainBusI2CFrequency = 400_000;
+const RUN_GESTURE_TEST = true;
 const I2C_TEST: I2CTest | null = null;
 const RUN_GPIO_TESTS = false;
 
@@ -60,6 +61,7 @@ async function runChainBusChecks(device: ChainBusDevice) {
 	await device.i2c.configure({ frequency: I2C_FREQUENCY });
 	const addresses = await device.i2c.scan();
 	log(`I2C ${I2C_FREQUENCY} Hz addresses=${formatAddresses(addresses)}`);
+	if (RUN_GESTURE_TEST) await verifyGestureUnit(device, addresses);
 
 	if (I2C_TEST) await runI2CTransfers(device, I2C_TEST);
 	else log("raw I2C transfers skipped; configure I2C_TEST for the connected peripheral");
@@ -69,6 +71,22 @@ async function runChainBusChecks(device: ChainBusDevice) {
 
 	if (RUN_GPIO_TESTS) await runGPIOChecks(device);
 	else log("GPIO tests skipped; set RUN_GPIO_TESTS after checking the wiring");
+}
+
+async function verifyGestureUnit(device: ChainBusDevice, addresses: readonly number[]) {
+	const address = 0x73;
+	if (!addresses.includes(address)) throw new Error("Gesture Unit address 0x73 was not found");
+
+	// PAJ7620U2 register 0xEF selects the register bank. Bank 0 exposes the two-byte device ID at 0x00.
+	await device.i2c.writeRegister(address, 0xef, 1, Uint8Array.of(0));
+	log("Gesture register bank selected: 0");
+
+	const id = await device.i2c.readRegister(address, 0x00, 1, 2);
+	log(`Gesture device ID=${formatBytes(id)}`);
+	if (id[0] !== 0x20 || id[1] !== 0x76) {
+		throw new Error(`unexpected Gesture device ID ${formatBytes(id)}; expected 20 76`);
+	}
+	log("Gesture PAJ7620U2 register read/write verified");
 }
 
 async function runI2CTransfers(device: ChainBusDevice, test: I2CTest) {
