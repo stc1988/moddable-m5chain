@@ -140,6 +140,7 @@ From a checkout of this repository:
 
 - [Standalone Host](examples/host): discover all supported devices.
 - [Basic Mod](examples/basic): discovery, device information, and event handlers.
+- [ChainBus Mod](examples/chainbus): I2C, GPIO, ADC, interrupt, and LED checks for ChainBus Unit.
 - [LED Mod](examples/led), [Buzzer Mod](examples/buzzer), [Matrix Mod](examples/matrix): output examples.
 - [Simulator](examples/simulator): scan an in-memory device without hardware.
 

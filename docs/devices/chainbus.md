@@ -7,6 +7,8 @@ The protocol reference used by this implementation is
 [M5Stack Unit ChainBus Protocol V1](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1201/M5Stack-Unit-ChainBus-Protocol-EN.pdf),
 dated November 13, 2025.
 
+See the [ChainBus example](../../examples/chainbus) for configurable I2C, GPIO, ADC, interrupt, and LED checks.
+
 ## Role in M5Chain
 
 Despite its name, a ChainBus Unit does not create another M5Chain UART transport. It is one node on the existing

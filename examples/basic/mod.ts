@@ -65,6 +65,10 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 			};
 			break;
 
+		case "chainbus":
+			log(`${deviceLabel(device)} ready`);
+			break;
+
 		case "pir":
 			device.onPresenceChanged = (status) => {
 				const detected = status === PIR_STATUS.PERSON_DETECTED;
