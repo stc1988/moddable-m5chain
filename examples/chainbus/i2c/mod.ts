@@ -1,5 +1,5 @@
+import { formatBytes, runChainBusExample } from "chainbusExample";
 import type { ChainBusI2CFrequency } from "m5chainChainBus";
-import { formatBytes, runChainBusExample } from "../common";
 
 const I2C_FREQUENCY: ChainBusI2CFrequency = 400_000;
 const GESTURE_ADDRESS = 0x73;

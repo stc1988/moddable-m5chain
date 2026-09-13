@@ -6,6 +6,6 @@
 		"../../manifests/devices/chainbus.json"
 	],
 	"modules": {
-		"*": "./common"
+		"chainbusExample": "./common"
 	}
 }

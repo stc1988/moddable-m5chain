@@ -1,4 +1,4 @@
-import { runChainBusExample } from "../common";
+import { runChainBusExample } from "chainbusExample";
 
 export async function main() {
 	await runChainBusExample("basic", async (device) => {

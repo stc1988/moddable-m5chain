@@ -1,4 +1,4 @@
-import { type ChainBusDevice, runChainBusExample } from "../common";
+import { type ChainBusDevice, runChainBusExample } from "chainbusExample";
 
 const OUTPUT_TEST_ENABLED = false;
 

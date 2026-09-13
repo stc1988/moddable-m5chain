@@ -18,6 +18,7 @@
 		"noUncheckedSideEffectImports": true,
 		"verbatimModuleSyntax": true,
 		"paths": {
+			"chainbusExample": ["./examples/chainbus/common"],
 			"*": [
 				"./node_modules/@moddable/typings/*",
 				"./node_modules/@moddable/typings/ble/*",
