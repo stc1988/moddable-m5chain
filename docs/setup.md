@@ -127,8 +127,9 @@ mcrun -d -m -p esp32/m5atom_matrix ./examples/basic/manifest.json
 
 The Host calls the Mod's exported `main()` function. The debugger shows `[examples/basic] start` and
 the discovered device list. A fresh Host without a Mod may show `No module found.` before this step.
-Replace `basic` with `chainbus`, `led`, `buzzer`, or `matrix` to run another Mod. Configure the hardware-specific
-tests in [`examples/chainbus/mod.ts`](../examples/chainbus/mod.ts) before enabling its I2C writes or GPIO operations.
+Replace `basic` with `led`, `buzzer`, or `matrix` to run another top-level Mod. ChainBus checks are separated by I/O
+type; for example, run `examples/chainbus/i2c/manifest.json` with a Gesture Unit or
+`examples/chainbus/gpio-input/manifest.json` with a PIR Unit.
 
 The examples use a shared Host. The shared host
 contains the M5Chain transport, scan, polling, base-device, and UnknownDevice code; concrete device implementations

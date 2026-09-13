@@ -7,7 +7,8 @@ The protocol reference used by this implementation is
 [M5Stack Unit ChainBus Protocol V1](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1201/M5Stack-Unit-ChainBus-Protocol-EN.pdf),
 dated November 13, 2025.
 
-See the [ChainBus example](../../examples/chainbus) for configurable I2C, GPIO, ADC, interrupt, and LED checks.
+See the [ChainBus examples](../../examples/chainbus) for separate basic, I2C, GPIO input, GPIO output, ADC, interrupt,
+and LED checks.
 
 ## Role in M5Chain
 

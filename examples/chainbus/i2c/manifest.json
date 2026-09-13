@@ -1,0 +1,5 @@
+{
+	"build": { "NAME": "chainbus-i2c" },
+	"include": ["../manifest-base.json"],
+	"modules": { "*": "./mod" }
+}

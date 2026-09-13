@@ -1,0 +1,5 @@
+{
+	"build": { "NAME": "chainbus-gpio-output" },
+	"include": ["../manifest-base.json"],
+	"modules": { "*": "./mod" }
+}

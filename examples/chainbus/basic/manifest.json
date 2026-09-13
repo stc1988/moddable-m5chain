@@ -1,0 +1,5 @@
+{
+	"build": { "NAME": "chainbus-basic" },
+	"include": ["../manifest-base.json"],
+	"modules": { "*": "./mod" }
+}
