@@ -1,5 +1,6 @@
 import M5ChainAngle from "m5chainAngle";
 import M5ChainBuzzer from "m5chainBuzzer";
+import M5ChainChainBus from "m5chainChainBus";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
@@ -17,6 +18,7 @@ const M5CHAIN_DEVICE_CLASSES = Object.freeze([
 	M5ChainToF,
 	M5ChainPIR,
 	M5ChainBuzzer,
+	M5ChainChainBus,
 	M5ChainMono,
 	M5ChainRGB,
 ]);

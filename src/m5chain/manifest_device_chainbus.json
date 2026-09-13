@@ -1,0 +1,8 @@
+{
+	"include": ["./manifest_feature_led.json"],
+	"modules": {
+		"chainBusProtocol": "./chainBusProtocol",
+		"m5chainChainBus": "./m5chainDevices/m5chainChainBus"
+	},
+	"preload": ["chainBusProtocol", "m5chainChainBus"]
+}

@@ -1,10 +1,9 @@
-# ChainBus Unit Design Proposal
+# ChainBus Unit API
 
-This document defines the requirements and proposed public API for supporting the
-[M5Stack ChainBus Unit](https://docs.m5stack.com/ja/arduino/projects/chain/chain_bus). It is a design proposal, not
-documentation for an implemented device class.
+This document describes support for the
+[M5Stack ChainBus Unit](https://docs.m5stack.com/ja/arduino/projects/chain/chain_bus).
 
-The protocol reference used by this proposal is
+The protocol reference used by this implementation is
 [M5Stack Unit ChainBus Protocol V1](https://m5stack-doc.oss-cn-shenzhen.aliyuncs.com/1201/M5Stack-Unit-ChainBus-Protocol-EN.pdf),
 dated November 13, 2025.
 
@@ -14,9 +13,9 @@ Despite its name, a ChainBus Unit does not create another M5Chain UART transport
 M5Chain and is enumerated with device type `0x0006`. The unit provides remote access to an I2C bus, two GPIO pins,
 12-bit ADC input, GPIO edge events, and one RGB LED.
 
-The implementation should therefore add a regular device class:
+The library exposes the unit as a regular device class:
 
-| Property | Proposed value |
+| Property | Value |
 | --- | --- |
 | Class | `M5ChainChainBus` |
 | Module | `m5chainChainBus` |
@@ -27,7 +26,7 @@ The implementation should therefore add a regular device class:
 The existing `M5Chain` instance continues to own the UART, framing, CRC validation, request serialization,
 enumeration, connection monitoring, and error reporting. No raw UART or second transport is exposed for this device.
 
-## Proposed Public API
+## Public API
 
 The API groups operations by the remote resource they control. Applications do not pass protocol pin identifiers;
 `gpio1` and `gpio2` bind those identifiers when the device is constructed.
@@ -125,7 +124,7 @@ interface ChainBusGPIO {
 - `onInterrupt` does not itself change the hardware mode. Set the handler before configuring interrupt mode to avoid
   missing an event. Setting it to `null` stops application delivery but does not reconfigure the remote pin.
 
-The unit has one RGB LED and should compose the existing `HasLed` feature. Public color and brightness values remain
+The unit has one RGB LED and composes the existing `HasLed` feature. Public color and brightness values remain
 integers from 0 through 255. Brightness conversion to and from the protocol's 0-through-100 scale follows the existing
 [HasLed API](../features/has-led.md); LED state is not part of device configuration.
 
@@ -163,7 +162,7 @@ delivered to that instance.
 
 ## Protocol Mapping
 
-| Command | Protocol operation | Proposed API |
+| Command | Protocol operation | Public API |
 | --- | --- | --- |
 | `0x10` | Initialize I2C | `i2c.configure()` |
 | `0x11` | Raw I2C read | `i2c.read()` |
@@ -220,12 +219,11 @@ The source documents contain details that an implementation must resolve conserv
 - The protocol describes a maximum packet length of 256 bytes and maximum I2C transfer length of 64 bytes. The lower
   I2C limit governs the public I2C methods even when the transport has room for a larger payload.
 
-## Integration Requirements for a Future Implementation
+## Integration
 
-A complete implementation must add the device runtime module and declaration-only Host/Mod surface, a public device
-manifest, the all-device manifest entry, and the inferred `m5chainDevices` union. It must also update the supported
-device tables in the main README and [Device API Guides](README.md). Preloaded constants and command tables must remain
-frozen.
+The device runtime and protocol modules are available through `manifests/devices/chainbus.json`. The all-device
+manifest includes them and adds `M5ChainChainBus` to the inferred `m5chainDevices` union. Preloaded constants and
+command tables remain frozen.
 
 The API deliberately does not copy the Arduino library's pointer-based status/result interface. Promise resolution,
 typed values, resource-specific objects, and exceptions match this library's existing TypeScript-facing conventions
@@ -256,6 +254,6 @@ The simulator can verify framing, validation, request ordering, state-independen
 hardware validation is still required for 100/400 kHz I2C operation, electrical pull and drive behavior, actual ADC
 accuracy and reference voltage, interrupt timing, hot swapping, and mixed-device chains.
 
-Implementation is acceptable only when all protocol operations are reachable through the proposed API, malformed or
+Implementation is acceptable only when all protocol operations are reachable through the public API, malformed or
 failed responses cannot be mistaken for valid values, existing M5Chain devices remain unaffected, and the hardware-
 only gaps above are explicitly reported with the test results.

@@ -59,6 +59,7 @@ declare class IncompleteDevice {
 type _IncompleteDeviceRegistry = RegisteredM5ChainDevice<readonly [typeof IncompleteDevice]>;
 
 import M5ChainAngle from "m5chainAngle";
+import M5ChainChainBus, { type ChainBusGPIOMode } from "m5chainChainBus";
 import M5ChainEncoder from "m5chainEncoder";
 import M5Chain from "m5chain";
 
@@ -76,6 +77,23 @@ for (const device of chain.devices) {
 	}
 	if (device.kind === "encoder") {
 		await device.configure({ key: { mode: 1 } });
+	}
+}
+const chainBusChain = new M5Chain({ deviceClasses: [M5ChainChainBus], transport });
+for (const device of chainBusChain.devices) {
+	if (device.kind === "chainbus") {
+		await device.i2c.configure({ frequency: 400_000 });
+		await device.gpio1.configure({ mode: "interrupt", edge: "both" });
+		const mode: ChainBusGPIOMode = await device.gpio1.readMode();
+		void mode;
+		device.gpio2.onInterrupt = async (edge) => {
+			const typedEdge: "rising" | "falling" = edge;
+			void typedEdge;
+		};
+		// @ts-expect-error Unsupported I2C speed.
+		await device.i2c.configure({ frequency: 1_000_000 });
+		// @ts-expect-error Analog mode has no pull option.
+		await device.gpio1.configure({ mode: "analog", pull: "up" });
 	}
 }
 const SampleDevice = withDeviceFeatures(HasLed, CanSample<number>());

@@ -15,6 +15,7 @@ Shared mixin APIs are documented separately in [Feature API Guides](../features/
 | [Key](key.md) | `M5ChainKey` | `m5chainKey` | LED, key |
 | [JoyStick](joystick.md) | `M5ChainJoyStick` | `m5chainJoyStick` | LED, key, sampling |
 | [ToF](tof.md) | `M5ChainToF` | `m5chainToF` | LED, sampling |
+| [ChainBus](chainbus.md) | `M5ChainChainBus` | `m5chainChainBus` | LED, I2C, GPIO, ADC, GPIO interrupts |
 | [PIR](pir.md) | `M5ChainPIR` | `m5chainPIR` | LED, sampling, presence-change events |
 | [Buzzer](buzzer.md) | `M5ChainBuzzer` | `m5chainBuzzer` | LED, tone and note output |
 | [Mono](mono.md) | `M5ChainMono` | `m5chainMono` | 8x8 monochrome matrix display |

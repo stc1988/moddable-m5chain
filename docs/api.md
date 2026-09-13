@@ -17,7 +17,7 @@
 ## Common Device API (`M5ChainDevice`)
 
 - `device.id`
-- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `pir`, `buzzer`, `mono`, `rgb`, or `unknown`)
+- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `chainbus`, `pir`, `buzzer`, `mono`, `rgb`, or `unknown`)
 - `device.type` numeric device type ID used by the M5Chain protocol
 - `device.known` (`false` for device types not registered in this instance's `deviceClasses`, including unsupported types)
 - `device.connected`
