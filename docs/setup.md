@@ -133,13 +133,14 @@ tests in [`examples/chainbus/mod.ts`](../examples/chainbus/mod.ts) before enabli
 The examples use a shared Host. The shared host
 contains the M5Chain transport, scan, polling, base-device, and UnknownDevice code; concrete device implementations
 come from each Mod.
-That host reserves 6144 XS heap slots so the library and a loaded Mod fit in the fixed-size slot heap. Applications
-using their own Mod host should make the equivalent adjustment in the host manifest, not the Mod manifest:
+That host reserves 8192 XS heap slots so the all-device library and a loaded Mod fit in the fixed-size slot heap.
+Applications using their own Mod host should make the equivalent adjustment in the host manifest, not the Mod
+manifest. The larger allocation is required after adding the ChainBus remote-I/O classes to `mod-all`:
 
 ```json
 "creation": {
 	"heap": {
-		"initial": 6144,
+		"initial": 8192,
 		"incremental": 0
 	}
 }

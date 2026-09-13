@@ -16,7 +16,7 @@
 	},
 	"creation": {
 		"heap": {
-			"initial": 6144,
+			"initial": 8192,
 			"incremental": 0
 		}
 	},
