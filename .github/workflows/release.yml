@@ -49,7 +49,11 @@ jobs:
           fi
 
       - name: Update package version
-        run: npm version "$VERSION" --no-git-tag-version
+        run: |
+          CURRENT_VERSION="$(node -p "require('./package.json').version")"
+          if [[ "$CURRENT_VERSION" != "$VERSION" ]]; then
+            npm version "$VERSION" --no-git-tag-version
+          fi
 
       - name: Verify version files
         run: |
@@ -61,11 +65,13 @@ jobs:
             exit 1
           fi
 
-          CHANGED_FILES="$(git diff --name-only)"
-          if [[ "$CHANGED_FILES" != $'package-lock.json\npackage.json' ]]; then
-            echo "Expected only package.json and package-lock.json to change; got:" >&2
-            printf '%s\n' "$CHANGED_FILES" >&2
-            exit 1
+          if ! git diff --quiet; then
+            CHANGED_FILES="$(git diff --name-only)"
+            if [[ "$CHANGED_FILES" != $'package-lock.json\npackage.json' ]]; then
+              echo "Expected only package.json and package-lock.json to change; got:" >&2
+              printf '%s\n' "$CHANGED_FILES" >&2
+              exit 1
+            fi
           fi
 
       - name: Commit and tag release
@@ -75,7 +81,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add package.json package-lock.json
-          git commit -m "Release ${TAG}"
+          git commit --allow-empty -m "Release ${TAG}"
           git tag -a "$TAG" -m "Release ${TAG}"
 
           TAG_VERSION="$(git show "${TAG}:package.json" | node -e "let data = ''; process.stdin.on('data', chunk => data += chunk); process.stdin.on('end', () => process.stdout.write(JSON.parse(data).version));")"
