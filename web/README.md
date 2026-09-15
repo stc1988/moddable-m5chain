@@ -5,6 +5,8 @@ Browser applications in this directory are published together as one GitHub Page
 - `web/index.html` is the site index at `https://stc1988.github.io/moddable-m5chain/`.
 - Each application is built into its own subdirectory. For example, `web/buzzer` is published at
   `https://stc1988.github.io/moddable-m5chain/buzzer/`.
+- `web/matrix` provides one shared Mono/RGB frame editor at
+  `https://stc1988.github.io/moddable-m5chain/matrix/`.
 
 The deployment workflow builds every application and assembles one Pages artifact. A deployment must always include
 all applications because a Pages deployment replaces the previously published artifact.

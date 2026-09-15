@@ -30,7 +30,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: web/buzzer/package-lock.json
+          cache-dependency-path: |
+            web/buzzer/package-lock.json
+            web/matrix/package-lock.json
 
       - name: Install Buzzer dependencies
         run: npm ci --prefix web/buzzer
@@ -38,11 +40,18 @@ jobs:
       - name: Build Buzzer
         run: npm run build --prefix web/buzzer
 
+      - name: Install Matrix dependencies
+        run: npm ci --prefix web/matrix
+
+      - name: Build Matrix
+        run: npm run build --prefix web/matrix
+
       - name: Assemble Pages site
         run: |
-          mkdir -p pages/buzzer
+          mkdir -p pages/buzzer pages/matrix
           cp web/index.html web/styles.css pages/
           cp -R web/buzzer/dist/. pages/buzzer/
+          cp -R web/matrix/dist/. pages/matrix/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

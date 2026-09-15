@@ -169,6 +169,16 @@ h1 {
 	fill: none;
 }
 
+.tool-icon svg rect,
+.tool-icon svg circle {
+	fill: none;
+}
+
+.rgb-icon {
+	color: #80d8ff;
+	background: linear-gradient(135deg, rgba(255, 95, 112, 0.1), rgba(82, 226, 156, 0.09), rgba(88, 168, 255, 0.12));
+}
+
 .tool-label {
 	margin-bottom: 9px;
 	color: #68e9a8;
