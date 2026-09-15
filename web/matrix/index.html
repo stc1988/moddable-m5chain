@@ -32,6 +32,18 @@
 						<fieldset id="matrix" class="matrix"><legend class="visually-hidden">8 by 8 pixel frame</legend></fieldset>
 						<div class="stage-meta"><span>8 × 8</span><span id="device-caption">White LED</span></div>
 					</div>
+					<div class="animation-editor">
+						<div class="animation-heading">
+							<div><span class="field-label">Animation</span><output id="frame-position">Frame 1 / 1</output></div>
+							<div class="playback-actions"><button id="play" type="button">Preview</button><button id="stop" type="button" disabled>Stop</button></div>
+						</div>
+						<div id="frame-list" class="frame-list"></div>
+						<div class="animation-settings">
+							<label>Frame time <span><input id="frame-duration" type="number" min="20" max="60000" step="10" value="250" /> ms</span></label>
+							<label class="loop-field"><input id="loop" type="checkbox" checked /> Loop</label>
+							<div class="frame-actions"><button id="add-frame" type="button">+ Blank</button><button id="duplicate-frame" type="button">Duplicate</button><button id="delete-frame" type="button" disabled>Delete</button></div>
+						</div>
+					</div>
 
 					<div class="toolbar">
 						<label id="color-field" class="color-field" hidden>Paint color <input id="color" type="color" value="#55dbe1" /></label>

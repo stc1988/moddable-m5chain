@@ -166,7 +166,8 @@ h1 {
 }
 .device-tabs button,
 .toolbar button,
-#copy {
+#copy,
+.animation-editor button {
 	min-height: 36px;
 	padding: 7px 13px;
 	border: 1px solid transparent;
@@ -176,6 +177,110 @@ h1 {
 	cursor: pointer;
 	font-size: 12px;
 	font-weight: 700;
+}
+
+.animation-editor {
+	display: grid;
+	gap: 13px;
+	padding: 16px 18px;
+	border-top: 1px solid var(--line);
+	background: #0b1319;
+}
+
+.animation-heading,
+.animation-heading > div,
+.animation-settings,
+.playback-actions,
+.frame-actions {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+}
+
+.animation-heading {
+	justify-content: space-between;
+}
+
+.field-label {
+	color: var(--text);
+	font-size: 12px;
+	font-weight: 700;
+}
+
+#frame-position {
+	color: var(--muted);
+	font-size: 10px;
+}
+
+.animation-editor button {
+	min-height: 34px;
+	border-color: var(--line);
+	background: var(--raised);
+}
+
+.animation-editor button:hover:not(:disabled) {
+	border-color: #55dbe188;
+	color: var(--cyan);
+}
+
+.animation-editor button:disabled {
+	cursor: not-allowed;
+	opacity: 0.4;
+}
+
+#play {
+	border-color: #55dbe177;
+	color: var(--cyan);
+}
+
+.frame-list {
+	display: flex;
+	gap: 7px;
+	padding: 3px 1px 7px;
+	overflow-x: auto;
+}
+
+.frame-list button {
+	flex: none;
+	min-width: 42px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.frame-list button[aria-pressed="true"] {
+	border-color: var(--cyan);
+	background: #55dbe119;
+	color: var(--cyan);
+}
+
+.animation-settings {
+	flex-wrap: wrap;
+	color: var(--muted);
+	font-size: 11px;
+}
+
+.animation-settings label,
+.animation-settings label > span {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+
+#frame-duration {
+	width: 88px;
+	min-height: 34px;
+	padding: 6px 8px;
+	border: 1px solid var(--line);
+	border-radius: 7px;
+	background: var(--raised);
+	color: var(--text);
+}
+
+.loop-field input {
+	accent-color: var(--cyan);
+}
+
+.frame-actions {
+	margin-left: auto;
 }
 .device-tabs button[aria-pressed="true"],
 .toolbar button[aria-pressed="true"] {
@@ -406,6 +511,15 @@ noscript {
 		padding-inline: 12px;
 	}
 	.toolbar {
+		flex-wrap: wrap;
+	}
+	.animation-heading,
+	.animation-settings {
+		align-items: flex-start;
+		flex-direction: column;
+	}
+	.frame-actions {
+		margin-left: 0;
 		flex-wrap: wrap;
 	}
 	.toolbar button:last-child {

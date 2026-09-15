@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BLACK, generateCode, packMonoRows } from "../web/matrix/src/matrix.ts";
+import { BLACK, generateAnimationCode, generateCode, packMonoRows } from "../web/matrix/src/matrix.ts";
 
 const frame = () => Array.from({ length: 64 }, () => ({ ...BLACK }));
 
@@ -31,4 +31,14 @@ test("generates 64 RGB colors in row-major order", () => {
 	assert.ok(code.indexOf("{ r: 1, g: 2, b: 3 }") < code.indexOf("{ r: 253, g: 254, b: 255 }"));
 	assert.equal((code.match(/\{ r: /g) ?? []).length, 64);
 	assert.match(code, /rgb\.writeFrame\(frame\)/);
+});
+
+test("generates response-serialized looping and one-shot animations", () => {
+	const looping = generateAnimationCode("mono", [frame(), frame()], 0, 128, 250, true);
+	assert.match(looping, /import Timer from "timer"/);
+	assert.match(looping, /await mono\.writeFrame\(frames\[frameIndex\]\)/);
+	assert.ok(looping.indexOf("await mono.writeFrame") < looping.indexOf("Timer.set(showNextFrame, 250)"));
+	assert.match(looping, /frameIndex = 0/);
+	const once = generateAnimationCode("rgb", [frame(), frame()], 0, 128, 80, false);
+	assert.match(once, /if \(frameIndex === frames\.length\) return/);
 });
