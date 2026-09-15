@@ -10,6 +10,7 @@ import {
 	scrollStateFromWire,
 	scrollStateToWire,
 } from "matrixDisplayProtocol";
+import Timer from "timer";
 import type { DeviceConfiguration, DeviceConfigurationSnapshot } from "types";
 
 export {
@@ -35,6 +36,13 @@ export type MatrixDisplayConfiguration = DeviceConfiguration & {
 export type MatrixDisplayConfigurationSnapshot = DeviceConfigurationSnapshot & {
 	rotation: MatrixRotation;
 	brightness: number;
+};
+
+export type MatrixAnimationOptions = {
+	/** Minimum time to hold each frame, in milliseconds. Defaults to 250. */
+	frameDurationMs?: number;
+	/** Repeat until stopAnimation() is called. Defaults to false. */
+	loop?: boolean;
 };
 
 const DISPLAY_MODE = Object.freeze({
@@ -69,6 +77,14 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 
 	#displayMode: DisplayMode | undefined;
 	#operationMutex: Promise<void> = Promise.resolve();
+	#animationGeneration = 0;
+	#animationTimer: Timer | undefined;
+	#animationWaitResolve: (() => void) | undefined;
+
+	override _markDisconnected() {
+		this.stopAnimation();
+		super._markDisconnected();
+	}
 
 	override async configure(options: MatrixDisplayConfiguration = {}): Promise<void> {
 		assertKnownConfigurationOptions(options, ["rotation", "brightness", "saveToFlash"]);
@@ -156,8 +172,41 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 		});
 	}
 
+	stopAnimation(): void {
+		this.#animationGeneration++;
+		if (this.#animationTimer !== undefined) {
+			Timer.clear(this.#animationTimer);
+			this.#animationTimer = undefined;
+		}
+		this.#animationWaitResolve?.();
+		this.#animationWaitResolve = undefined;
+	}
+
 	protected abstract brightnessToWire(brightness: number): number;
 	protected abstract brightnessFromWire(value: number): number;
+
+	protected async playFrames<T>(
+		frames: readonly T[],
+		writeFrame: (frame: T) => Promise<void>,
+		options: MatrixAnimationOptions,
+	): Promise<void> {
+		const frameDurationMs = options.frameDurationMs ?? 250;
+		const loop = options.loop ?? false;
+		assertIntegerInRange("options.frameDurationMs", frameDurationMs, 20, 0xffff);
+		assertBoolean("options.loop", loop);
+		this.stopAnimation();
+		const generation = this.#animationGeneration;
+		do {
+			for (let index = 0; index < frames.length; index++) {
+				if (generation !== this.#animationGeneration) return;
+				const frame = frames[index];
+				if (frame === undefined) throw new Error(`Animation frame ${index} is missing.`);
+				await writeFrame(frame);
+				if (generation !== this.#animationGeneration) return;
+				if (index + 1 < frames.length || loop) await this.waitForAnimationFrame(frameDurationMs, generation);
+			}
+		} while (loop && generation === this.#animationGeneration);
+	}
 
 	protected async withPixelMode<T>(operation: () => Promise<T>): Promise<T> {
 		return await this.withDisplayLock(async () => {
@@ -215,6 +264,21 @@ abstract class M5ChainMatrixDisplay extends M5ChainDevice {
 		} finally {
 			release?.();
 		}
+	}
+
+	private waitForAnimationFrame(durationMs: number, generation: number): Promise<void> {
+		return new Promise((resolve) => {
+			if (generation !== this.#animationGeneration) {
+				resolve();
+				return;
+			}
+			this.#animationWaitResolve = resolve;
+			this.#animationTimer = Timer.set(() => {
+				this.#animationTimer = undefined;
+				this.#animationWaitResolve = undefined;
+				resolve();
+			}, durationMs);
+		});
 	}
 }
 

@@ -12,10 +12,10 @@ non-black pixel as on.
 
 ## Animation behavior
 
-Chain Mono and RGB do not provide a command for arbitrary frame animation. Generated code implements it by calling
-`writeFrame()`, awaiting the device response, and scheduling the next frame with Moddable `Timer.set`. This prevents
-overlapping UART requests. The configured frame time is therefore a minimum hold time; actual frame rate also includes
-the device round trip and may vary. This is intended for low-rate pixel animation, not video.
+Chain Mono and RGB do not provide a wire command for arbitrary frame animation. Generated code uses the library's
+`playAnimation()` API, which sends each frame and awaits the device response before waiting for the next frame. This
+prevents overlapping UART requests. The configured frame time is therefore a minimum hold time; actual frame rate also
+includes the device round trip and may vary. This is intended for low-rate pixel animation, not video.
 
 The browser preview uses the requested interval directly and cannot predict hardware transfer timing. Single-frame
 projects generate a simple `writeFrame()` call without a timer.

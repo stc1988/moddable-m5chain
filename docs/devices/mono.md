@@ -62,6 +62,28 @@ await mono.writeFrame(
 const rows = await mono.readFrame();
 ```
 
+## Animation
+
+`playAnimation()` displays one or more frames in order. Each frame uses the same eight-byte format as `writeFrame()`.
+The default frame time is 250 ms and the default is to play once.
+
+```ts
+await mono.playAnimation([frameA, frameB], {
+	frameDurationMs: 200,
+	loop: false,
+});
+```
+
+With `loop: true`, the returned promise remains pending until `stopAnimation()` is called, another animation starts,
+or the device disconnects. Each write completes before the frame timer begins, so the requested duration is a minimum
+hold time rather than a guaranteed frame rate. Input frames are copied before playback starts.
+
+```ts
+void mono.playAnimation([frameA, frameB], { loop: true });
+// Later:
+mono.stopAnimation();
+```
+
 ## Characters and Scrolling
 
 The built-in font is 5x7 and supports one-byte ASCII codes from 32 through 127.

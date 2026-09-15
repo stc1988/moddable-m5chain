@@ -46,7 +46,6 @@ export function generateAnimationCode(
 	const lines = [
 		'import M5Chain from "m5chain";',
 		`import ${className}, { MATRIX_ROTATION } from "m5chain${device === "mono" ? "Mono" : "RGB"}";`,
-		...(frames.length > 1 ? ['import Timer from "timer";'] : []),
 		"",
 		`const m5chain = new M5Chain({ deviceClasses: [${className}] });`,
 		"await m5chain.start();",
@@ -68,14 +67,11 @@ export function generateAnimationCode(
 	lines.push(
 		"];",
 		"",
-		"let frameIndex = 0;",
-		"async function showNextFrame() {",
-		`\tawait ${name}.writeFrame(frames[frameIndex]);`,
-		"\tframeIndex += 1;",
+		`await ${name}.playAnimation(frames, {`,
+		`\tframeDurationMs: ${frameDurationMs},`,
+		`\tloop: ${loop},`,
+		"});",
 	);
-	if (loop) lines.push("\tif (frameIndex === frames.length) frameIndex = 0;");
-	else lines.push("\tif (frameIndex === frames.length) return;");
-	lines.push(`\tTimer.set(showNextFrame, ${frameDurationMs});`, "}", "", "await showNextFrame();");
 	return lines.join("\n");
 }
 

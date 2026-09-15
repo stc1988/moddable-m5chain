@@ -35,10 +35,12 @@ test("generates 64 RGB colors in row-major order", () => {
 
 test("generates response-serialized looping and one-shot animations", () => {
 	const looping = generateAnimationCode("mono", [frame(), frame()], 0, 128, 250, true);
-	assert.match(looping, /import Timer from "timer"/);
-	assert.match(looping, /await mono\.writeFrame\(frames\[frameIndex\]\)/);
-	assert.ok(looping.indexOf("await mono.writeFrame") < looping.indexOf("Timer.set(showNextFrame, 250)"));
-	assert.match(looping, /frameIndex = 0/);
+	assert.doesNotMatch(looping, /import Timer/);
+	assert.match(looping, /await mono\.playAnimation\(frames/);
+	assert.match(looping, /frameDurationMs: 250/);
+	assert.match(looping, /loop: true/);
 	const once = generateAnimationCode("rgb", [frame(), frame()], 0, 128, 80, false);
-	assert.match(once, /if \(frameIndex === frames\.length\) return/);
+	assert.match(once, /await rgb\.playAnimation\(frames/);
+	assert.match(once, /frameDurationMs: 80/);
+	assert.match(once, /loop: false/);
 });

@@ -61,6 +61,28 @@ await rgb.writeFrame(frame);
 const colors = await rgb.readFrame();
 ```
 
+## Animation
+
+`playAnimation()` displays one or more 64-color frames in order. The default frame time is 250 ms and the default is
+to play once.
+
+```ts
+await rgb.playAnimation([frameA, frameB], {
+	frameDurationMs: 200,
+	loop: false,
+});
+```
+
+With `loop: true`, the returned promise remains pending until `stopAnimation()` is called, another animation starts,
+or the device disconnects. Each `writeFrame()` completes before the frame timer begins, so the requested duration is
+a minimum hold time rather than a guaranteed frame rate. Frames and their colors are copied before playback starts.
+
+```ts
+void rgb.playAnimation([frameA, frameB], { loop: true });
+// Later:
+rgb.stopAnimation();
+```
+
 The library converts colors to the device's RGB565 representation. Values returned by read methods are expanded back to
 8-bit channels and may differ slightly from the originally supplied values.
 
