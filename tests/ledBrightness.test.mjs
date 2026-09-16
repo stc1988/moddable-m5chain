@@ -10,6 +10,7 @@ const modules = Object.fromEntries(
 		["matrixDisplayProtocol", "matrixDisplayProtocol"],
 	].map(([name, path]) => [name, new URL(`../src/m5chain/${path}.ts`, import.meta.url).href]),
 );
+modules.timer = new URL("./timerMock.mjs", import.meta.url).href;
 register(
 	`data:text/javascript,${encodeURIComponent(`
 		const modules = ${JSON.stringify(modules)};

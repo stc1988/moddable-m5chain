@@ -1,6 +1,7 @@
 import { readPacketByte, readPacketUint16LE } from "m5chainDevice";
 import M5ChainMatrixDisplay, {
 	type DisplayCoordinate,
+	type MatrixAnimationOptions,
 	SCROLL_BEHAVIOR,
 	SCROLL_DIRECTION,
 	SCROLL_STATE,
@@ -58,6 +59,8 @@ export type RgbScrollText = ScrollSettings & {
 	text: string;
 	color: RgbScrollColor;
 };
+
+export type RgbAnimationOptions = MatrixAnimationOptions;
 
 const RGB_DIRECTIONS: WireDirectionMap = Object.freeze({
 	[SCROLL_DIRECTION.LEFT]: 0,
@@ -147,6 +150,20 @@ class M5ChainRGB extends M5ChainMatrixDisplay {
 			}
 			return colors;
 		});
+	}
+
+	async playAnimation(frames: readonly (readonly LedColor[])[], options: RgbAnimationOptions = {}): Promise<void> {
+		if (!Array.isArray(frames) || frames.length < 1) throw new RangeError("frames must contain at least one frame.");
+		const copies = frames.map((frame, frameIndex) => {
+			if (!Array.isArray(frame) || frame.length !== 64) {
+				throw new RangeError(`frames[${frameIndex}] must contain exactly 64 colors.`);
+			}
+			return frame.map((color, colorIndex) => {
+				assertColor(`frames[${frameIndex}][${colorIndex}]`, color);
+				return { ...color };
+			});
+		});
+		await this.playFrames(copies, (frame) => this.writeFrame(frame), options);
 	}
 
 	async drawCharacter(character: string, options: { x?: number; y?: number; color?: LedColor } = {}): Promise<void> {

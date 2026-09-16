@@ -30,19 +30,19 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: web/buzzer/package-lock.json
+          cache-dependency-path: web/package-lock.json
 
-      - name: Install Buzzer dependencies
-        run: npm ci --prefix web/buzzer
+      - name: Install web dependencies
+        run: npm ci --prefix web
 
-      - name: Build Buzzer
-        run: npm run build --prefix web/buzzer
+      - name: Test web tools
+        run: npm --prefix web test
 
-      - name: Assemble Pages site
-        run: |
-          mkdir -p pages/buzzer
-          cp web/index.html web/styles.css pages/
-          cp -R web/buzzer/dist/. pages/buzzer/
+      - name: Check web sources
+        run: npm --prefix web run check
+
+      - name: Build web site
+        run: npm --prefix web run build
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6
@@ -50,7 +50,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: pages
+          path: web/dist
 
   deploy:
     needs: build

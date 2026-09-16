@@ -43,7 +43,7 @@ only when the import is evaluated at runtime.
 
 Documentation-only and web-only changes do not require unrelated device builds. Run the formatter, linter, tests, and
 builds relevant to the affected files, and report hardware behavior that remains unverified. For changes under
-`web/buzzer/`, run `npm run buzzer-preview:build` in addition to formatting and linting.
+`web/`, run `npm run web:build` in addition to formatting and linting.
 
 ## Host and Mod type boundary
 

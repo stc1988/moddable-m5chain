@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseMelodyCsv } from "../web/buzzer/src/melodyCsv.ts";
-import { createBuzzerTools, registerBuzzerTools } from "../web/buzzer/src/webmcp.ts";
+import { parseMelodyCsv } from "../buzzer/src/melodyCsv.ts";
+import { createBuzzerTools, registerBuzzerTools } from "../buzzer/src/webmcp.ts";
 
 function fixture() {
 	const notes = ["REST", "C5", "A_SHARP_4"];

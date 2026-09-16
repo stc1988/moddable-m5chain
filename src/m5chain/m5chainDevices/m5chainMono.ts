@@ -1,6 +1,7 @@
 import { readPacketByte, readPacketUint16LE } from "m5chainDevice";
 import M5ChainMatrixDisplay, {
 	type DisplayCoordinate,
+	type MatrixAnimationOptions,
 	SCROLL_BEHAVIOR,
 	SCROLL_DIRECTION,
 	SCROLL_STATE,
@@ -49,6 +50,8 @@ export type MonoScrollOptions = {
 export type MonoScrollText = ScrollSettings & {
 	text: string;
 };
+
+export type MonoAnimationOptions = MatrixAnimationOptions;
 
 const MONO_DIRECTIONS: WireDirectionMap = Object.freeze({
 	[SCROLL_DIRECTION.LEFT]: 1,
@@ -131,6 +134,17 @@ class M5ChainMono extends M5ChainMatrixDisplay {
 			readPacketByte(packet, 13, "read Mono frame");
 			return packet.slice(6, 14);
 		});
+	}
+
+	async playAnimation(frames: readonly Uint8Array[], options: MonoAnimationOptions = {}): Promise<void> {
+		if (!Array.isArray(frames) || frames.length < 1) throw new RangeError("frames must contain at least one frame.");
+		const copies = frames.map((frame, index) => {
+			if (!(frame instanceof Uint8Array) || frame.length !== 8) {
+				throw new RangeError(`frames[${index}] must be a Uint8Array containing exactly 8 bytes.`);
+			}
+			return frame.slice();
+		});
+		await this.playFrames(copies, (frame) => this.writeFrame(frame), options);
 	}
 
 	async drawCharacter(character: string, options: { x?: number; y?: number } = {}): Promise<void> {

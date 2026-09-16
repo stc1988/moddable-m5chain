@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseMelodyCsv } from "../web/buzzer/src/melodyCsv.ts";
+import { parseMelodyCsv } from "../buzzer/src/melodyCsv.ts";
+import { melodyStepDurationMs, validateMelodyTiming } from "../buzzer/src/melodyTiming.ts";
 
 const VALID_NOTES = new Set(["REST", "C5", "G4", "A_SHARP_4"]);
 
@@ -24,4 +25,10 @@ test("reports invalid CSV without returning partial rows", () => {
 	assert.throws(() => parseMelodyCsv("C5,0", VALID_NOTES), /Line 1: beats must be/);
 	assert.throws(() => parseMelodyCsv("C5,1,extra", VALID_NOTES), /Line 1: expected exactly 2 columns/);
 	assert.throws(() => parseMelodyCsv("note,beats", VALID_NOTES), /at least one melody step/);
+});
+
+test("validates derived melody step durations against the device protocol", () => {
+	assert.equal(melodyStepDurationMs(1, 120), 500);
+	assert.throws(() => melodyStepDurationMs(1000, 120), /1 to 65535 ms/);
+	assert.throws(() => validateMelodyTiming([{ beats: 1 }, { beats: 2 }], 1), /Step 2/);
 });

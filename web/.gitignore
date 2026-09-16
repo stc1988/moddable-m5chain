@@ -1,0 +1,15 @@
+# dependencies
+node_modules/
+
+# testing
+coverage/
+
+# local environment
+.env*
+
+# deployment and generated files
+dist/
+
+# logs and local files
+*.log
+.DS_Store

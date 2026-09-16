@@ -6,7 +6,7 @@ Protocol: [Chain Buzzer Communication Protocol](https://m5stack-doc.oss-cn-shenz
 
 ## Browser Tone Preview
 
-The [Buzzer Tone Studio](https://stc1988.github.io/moddable-m5chain/buzzer/) is deployed from this repository's `web/buzzer` app. It plays an approximation of Buzzer tones and melodies in the browser and generates copy-ready Moddable code for `playTone()`, `playNote()`, `playMelody()`, or continuous playback. The melody editor shows an estimated playback time and can replace its sequence from pasted `note,beats` CSV text. To run it locally, install it once with `npm ci --prefix web/buzzer`, then start it from the repository root with `npm run buzzer-preview:dev`.
+The [Buzzer Tone Studio](https://stc1988.github.io/moddable-m5chain/buzzer/) is deployed from this repository's `web/buzzer` app. It plays an approximation of Buzzer tones and melodies in the browser and generates copy-ready Moddable code for `playTone()`, `playNote()`, `playMelody()`, or continuous playback. The melody editor shows an estimated playback time and can replace its sequence from pasted `note,beats` CSV text. To run it locally, install the shared web toolchain once with `npm ci --prefix web`, then start it from the repository root with `npm run web:dev`.
 
 Playback starts only after pressing a preview button because browsers require a user gesture before producing audio. The preview approximates the device's PWM duty cycle in its audio synthesis. It is useful for checking pitch, duration, note choice, and the character of a duty-cycle setting, but speaker hardware and browser audio processing mean it will not sound identical to the physical Buzzer.
 

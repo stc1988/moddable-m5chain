@@ -6,8 +6,10 @@
 		"noEmit": true,
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
+		"allowImportingTsExtensions": true,
+		"types": ["node"],
 		"skipLibCheck": true,
 		"useDefineForClassFields": true
 	},
-	"include": ["src", "vite.config.ts"]
+	"include": ["buzzer/src", "matrix/src", "vite.config.ts"]
 }

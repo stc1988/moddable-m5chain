@@ -17,6 +17,7 @@ The note frequencies match the M5Stack Chain Buzzer firmware table. Browser prev
 The melody editor starts with the sample sequence from the Buzzer API design discussion. Every change updates the estimated duration and generated Moddable code immediately.
 
 CSV import accepts an optional `note,beats` header and note names such as `C5`, `BUZZER_NOTE.C5`, `NOTE_AS4`, and `NOTE_REST`. Beats may be decimals or fractions such as `2/3`. The current sequence is replaced only after every row passes validation.
+At the selected tempo, each rounded step duration must fit the device protocol's 1–65535 ms range.
 
 The app uses browser-native DOM, Web Audio, and Clipboard APIs. Its only development dependencies are Vite, TypeScript, and Biome; the production build has no runtime dependencies. PWM duty-cycle controls remain available for raw tone playback because they map directly to the device API; melody notes use the firmware's fixed 50% note waveform.
 
@@ -25,23 +26,22 @@ The app uses browser-native DOM, Web Audio, and Clipboard APIs. Its only develop
 From the repository root:
 
 ```sh
-npm ci --prefix web/buzzer
-npm run buzzer-preview:dev
+npm ci --prefix web
+npm run web:dev
 ```
 
 Then open the local URL shown by the development server. Build the deployable site with:
 
 ```sh
-npm run buzzer-preview:build
+npm run web:build
 ```
 
-The output in `web/buzzer/dist` is a static site that can be served by any static web host.
+The complete multi-page site is emitted to `web/dist`, including this application under `web/dist/buzzer`.
 
 ## GitHub Pages
 
-The application is published at `https://stc1988.github.io/moddable-m5chain/buzzer/`. Its Vite base path must remain
-aligned with that location. The repository-wide workflow documented in `web/README.md` builds and deploys this app
-together with the site index and any future web applications.
+The application is published at `https://stc1988.github.io/moddable-m5chain/buzzer/`. It remains an independent entry
+point in the repository-wide Vite build documented in `web/README.md`.
 
 ## WebMCP
 

@@ -36,10 +36,12 @@ async function showMono(mono: Extract<MatrixDevice, { kind: "mono" }>) {
 		rotation: MATRIX_ROTATION.DEG_0,
 		brightness: 128,
 	});
-	await mono.writeFrame(
-		new Uint8Array([0b00111100, 0b01000010, 0b10100101, 0b10000001, 0b10100101, 0b10011001, 0b01000010, 0b00111100]),
-	);
-	log(`Mono id=${mono.id} showing a frame`);
+	const smile = new Uint8Array([
+		0b00111100, 0b01000010, 0b10100101, 0b10000001, 0b10100101, 0b10011001, 0b01000010, 0b00111100,
+	]);
+	const blank = new Uint8Array(8);
+	await mono.playAnimation([smile, blank, smile], { frameDurationMs: 200 });
+	log(`Mono id=${mono.id} played an animation`);
 }
 
 async function showRGB(rgb: Extract<MatrixDevice, { kind: "rgb" }>) {
