@@ -53,11 +53,11 @@ does not connect to M5Chain hardware.
 From the repository root:
 
 ```sh
-npm ci --prefix web/matrix
-npm run matrix-preview:dev
+npm ci --prefix web
+npm run web:dev
 ```
 
-Build the static site with `npm run matrix-preview:build`. Output is written to `web/matrix/dist`.
+Build the complete multi-page site with `npm run web:build`. This application is written to `web/dist/matrix`.
 
 ## GitHub Pages
 

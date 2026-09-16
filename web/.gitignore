@@ -1,18 +1,15 @@
 # dependencies
-/node_modules
+node_modules/
 
 # testing
-/coverage
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
+coverage/
 
 # local environment
 .env*
 
 # deployment and generated files
-/dist/
+dist/
+
+# logs and local files
+*.log
+.DS_Store

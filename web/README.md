@@ -1,6 +1,6 @@
 # Web applications
 
-Browser applications in this directory are published together as one GitHub Pages site:
+Browser applications in this directory are built as one Vite multi-page site and published together to GitHub Pages:
 
 - `web/index.html` is the site index at `https://stc1988.github.io/moddable-m5chain/`.
 - Each application is built into its own subdirectory. For example, `web/buzzer` is published at
@@ -8,15 +8,15 @@ Browser applications in this directory are published together as one GitHub Page
 - `web/matrix` provides one shared Mono/RGB frame editor at
   `https://stc1988.github.io/moddable-m5chain/matrix/`.
 
-The deployment workflow builds every application and assembles one Pages artifact. A deployment must always include
-all applications because a Pages deployment replaces the previously published artifact.
+The pages share one toolchain and dependency lockfile while keeping separate HTML and TypeScript entry points. Run
+`npm ci --prefix web` once, then use `npm run web:dev` from the repository root to serve the index and both tools.
+`npm run web:build` produces the complete Pages artifact in `web/dist`.
 
 ## Adding an application
 
-1. Create the application under `web/<application-name>`.
-2. Configure its production asset base for `/moddable-m5chain/<application-name>/`.
-3. Add its install, build, and artifact-copy steps to `.github/workflows/deploy-pages.yml`.
-4. Add the application to `web/index.html`.
-5. Run the application's local build and verify its generated asset paths.
+1. Create the application under `web/<application-name>` with its own `index.html` and source directory.
+2. Add its HTML entry point to `build.rollupOptions.input` in `web/vite.config.ts`.
+3. Add the application to `web/index.html`.
+4. Run `npm run web:build` and verify its generated page and asset paths under `web/dist`.
 
 GitHub Pages must use **GitHub Actions** as its source under the repository's **Settings > Pages** configuration.
