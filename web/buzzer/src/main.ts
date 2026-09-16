@@ -1,5 +1,6 @@
 import "./styles.css";
 import { parseMelodyCsv } from "./melodyCsv";
+import { melodyStepDurationMs, validateMelodyTiming } from "./melodyTiming";
 import { createBuzzerTools, type ModelContext, type PreviewSettings, registerBuzzerTools } from "./webmcp";
 
 type PreviewMode = "tone" | "note" | "melody" | "continuous";
@@ -197,7 +198,7 @@ function effectiveDuty(): number {
 }
 
 function melodyDurationMs(): number {
-	return state.melody.reduce((total, step) => total + Math.round((60_000 * step.beats) / state.tempoBpm), 0);
+	return state.melody.reduce((total, step) => total + melodyStepDurationMs(step.beats, state.tempoBpm), 0);
 }
 
 function formatNumber(value: number): string {
@@ -304,7 +305,14 @@ function renderMelodyRows(): void {
 		beatsInput.addEventListener("change", () => {
 			stopPreview(false);
 			const value = beatsInput.valueAsNumber;
-			step.beats = Number.isFinite(value) ? Math.min(1000, Math.max(0.01, value)) : 1;
+			const beats = Number.isFinite(value) ? value : 1;
+			try {
+				melodyStepDurationMs(beats, state.tempoBpm);
+				step.beats = beats;
+				setStatus("Ready to preview");
+			} catch (error) {
+				setStatus(error instanceof Error ? error.message : "Invalid melody step duration");
+			}
 			render();
 		});
 		beatsField.append(beatsInput, " beat");
@@ -478,7 +486,7 @@ async function playMelodyPreview(context: AudioContext, runId: number): Promise<
 		const step = state.melody[index];
 		if (!step) continue;
 		const note = noteFromConstant(step.noteConstant);
-		const durationMs = Math.max(1, Math.round((60_000 * step.beats) / state.tempoBpm));
+		const durationMs = melodyStepDurationMs(step.beats, state.tempoBpm);
 		const toneDurationMs = Math.max(1, Math.round(durationMs * (state.gatePercent / 100)));
 		let stepOscillator: OscillatorNode | null = null;
 
@@ -610,7 +618,14 @@ durationInput.addEventListener("change", () => {
 tempoInput.addEventListener("change", () => {
 	stopPreview(false);
 	const value = Number.isFinite(tempoInput.valueAsNumber) ? tempoInput.valueAsNumber : DEFAULTS.tempoBpm;
-	state.tempoBpm = Math.min(1000, Math.max(1, value));
+	const tempoBpm = Math.min(1000, Math.max(1, value));
+	try {
+		validateMelodyTiming(state.melody, tempoBpm);
+		state.tempoBpm = tempoBpm;
+		setStatus("Ready to preview");
+	} catch (error) {
+		setStatus(error instanceof Error ? error.message : "Invalid melody timing");
+	}
 	render();
 });
 
@@ -634,6 +649,7 @@ csvInput.addEventListener("input", () => {
 
 function importMelodyCsv(csv: string): void {
 	const imported = parseMelodyCsv(csv, VALID_NOTE_CONSTANTS);
+	validateMelodyTiming(imported, state.tempoBpm);
 	stopPreview(false);
 	state.melody = imported;
 	state.mode = "melody";
@@ -732,6 +748,7 @@ const webmcpTools = createBuzzerTools(
 			generatedCode: buildCode(),
 		}),
 		configure: (settings) => {
+			validateMelodyTiming(state.melody, settings.tempoBpm ?? state.tempoBpm);
 			stopPreview(false);
 			Object.assign(state, settings);
 			setStatus("Ready to preview");

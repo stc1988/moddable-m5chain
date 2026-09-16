@@ -1,4 +1,7 @@
+import { createToolFactory, type ModelContext, objectInput, registerTools, type Tool } from "../../shared/webmcp.ts";
 import type { Color, DeviceType } from "./matrix";
+
+export type { ModelContext } from "../../shared/webmcp.ts";
 
 export type MatrixSettings = {
 	device: DeviceType;
@@ -19,63 +22,17 @@ type MatrixActions = {
 	stop: () => void;
 };
 
-type Tool = {
-	name: string;
-	description: string;
-	inputSchema: Record<string, unknown>;
-	annotations: { readOnlyHint: boolean };
-	execute: (input: unknown) => Promise<string>;
-};
-
-export type ModelContext = {
-	registerTool: (tool: Tool, options: { signal: AbortSignal }) => Promise<void>;
-};
-
-function objectInput(input: unknown): Record<string, unknown> {
-	if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Expected an object.");
-	return input as Record<string, unknown>;
-}
-
 function integer(name: string, value: unknown, minimum: number, maximum: number): number {
 	if (!Number.isInteger(value) || (value as number) < minimum || (value as number) > maximum)
 		throw new Error(`${name} must be an integer from ${minimum} to ${maximum}.`);
 	return value as number;
 }
 
-function tool(
-	actions: MatrixActions,
-	name: string,
-	description: string,
-	properties: Record<string, unknown>,
-	required: string[],
-	run: (input: Record<string, unknown>) => void,
-	readOnlyHint = false,
-): Tool {
-	return {
-		name,
-		description,
-		inputSchema: { type: "object", properties, required, additionalProperties: false },
-		annotations: { readOnlyHint },
-		execute: async (input) => {
-			try {
-				const values = objectInput(input);
-				for (const key of Object.keys(values))
-					if (!Object.hasOwn(properties, key)) throw new Error(`Unknown field: ${key}`);
-				for (const key of required) if (!Object.hasOwn(values, key)) throw new Error(`Missing field: ${key}`);
-				run(values);
-				return JSON.stringify({ ok: true, state: actions.getState() });
-			} catch (error) {
-				return JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "Tool failed." });
-			}
-		},
-	};
-}
-
 export function createMatrixTools(actions: MatrixActions): Tool[] {
+	const tool = createToolFactory(actions.getState);
 	const frameIndex = { type: "integer", minimum: 0, description: "Zero-based frame index; defaults to current frame." };
 	return [
 		tool(
-			actions,
 			"get_matrix_state",
 			"Read settings, frames, playback state, and generated Moddable code.",
 			{},
@@ -84,7 +41,6 @@ export function createMatrixTools(actions: MatrixActions): Tool[] {
 			true,
 		),
 		tool(
-			actions,
 			"configure_matrix",
 			"Change display and animation settings. Omitted settings stay unchanged; does not start playback.",
 			{
@@ -107,7 +63,6 @@ export function createMatrixTools(actions: MatrixActions): Tool[] {
 			},
 		),
 		tool(
-			actions,
 			"set_matrix_pixel",
 			"Set one pixel in a frame. Use on for Mono or color for RGB; null/false clears the pixel.",
 			{
@@ -152,7 +107,6 @@ export function createMatrixTools(actions: MatrixActions): Tool[] {
 			},
 		),
 		tool(
-			actions,
 			"add_matrix_frame",
 			"Append a blank frame or a copy of the current frame and select it.",
 			{ copyCurrent: { type: "boolean" } },
@@ -164,7 +118,6 @@ export function createMatrixTools(actions: MatrixActions): Tool[] {
 			},
 		),
 		tool(
-			actions,
 			"select_matrix_frame",
 			"Select a frame for editing.",
 			{ frameIndex },
@@ -172,7 +125,6 @@ export function createMatrixTools(actions: MatrixActions): Tool[] {
 			({ frameIndex: value }) => actions.selectFrame(integer("frameIndex", value, 0, 999)),
 		),
 		tool(
-			actions,
 			"delete_matrix_frame",
 			"Delete a frame; defaults to the current frame. At least one frame remains.",
 			{ frameIndex },
@@ -181,21 +133,16 @@ export function createMatrixTools(actions: MatrixActions): Tool[] {
 				actions.deleteFrame(value === undefined ? undefined : integer("frameIndex", value, 0, 999)),
 		),
 		tool(
-			actions,
 			"preview_matrix_animation",
 			"Start the browser-only animation preview. Does not control hardware.",
 			{},
 			[],
 			() => actions.preview(),
 		),
-		tool(actions, "stop_matrix_animation", "Stop the browser animation preview.", {}, [], () => actions.stop()),
+		tool("stop_matrix_animation", "Stop the browser animation preview.", {}, [], () => actions.stop()),
 	];
 }
 
 export async function registerMatrixTools(context: ModelContext | undefined, tools: Tool[], signal: AbortSignal) {
-	if (!context) return;
-	for (const item of tools) {
-		if (signal.aborted) return;
-		await context.registerTool(item, { signal });
-	}
+	await registerTools(context, tools, signal);
 }

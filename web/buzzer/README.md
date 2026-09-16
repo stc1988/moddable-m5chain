@@ -17,6 +17,7 @@ The note frequencies match the M5Stack Chain Buzzer firmware table. Browser prev
 The melody editor starts with the sample sequence from the Buzzer API design discussion. Every change updates the estimated duration and generated Moddable code immediately.
 
 CSV import accepts an optional `note,beats` header and note names such as `C5`, `BUZZER_NOTE.C5`, `NOTE_AS4`, and `NOTE_REST`. Beats may be decimals or fractions such as `2/3`. The current sequence is replaced only after every row passes validation.
+At the selected tempo, each rounded step duration must fit the device protocol's 1–65535 ms range.
 
 The app uses browser-native DOM, Web Audio, and Clipboard APIs. Its only development dependencies are Vite, TypeScript, and Biome; the production build has no runtime dependencies. PWM duty-cycle controls remain available for raw tone playback because they map directly to the device API; melody notes use the firmware's fixed 50% note waveform.
 

@@ -35,8 +35,14 @@ jobs:
       - name: Install web dependencies
         run: npm ci --prefix web
 
+      - name: Test web tools
+        run: npm --prefix web test
+
+      - name: Check web sources
+        run: npm --prefix web run check
+
       - name: Build web site
-        run: npm run build --prefix web
+        run: npm --prefix web run build
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v6

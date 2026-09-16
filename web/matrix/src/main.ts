@@ -172,7 +172,7 @@ function startPreview() {
 function stopPreview(showStatus = true) {
 	if (previewTimer !== undefined) window.clearInterval(previewTimer);
 	previewTimer = undefined;
-	playButton.disabled = false;
+	playButton.disabled = frames.length < 2;
 	stopButton.disabled = true;
 	if (showStatus) status.textContent = "Animation preview stopped.";
 }
@@ -212,6 +212,7 @@ function render() {
 	brightnessValue.textContent = brightness.value;
 	framePosition.textContent = `Frame ${currentFrameIndex + 1} / ${frames.length}`;
 	renderFrameList();
+	playButton.disabled = previewTimer !== undefined || frames.length < 2;
 	byId<HTMLButtonElement>("delete-frame").disabled = frames.length === 1;
 	generatedCode.textContent = generateAnimationCode(
 		device,
