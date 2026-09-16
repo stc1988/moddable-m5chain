@@ -7,7 +7,7 @@
 		"web:dev": "npm --prefix web run dev",
 		"format": "biome format --write README.md docs examples manifests src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run fix",
 		"lint": "biome check README.md docs examples manifests src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run check",
-		"test": "node --no-warnings --experimental-strip-types --test tests/*.test.mjs",
+		"test": "node --no-warnings --experimental-strip-types --test tests/*.test.mjs && npm --prefix web test",
 		"typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.mod.json"
 	},
 	"devDependencies": {

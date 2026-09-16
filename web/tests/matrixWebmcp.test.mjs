@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createMatrixTools, registerMatrixTools } from "../web/matrix/src/webmcp.ts";
+import { createMatrixTools, registerMatrixTools } from "../matrix/src/webmcp.ts";
 
 function fixture() {
 	const state = { device: "mono", frames: 1, playing: false };

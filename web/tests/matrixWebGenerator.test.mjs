@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BLACK, generateAnimationCode, generateCode, packMonoRows } from "../web/matrix/src/matrix.ts";
+import { BLACK, generateAnimationCode, generateCode, packMonoRows } from "../matrix/src/matrix.ts";
 
 const frame = () => Array.from({ length: 64 }, () => ({ ...BLACK }));
 

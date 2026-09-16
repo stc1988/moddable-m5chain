@@ -10,7 +10,8 @@ Browser applications in this directory are built as one Vite multi-page site and
 
 The pages share one toolchain and dependency lockfile while keeping separate HTML and TypeScript entry points. Run
 `npm ci --prefix web` once, then use `npm run web:dev` from the repository root to serve the index and both tools.
-`npm run web:build` produces the complete Pages artifact in `web/dist`.
+`npm run web:build` produces the complete Pages artifact in `web/dist`. Run the web-only tests with
+`npm --prefix web test`; the repository-level `npm test` runs both library and web tests.
 
 ## Adding an application
 
