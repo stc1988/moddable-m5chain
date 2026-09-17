@@ -18,12 +18,9 @@ Create these two files in a new application directory.
 	"include": [
 		"$(MODDABLE)/examples/manifest_base.json",
 		{
-			"git": "https://github.com/stc1988/moddable-m5chain.git",
-			"branch": "main"
+			"git": "https://github.com/stc1988/moddable-m5chain.git"
 		}
-	],
-	"defines": { "main": { "async": 1 } },
-	"modules": { "*": "./main" }
+	]
 }
 ```
 
@@ -56,20 +53,6 @@ try {
 	await m5chain.close();
 }
 ```
-
-From that application directory, build, flash, and open the debugger:
-
-```sh
-mcconfig -d -m -p esp32/m5atom_matrix ./manifest.json
-```
-
-The **xsbug debugger** shows `found 1 device(s)` and `id=1 kind=encoder`. Turn the Encoder to see
-`encoder delta=...` messages. The initial encoder reading establishes the baseline; later changes produce deltas.
-`trace()` output appears in the debugger, not the shell. The application keeps running after `start()` completes.
-
-The manifest uses the moving `main` branch. For repeatable builds, use a published release tag when available;
-see [installation options](docs/setup.md). This example includes all device modules for convenience, while
-`deviceClasses` selects which connected devices this application recognizes.
 
 ## Choose an installation
 
