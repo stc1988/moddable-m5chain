@@ -14,34 +14,11 @@ Browser-based tone preview and Moddable code generator for the M5Chain Buzzer.
 
 The note frequencies match the M5Stack Chain Buzzer firmware table. Browser preview volume is intentionally separate from the generated `dutyCycle` value because duty cycle is not a linear loudness control.
 
-The melody editor starts with the sample sequence from the Buzzer API design discussion. Every change updates the estimated duration and generated Moddable code immediately.
-
 CSV import accepts an optional `note,beats` header and note names such as `C5`, `BUZZER_NOTE.C5`, `NOTE_AS4`, and `NOTE_REST`. Beats may be decimals or fractions such as `2/3`. The current sequence is replaced only after every row passes validation.
 At the selected tempo, each rounded step duration must fit the device protocol's 1–65535 ms range.
 
-The app uses browser-native DOM, Web Audio, and Clipboard APIs. Its only development dependencies are Vite, TypeScript, and Biome; the production build has no runtime dependencies. PWM duty-cycle controls remain available for raw tone playback because they map directly to the device API; melody notes use the firmware's fixed 50% note waveform.
-
-## Local development
-
-From the repository root:
-
-```sh
-npm ci --prefix web
-npm run web:dev
-```
-
-Then open the local URL shown by the development server. Build the deployable site with:
-
-```sh
-npm run web:build
-```
-
-The complete multi-page site is emitted to `web/dist`, including this application under `web/dist/buzzer`.
-
-## GitHub Pages
-
-The application is published at `https://stc1988.github.io/moddable-m5chain/buzzer/`. It remains an independent entry
-point in the repository-wide Vite build documented in `web/README.md`.
+PWM duty-cycle controls remain available for raw tone playback because they map directly to the device API; melody
+notes use the firmware's fixed 50% note waveform.
 
 ## WebMCP
 

@@ -6,9 +6,8 @@ The editor supports pointer and keyboard input, Mono/RGB switching, color and er
 multiple animation frames, a browser preview, and copy-ready calls to `configure()` and `writeFrame()`. Browser
 brightness and color are illustrative; they are not a hardware simulation.
 
-Mono and RGB share one application because their 8x8 display concepts are nearly identical. The `device=mono` and
-`device=rgb` query parameters select the initial mode. Switching preserves the frames: RGB-to-Mono treats every
-non-black pixel as on.
+The `device=mono` and `device=rgb` query parameters select the initial mode. Switching preserves the frames:
+RGB-to-Mono treats every non-black pixel as on.
 
 ## Animation behavior
 
@@ -41,25 +40,8 @@ does not connect to M5Chain hardware.
 
 ## Technical constraints
 
-- Mono code packs eight row bytes, with bit 7 representing X=0.
-- RGB code emits 64 colors in row-major order. The device converts them to RGB565.
-- Rotation accepts 0, 90, 180, or 270 degrees; brightness accepts integers from 0 through 255.
+- Generated frame data follows the [Mono](../../docs/devices/mono.md#pixels-and-frames) and
+  [RGB](../../docs/devices/rgb.md#pixels-and-frames) API formats.
 - Frame time accepts integers from 20 through 60,000 ms.
 - Direct USB/UART control, firmware-font-perfect text previews, image quantization, and file import/export are not
   implemented.
-
-## Local development
-
-From the repository root:
-
-```sh
-npm ci --prefix web
-npm run web:dev
-```
-
-Build the complete multi-page site with `npm run web:build`. This application is written to `web/dist/matrix`.
-
-## GitHub Pages
-
-The application is published at `https://stc1988.github.io/moddable-m5chain/matrix/`. The `device=mono` and
-`device=rgb` query parameters select the initial editor mode.
