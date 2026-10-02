@@ -124,7 +124,7 @@ poll terminology such as `pollingInterval`.
 
 ## Type-safe device APIs
 
-TypeScript rejects combining a custom `transport` with UART pins. Key settings belong to
+TypeScript rejects combining a custom `transport` with UART port or pins. Key settings belong to
 `KeyDeviceConfiguration` and `KeyDeviceConfigurationSnapshot`, used only by key-capable devices.
 Device-specific configuration types expose the settings accepted by that device. Fixed `DEVICE_TYPE` fields
 are `static readonly`.

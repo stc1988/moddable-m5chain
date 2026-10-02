@@ -39,8 +39,8 @@ export type M5ChainOptions<TClasses extends readonly M5ChainDeviceClass[]> = {
 	pollingInterval?: number;
 	connectionCheckInterval?: number;
 } & (
-	| { transport: M5ChainTransport; transmit?: never; receive?: never }
-	| { transport?: never; transmit?: number; receive?: number }
+	| { transport: M5ChainTransport; transmit?: never; receive?: never; port?: never }
+	| { transport?: never; transmit?: number; receive?: number; port?: number }
 );
 
 declare const device: {
@@ -71,6 +71,7 @@ function loadConnectionConfig(): ConnectionConfig {
 	return resolveConnectionConfig(modConfig, config, {
 		transmit: device.I2C.default.data,
 		receive: device.I2C.default.clock,
+		port: 1,
 	});
 }
 
@@ -142,8 +143,8 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 		}
 
 		if (options.transport !== undefined) {
-			if (options.transmit !== undefined || options.receive !== undefined) {
-				throw new TypeError("transport cannot be combined with transmit or receive pins.");
+			if (options.transmit !== undefined || options.receive !== undefined || options.port !== undefined) {
+				throw new TypeError("transport cannot be combined with transmit, receive, or port.");
 			}
 			if (
 				!options.transport ||
@@ -158,14 +159,10 @@ export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {
 			}
 			this.#transport = options.transport;
 		} else {
-			let connectionConfig: ConnectionConfig;
-			if (options.transmit !== undefined && options.receive !== undefined) {
-				connectionConfig = { transmit: options.transmit, receive: options.receive };
-			} else {
-				connectionConfig = loadConnectionConfig();
-				connectionConfig.transmit = options.transmit ?? connectionConfig.transmit;
-				connectionConfig.receive = options.receive ?? connectionConfig.receive;
-			}
+			const connectionConfig: ConnectionConfig = loadConnectionConfig();
+			connectionConfig.transmit = options.transmit ?? connectionConfig.transmit;
+			connectionConfig.receive = options.receive ?? connectionConfig.receive;
+			connectionConfig.port = options.port ?? connectionConfig.port;
 			this.#transport = createSerialTransport(connectionConfig);
 		}
 

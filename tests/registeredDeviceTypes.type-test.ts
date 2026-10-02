@@ -66,6 +66,9 @@ import M5Chain from "m5chain";
 const chain = new M5Chain({ deviceClasses: [M5ChainAngle, M5ChainEncoder], transport });
 // @ts-expect-error Custom transport and UART pins are mutually exclusive.
 new M5Chain({ deviceClasses: [], transport, transmit: 1 });
+new M5Chain({ deviceClasses: [], port: 2 });
+// @ts-expect-error Custom transport and UART port are mutually exclusive.
+new M5Chain({ deviceClasses: [], transport, port: 2 });
 // @ts-expect-error Device IDs are fixed.
 M5ChainEncoder.DEVICE_TYPE = 2;
 type _EncoderIdIsLiteral = Expect<Equal<typeof M5ChainEncoder.DEVICE_TYPE, 1>>;

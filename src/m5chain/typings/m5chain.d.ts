@@ -26,8 +26,8 @@ export type M5ChainOptions<TClasses extends readonly M5ChainDeviceClass[]> = {
 	pollingInterval?: number;
 	connectionCheckInterval?: number;
 } & (
-	| { transport: M5ChainTransport; transmit?: never; receive?: never }
-	| { transport?: never; transmit?: number; receive?: number }
+	| { transport: M5ChainTransport; transmit?: never; receive?: never; port?: never }
+	| { transport?: never; transmit?: number; receive?: number; port?: number }
 );
 
 export default class M5Chain<TClasses extends readonly M5ChainDeviceClass[]> {

@@ -65,7 +65,8 @@ try {
 | Run without M5Chain hardware | [Stream transport and simulator](docs/setup.md#inject-a-stream-transport-for-simulation) |
 
 Atom Chain Base pins are supplied for supported M5Atom targets. Other targets default to their Grove-compatible
-pins. Override `transmit` and `receive` in the constructor when needed; see [pin configuration](docs/setup.md#pin-configuration).
+pins. Override `transmit`, `receive`, or the default UART `port: 1` in the constructor when needed; see
+[serial configuration](docs/setup.md#serial-configuration).
 
 ## Using devices
 
