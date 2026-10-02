@@ -4,10 +4,11 @@
 
 ## M5Chain
 
-- `new M5Chain({ deviceClasses, transmit, receive, transport, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
-  - `pollingInterval` and `connectionCheckInterval` must be non-negative finite numbers.
-  - `transport` is an optional `M5ChainTransport` stream pair for simulation or custom I/O; it is mutually exclusive
-    with `transmit` and `receive`.
+- `new M5Chain({ deviceClasses, port = 1, transmit, receive, transport, debug = false, pollingInterval = 30, connectionCheckInterval = 1000 })`
+	- `pollingInterval` and `connectionCheckInterval` must be non-negative finite numbers.
+	- `port` selects the hardware UART. Separate instances can use separate ports concurrently.
+	- `transport` is an optional `M5ChainTransport` stream pair for simulation or custom I/O; it is mutually exclusive
+	  with `port`, `transmit`, and `receive`.
 - `await m5chain.start()` scans the chain and rejects if enumeration fails; no connected chain is a successful empty scan
 - `await m5chain.stop()` stops polling, disconnects current device instances, and allows a later `start()`
 - `await m5chain.close()` stops the chain and closes UART permanently

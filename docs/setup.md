@@ -164,7 +164,7 @@ use local relative paths to the same public manifests, for example:
 The files under `manifests/` are the stable public manifest entry points. Files under `src/m5chain/` are internal and
 may move as the implementation evolves.
 
-## Pin configuration
+## Serial configuration
 
 When no M5Chain pin configuration is present, the UART pins default to the target's Grove-compatible
 `device.I2C.default.data` and `device.I2C.default.clock` pins.
@@ -172,10 +172,19 @@ When no M5Chain pin configuration is present, the UART pins default to the targe
 The library supplies Atom Chain Base pin settings for M5Atom Matrix, Lite, S3, S3 Lite, and S3R targets.
 Other targets use the Grove-compatible defaults unless you specify pins.
 
+The UART port defaults to `1`. Pass `port` to select another hardware UART, allowing separate `M5Chain` instances to
+use different ports concurrently:
+
+```ts
+const first = new M5Chain({ deviceClasses, port: 1 });
+const second = new M5Chain({ deviceClasses, port: 2, transmit: 17, receive: 16 });
+```
+
 Target defaults, `mc/config`, `mod/config`, and constructor options are applied in that order of increasing priority.
-`transmit` and `receive` may override either configured pin independently. Pin number `0` is supported.
-Pins in `mc/config` and `mod/config` must be non-negative integers. Invalid values in these configuration
-objects are ignored. Constructor pin options are passed to the UART driver.
+`port`, `transmit`, and `receive` may override their configured values independently. Port and pin number `0` are
+supported. Values in `mc/config` and `mod/config` must be non-negative integers; invalid values are ignored.
+Constructor serial options are passed to the UART driver. For example, application configuration may contain
+`{ "m5chain": { "port": 2, "transmit": 17, "receive": 16 } }`.
 
 See the [quick start](../README.md#quick-start) for the concrete usage pattern.
 
@@ -202,7 +211,7 @@ const m5chain = new M5Chain({
 });
 ```
 
-`transport` cannot be combined with `transmit` or `receive`, and both streams must be unlocked. `M5Chain` locks both
+`transport` cannot be combined with `port`, `transmit`, or `receive`, and both streams must be unlocked. `M5Chain` locks both
 streams for its lifetime. Its
 `close()` method invokes the optional transport `close()` hook to release the underlying resource, then cancels or
 aborts the streams and releases their locks. Readable chunks must be `Uint8Array` values. The injected transport

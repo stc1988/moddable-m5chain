@@ -1,6 +1,7 @@
 export type ConnectionConfig = {
 	transmit: number;
 	receive: number;
+	port: number;
 };
 
 type PartialConnectionConfig = Partial<ConnectionConfig>;
@@ -29,6 +30,9 @@ function readConnectionConfig(value: unknown): PartialConnectionConfig | undefin
 	) {
 		config.receive = m5chain.receive;
 	}
+	if ("port" in m5chain && typeof m5chain.port === "number" && Number.isInteger(m5chain.port) && m5chain.port >= 0) {
+		config.port = m5chain.port;
+	}
 	return config;
 }
 
@@ -39,6 +43,7 @@ function resolveConnectionConfig(modConfig: unknown, appConfig: unknown, default
 	return {
 		transmit: modConnection?.transmit ?? appConnection?.transmit ?? defaults.transmit,
 		receive: modConnection?.receive ?? appConnection?.receive ?? defaults.receive,
+		port: modConnection?.port ?? appConnection?.port ?? defaults.port,
 	};
 }
 
