@@ -169,8 +169,9 @@ may move as the implementation evolves.
 When no M5Chain pin configuration is present, the UART pins default to the target's Grove-compatible
 `device.I2C.default.data` and `device.I2C.default.clock` pins.
 
-The library supplies Atom Chain Base pin settings for M5Atom Matrix, Lite, S3, S3 Lite, and S3R targets.
-Other targets use the Grove-compatible defaults unless you specify pins.
+The library supplies Atom Chain Base pin settings for M5Atom Matrix, Lite, S3, S3 Lite, and S3R targets. On the
+M5Stack Chain DualKey target, the first Chain connector is the default, using UART1 with transmit pin 47 and receive
+pin 48. Other targets use the Grove-compatible defaults unless you specify pins.
 
 The UART port defaults to `1`. Pass `port` to select another hardware UART, allowing separate `M5Chain` instances to
 use different ports concurrently:
@@ -178,6 +179,14 @@ use different ports concurrently:
 ```ts
 const first = new M5Chain({ deviceClasses, port: 1 });
 const second = new M5Chain({ deviceClasses, port: 2, transmit: 17, receive: 16 });
+```
+
+Chain DualKey has two independent Chain connectors. To use both at the same time, create one `M5Chain` instance for
+each hardware UART. The first instance below uses the target defaults; the second selects UART2 and its pins:
+
+```ts
+const first = new M5Chain({ deviceClasses });
+const second = new M5Chain({ deviceClasses, port: 2, transmit: 6, receive: 5 });
 ```
 
 Target defaults, `mc/config`, `mod/config`, and constructor options are applied in that order of increasing priority.

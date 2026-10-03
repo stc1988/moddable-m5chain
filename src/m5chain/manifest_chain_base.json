@@ -39,6 +39,14 @@
 					"receive": 6
 				}
 			}
+		},
+		"esp32/m5dualkey": {
+			"config": {
+				"m5chain": {
+					"transmit": 47,
+					"receive": 48
+				}
+			}
 		}
 	}
 }
