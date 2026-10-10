@@ -4,6 +4,7 @@ import M5ChainChainBus from "m5chainChainBus";
 import M5ChainEncoder from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
+import M5ChainMIC from "m5chainMIC";
 import M5ChainMono from "m5chainMono";
 import M5ChainPIR from "m5chainPIR";
 import M5ChainRGB from "m5chainRGB";
@@ -17,6 +18,7 @@ const M5CHAIN_DEVICE_CLASSES = Object.freeze([
 	M5ChainKey,
 	M5ChainJoyStick,
 	M5ChainToF,
+	M5ChainMIC,
 	M5ChainPIR,
 	M5ChainBuzzer,
 	M5ChainChainBus,

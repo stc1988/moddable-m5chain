@@ -114,6 +114,7 @@ with a particular instance. See the [API and lifecycle reference](docs/api.md) f
 | [ChainBus](https://docs.m5stack.com/ja/arduino/projects/chain/chain_bus) | `0x0006` | Yes | No | No | — | `gpioN.onInterrupt` | [ChainBus API](docs/devices/chainbus.md) |
 | [Switch](https://docs.m5stack.com/en/chain/Chain_Switch) | `0x0007` | Yes | No | Yes | Slider position `0`-`4095` | `onSwitchChanged` | [Switch API](docs/devices/switch.md) |
 | [PIR](https://docs.m5stack.com/en/chain/Chain_PIR) | `0x0009` | Yes | No | Yes | Presence status | `onPresenceChanged` | [PIR API](docs/devices/pir.md) |
+| [MIC](https://docs.m5stack.com/en/chain/Chain_MIC) | `0x000A` | Yes | No | Yes | Microphone ADC `0`-`4095` | `onThresholdCrossed` | [MIC API](docs/devices/mic.md) |
 | [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer) | `0x000B` | Yes | No | No | — | — | [Buzzer API](docs/devices/buzzer.md) |
 | [Mono](https://docs.m5stack.com/en/chain/Chain_Mono) | `0x000D` | No | No | No | — | — | [Mono API](docs/devices/mono.md) |
 | [RGB](https://docs.m5stack.com/en/chain/Chain_RGB) | `0x000E` | No | No | No | — | — | [RGB API](docs/devices/rgb.md) |
