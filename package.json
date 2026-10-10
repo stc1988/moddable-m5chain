@@ -3,11 +3,13 @@
 	"version": "1.0.2",
 	"license": "MIT",
 	"scripts": {
+		"size": "node scripts/measure-sizes.mjs",
+		"test:size": "node --test scripts/measure-sizes.test.mjs",
 		"web:build": "npm --prefix web run build",
 		"web:dev": "npm --prefix web run dev",
 		"format": "biome format --write README.md docs examples manifests scripts src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run fix",
 		"lint": "biome check README.md docs examples manifests scripts src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run check",
-		"test": "npm run test:xs && npm run test:web",
+		"test": "npm run test:size && npm run test:xs && npm run test:web",
 		"test:xs": "node scripts/run-xs-tests.mjs",
 		"test:web": "npm --prefix web test",
 		"typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.mod.json"

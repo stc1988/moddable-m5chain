@@ -50,6 +50,34 @@ Documentation-only and web-only changes do not require unrelated device builds. 
 builds relevant to the affected files, and report hardware behavior that remains unverified. For changes under
 `web/`, run `npm run web:build` in addition to formatting and linting.
 
+## Size measurement
+
+Run `npm run size` to measure debug-build flash usage for the M5Chain Host and its device Mods. The command defaults
+to `esp32/m5atom_matrix` and writes machine-readable JSON plus a Markdown summary to `build/size-report.json` and
+`build/size-report.md`.
+
+```sh
+npm run size
+npm run size -- --target esp32/m5atom_s3
+```
+
+The Host measurement compares the final `xs_esp32.bin` against the same minimal Host without M5Chain. Each device
+measurement compares its final `.xsa` archive against the same `mod-base` archive, so shared features and archive
+overhead are included in the device's standalone cost. The report records the target, debug configuration, package
+version, and the complete Moddable SDK and M5Chain Git revisions. Results are comparable only when those inputs match.
+
+Use `--mod-only` to skip the Host firmware builds. This also permits measuring Mod archives for targets other than
+ESP32. Use `--output-dir <path>` to choose another report directory.
+
+The repository keeps the latest reviewed measurement for the default target in
+[`measurements/esp32-m5atom_matrix-debug.json`](../measurements/esp32-m5atom_matrix-debug.json), with a corresponding
+[Markdown summary](../measurements/esp32-m5atom_matrix-debug.md). Update both files together after intentionally
+rerunning the measurement under the recorded SDK revision:
+
+```sh
+npm run size -- --snapshot
+```
+
 ## Commits and pull requests
 
 - Keep each commit focused on one coherent change. Run the relevant validation before committing, and report the

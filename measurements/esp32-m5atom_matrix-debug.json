@@ -1,0 +1,94 @@
+{
+	"schemaVersion": 1,
+	"generatedAt": "2026-10-10T09:32:34.064Z",
+	"target": "esp32/m5atom_matrix",
+	"build": "debug",
+	"moddable": {
+		"version": "10.0.0",
+		"revision": "5f215f776f93039755343dbe75a09aa2615045f4",
+		"describe": "10.0.0",
+		"dirty": false
+	},
+	"m5chain": {
+		"version": "1.0.2",
+		"revision": "5205018401a902d4c89d2ebd05433fdc8cfa7661",
+		"describe": "v1.0.2-12-g5205018",
+		"dirty": false
+	},
+	"host": {
+		"artifact": "xs_esp32.bin",
+		"baselineBytes": 836304,
+		"withM5ChainBytes": 954896,
+		"incrementalBytes": 118592
+	},
+	"mods": {
+		"artifact": "xsa",
+		"baselineBytes": 1056,
+		"devices": [
+			{
+				"name": "angle",
+				"archiveBytes": 10006,
+				"incrementalBytes": 8950
+			},
+			{
+				"name": "buzzer",
+				"archiveBytes": 20171,
+				"incrementalBytes": 19115
+			},
+			{
+				"name": "chainbus",
+				"archiveBytes": 18690,
+				"incrementalBytes": 17634
+			},
+			{
+				"name": "encoder",
+				"archiveBytes": 15818,
+				"incrementalBytes": 14762
+			},
+			{
+				"name": "joystick",
+				"archiveBytes": 15450,
+				"incrementalBytes": 14394
+			},
+			{
+				"name": "key",
+				"archiveBytes": 11192,
+				"incrementalBytes": 10136
+			},
+			{
+				"name": "mic",
+				"archiveBytes": 13499,
+				"incrementalBytes": 12443
+			},
+			{
+				"name": "mono",
+				"archiveBytes": 20364,
+				"incrementalBytes": 19308
+			},
+			{
+				"name": "pir",
+				"archiveBytes": 12231,
+				"incrementalBytes": 11175
+			},
+			{
+				"name": "rgb",
+				"archiveBytes": 21254,
+				"incrementalBytes": 20198
+			},
+			{
+				"name": "switch",
+				"archiveBytes": 14894,
+				"incrementalBytes": 13838
+			},
+			{
+				"name": "tof",
+				"archiveBytes": 12062,
+				"incrementalBytes": 11006
+			}
+		],
+		"allDevices": {
+			"archiveBytes": 102106,
+			"incrementalBytes": 101050
+		}
+	}
+}
