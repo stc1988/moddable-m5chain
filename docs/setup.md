@@ -167,7 +167,7 @@ may move as the implementation evolves.
 ## Serial configuration
 
 When no M5Chain pin configuration is present, the UART pins default to the target's Grove-compatible
-`device.I2C.default.data` and `device.I2C.default.clock` pins.
+`device.i2c.default.data` and `device.i2c.default.clock` pins.
 
 The library supplies Atom Chain Base pin settings for M5Atom Matrix, Lite, S3, S3 Lite, and S3R targets. On the
 M5Stack Chain DualKey target, the first Chain connector is the default, using UART1 with transmit pin 47 and receive
