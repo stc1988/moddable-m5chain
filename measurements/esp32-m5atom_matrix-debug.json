@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 1,
-	"generatedAt": "2026-10-10T09:26:17.416Z",
+	"generatedAt": "2026-10-10T09:32:34.064Z",
 	"target": "esp32/m5atom_matrix",
 	"build": "debug",
 	"moddable": {
@@ -11,9 +11,9 @@
 	},
 	"m5chain": {
 		"version": "1.0.2",
-		"revision": "b73a5dc402adadd872e4dbdab001487e06f14aad",
-		"describe": "v1.0.2-11-gb73a5dc-dirty",
-		"dirty": true
+		"revision": "5205018401a902d4c89d2ebd05433fdc8cfa7661",
+		"describe": "v1.0.2-12-g5205018",
+		"dirty": false
 	},
 	"host": {
 		"artifact": "xs_esp32.bin",

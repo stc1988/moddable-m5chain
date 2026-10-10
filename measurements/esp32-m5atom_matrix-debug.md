@@ -1,10 +1,10 @@
 # M5Chain size report
 
-Generated: 2026-10-10T09:26:17.416Z
+Generated: 2026-10-10T09:32:34.064Z
 Target: `esp32/m5atom_matrix`
 Build: `debug`
 Moddable SDK: `10.0.0` (`5f215f776f93039755343dbe75a09aa2615045f4`)
-M5Chain: `b73a5dc402adadd872e4dbdab001487e06f14aad` (dirty)
+M5Chain: `5205018401a902d4c89d2ebd05433fdc8cfa7661`
 
 ## Host
 
