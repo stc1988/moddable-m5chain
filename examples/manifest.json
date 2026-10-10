@@ -1,9 +1,5 @@
 {
-	"include": [
-		"$(MODDABLE)/examples/manifest_base.json",
-		"$(MODULES)/base/modules/manifest.json",
-		"../manifests/host.json"
-	],
+	"include": ["$(MODDABLE)/examples/manifest_base.json", "$(MODULES)/base/modules", "../manifests/host.json"],
 	"defines": {
 		"XS_MODS": 1,
 		"main": {

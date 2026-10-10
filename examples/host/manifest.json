@@ -1,5 +1,5 @@
 {
-	"include": ["$(MODDABLE)/examples/manifest_base.json", "../../manifest.json"],
+	"include": ["$(MODDABLE)/examples/manifest_base.json", "../.."],
 	"defines": {
 		"main": {
 			"async": 1
