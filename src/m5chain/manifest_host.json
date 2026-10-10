@@ -1,7 +1,8 @@
 {
 	"include": [
 		"./manifest_chain_base.json",
-		"$(MODDABLE)/modules/io",
+		"$(MODDABLE)/modules/io/i2c",
+		"$(MODDABLE)/modules/io/serial",
 		"$(MODDABLE)/modules/web/streams/all",
 		"$(MODULES)/base/modules"
 	],
