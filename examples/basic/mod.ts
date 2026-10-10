@@ -1,5 +1,6 @@
 import { M5CHAIN_DEVICE_CLASSES, type M5ChainDevice } from "m5chainDevices";
 import { KEY_EVENT, type KeyEvent } from "m5chainEncoder";
+import { MIC_TRIGGER } from "m5chainMIC";
 import { PIR_STATUS } from "m5chainPIR";
 import { SWITCH_STATUS } from "m5chainSwitch";
 import M5Chain from "m5chain";
@@ -74,6 +75,12 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 			device.onPresenceChanged = (status) => {
 				const detected = status === PIR_STATUS.PERSON_DETECTED;
 				log(`${deviceLabel(device)} person detected=${detected}`);
+			};
+			break;
+
+		case "mic":
+			device.onThresholdCrossed = (trigger) => {
+				log(`${deviceLabel(device)} above threshold=${trigger === MIC_TRIGGER.HIGH_THRESHOLD}`);
 			};
 			break;
 

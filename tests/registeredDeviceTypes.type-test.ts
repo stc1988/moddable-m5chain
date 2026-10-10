@@ -61,6 +61,7 @@ type _IncompleteDeviceRegistry = RegisteredM5ChainDevice<readonly [typeof Incomp
 import M5ChainAngle from "m5chainAngle";
 import M5ChainChainBus, { type ChainBusGPIOMode } from "m5chainChainBus";
 import M5ChainEncoder from "m5chainEncoder";
+import M5ChainMIC, { MIC_REPORT_MODE, type MICTrigger } from "m5chainMIC";
 import M5ChainSwitch, { SWITCH_DIRECTION, SWITCH_REPORT_MODE } from "m5chainSwitch";
 import M5Chain from "m5chain";
 
@@ -112,6 +113,20 @@ for (const device of switchChain.devices) {
 		void sample;
 		// @ts-expect-error Switch thresholds require both open and close values.
 		await device.configure({ thresholds: { open: 3967 } });
+	}
+}
+const micChain = new M5Chain({ deviceClasses: [M5ChainMIC], transport });
+for (const device of micChain.devices) {
+	if (device.kind === "mic") {
+		await device.configure({ threshold: 2048, reportMode: MIC_REPORT_MODE.ENABLED, triggerIntervalMs: 500 });
+		const sample: number | undefined = device.sample();
+		void sample;
+		device.onThresholdCrossed = (trigger) => {
+			const typedTrigger: MICTrigger = trigger;
+			void typedTrigger;
+		};
+		// @ts-expect-error MIC thresholds are numeric 12-bit values.
+		await device.configure({ threshold: { low: 100, high: 200 } });
 	}
 }
 const SampleDevice = withDeviceFeatures(HasLed, CanSample<number>());

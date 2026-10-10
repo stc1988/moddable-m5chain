@@ -18,7 +18,7 @@
 ## Common Device API (`M5ChainDevice`)
 
 - `device.id`
-- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `chainbus`, `switch`, `pir`, `buzzer`, `mono`, `rgb`, or `unknown`)
+- `device.kind` human-readable device type (`encoder`, `angle`, `key`, `joystick`, `tof`, `chainbus`, `switch`, `pir`, `mic`, `buzzer`, `mono`, `rgb`, or `unknown`)
 - `device.type` numeric device type ID used by the M5Chain protocol
 - `device.known` (`false` for device types not registered in this instance's `deviceClasses`, including unsupported types)
 - `device.connected`
@@ -39,7 +39,7 @@ device implementations. The `m5chainDevices` all-device aggregate also exports i
 
 ## LED Features (`HasLed`)
 
-Available on: Encoder / Angle / Key / JoyStick / ToF / Switch / PIR / Buzzer
+Available on: Encoder / Angle / Key / JoyStick / ToF / Switch / PIR / MIC / Buzzer
 
 RGB channels and LED brightness use integers from `0` to `255`; operations remain asynchronous.
 Brightness previously used `0` to `1`: migrate `0.5` to `128` and `1` to `255`, including matrix brightness settings.
@@ -53,7 +53,7 @@ See [HasKey API](features/has-key.md).
 
 ## Sample Features (`CanSample`)
 
-Available on: Encoder / Angle / JoyStick / ToF / Switch / PIR
+Available on: Encoder / Angle / JoyStick / ToF / Switch / PIR / MIC
 
 See [CanSample API](features/can-sample.md).
 
@@ -105,7 +105,7 @@ device.onKeyEvent = async (keyEvent) => {
 
 ### `device.onSample = (sample) => {}`
 
-Available on devices with `CanSample` (Encoder / Angle / JoyStick / ToF / PIR).
+Available on devices with `CanSample` (Encoder / Angle / JoyStick / ToF / Switch / PIR / MIC).
 
 If any device has `onSample` set, bus polling starts. It stops when all `onSample` handlers are `null`.
 
@@ -122,7 +122,7 @@ The handler may return a promise. Rejections are reported through `m5chain.onErr
 
 `device.sample()` remains available as a synchronous accessor for the latest cached sample.
 
-Angle, JoyStick, ToF, Switch, and PIR dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
+Angle, JoyStick, ToF, Switch, PIR, and MIC dispatch `onSample` with the newly acquired value on every poll. Encoder dispatches `onSample` with the delta from the previous encoder value and skips dispatch while the value is unchanged.
 
 ### `pir.onPresenceChanged = (status) => {}`
 
@@ -133,6 +133,11 @@ Available on Chain PIR. When PIR report mode is enabled, the device sends a chan
 
 Available on Chain Switch. When automatic report mode is enabled, the device sends a change-driven event with
 `SWITCH_STATUS.CLOSED` or `SWITCH_STATUS.OPEN`. See the [Switch API](devices/switch.md).
+
+### `mic.onThresholdCrossed = (trigger) => {}`
+
+Available on Chain MIC. When automatic report mode is enabled, the device reports rising and falling crossings as
+`MIC_TRIGGER.HIGH_THRESHOLD` or `MIC_TRIGGER.LOW_THRESHOLD`. See the [MIC API](devices/mic.md).
 
 ### Sample-read failures
 
