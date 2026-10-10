@@ -3,6 +3,7 @@ import M5ChainEncoder, { KEY_EVENT } from "m5chainEncoder";
 import M5ChainJoyStick from "m5chainJoyStick";
 import M5ChainKey from "m5chainKey";
 import M5ChainPIR, { PIR_STATUS } from "m5chainPIR";
+import M5ChainSwitch from "m5chainSwitch";
 import M5ChainToF from "m5chainToF";
 import M5Chain, { type RegisteredM5ChainDevice } from "m5chain";
 
@@ -29,6 +30,7 @@ const LED_DEVICE_CLASSES = Object.freeze([
 	M5ChainJoyStick,
 	M5ChainToF,
 	M5ChainPIR,
+	M5ChainSwitch,
 ]);
 type LedDevice = RegisteredM5ChainDevice<typeof LED_DEVICE_CLASSES>;
 
@@ -120,6 +122,14 @@ function attachDeviceHandlers(device: LedDevice) {
 				const detected = status === PIR_STATUS.PERSON_DETECTED;
 				log(`${deviceLabel(device)} person detected=${detected}`);
 				await device.setLedColor(detected ? 0 : 255, detected ? 255 : 0, 0);
+			};
+			break;
+
+		case "switch":
+			device.onSample = async (position) => {
+				const value = position / 0x0fff;
+				log(`${deviceLabel(device)} position=${position}`);
+				await device.setLedColor(hsvToRgb(value * 0.33, 1, value));
 			};
 			break;
 

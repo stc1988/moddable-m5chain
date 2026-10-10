@@ -1,0 +1,8 @@
+{
+	"include": ["./manifest_feature_led.json", "./manifest_feature_sample.json"],
+	"modules": {
+		"m5chainSwitch": "./m5chainDevices/m5chainSwitch",
+		"switchProtocol": "./switchProtocol"
+	},
+	"preload": ["m5chainSwitch", "switchProtocol"]
+}

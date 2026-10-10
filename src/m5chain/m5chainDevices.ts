@@ -7,6 +7,7 @@ import M5ChainKey from "m5chainKey";
 import M5ChainMono from "m5chainMono";
 import M5ChainPIR from "m5chainPIR";
 import M5ChainRGB from "m5chainRGB";
+import M5ChainSwitch from "m5chainSwitch";
 import M5ChainToF from "m5chainToF";
 import type { RegisteredM5ChainDevice } from "types";
 
@@ -21,6 +22,7 @@ const M5CHAIN_DEVICE_CLASSES = Object.freeze([
 	M5ChainChainBus,
 	M5ChainMono,
 	M5ChainRGB,
+	M5ChainSwitch,
 ]);
 type M5ChainDevice = RegisteredM5ChainDevice<typeof M5CHAIN_DEVICE_CLASSES>;
 

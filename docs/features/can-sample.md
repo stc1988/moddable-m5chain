@@ -18,6 +18,7 @@ import type { SampleHandler } from "types";
 - Angle
 - JoyStick
 - ToF
+- Switch
 - PIR
 
 ## Methods
@@ -32,7 +33,7 @@ import type { SampleHandler } from "types";
 
 ## Sample Values
 
-Angle, JoyStick, ToF, and PIR dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
+Angle, JoyStick, ToF, Switch, and PIR dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
 
 | Device | `onSample` argument and `sample()` value |
 | --- | --- |
@@ -40,6 +41,7 @@ Angle, JoyStick, ToF, and PIR dispatch `onSample` with the latest sampled value 
 | Angle | Normalized angle value (`0.00` to `1.00`) |
 | JoyStick | `{ x, y }` (`-128` to `127`) |
 | ToF | Measured distance in millimeters (`number`) |
+| Switch | 12-bit slider position (`0` to `4095`) |
 | PIR | Presence status (`PIRStatus`) |
 
 ## Poll Loop Behavior
