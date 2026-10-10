@@ -61,6 +61,7 @@ type _IncompleteDeviceRegistry = RegisteredM5ChainDevice<readonly [typeof Incomp
 import M5ChainAngle from "m5chainAngle";
 import M5ChainChainBus, { type ChainBusGPIOMode } from "m5chainChainBus";
 import M5ChainEncoder from "m5chainEncoder";
+import M5ChainSwitch, { SWITCH_DIRECTION, SWITCH_REPORT_MODE } from "m5chainSwitch";
 import M5Chain from "m5chain";
 
 const chain = new M5Chain({ deviceClasses: [M5ChainAngle, M5ChainEncoder], transport });
@@ -97,6 +98,20 @@ for (const device of chainBusChain.devices) {
 		await device.i2c.configure({ frequency: 1_000_000 });
 		// @ts-expect-error Analog mode has no pull option.
 		await device.gpio1.configure({ mode: "analog", pull: "up" });
+	}
+}
+const switchChain = new M5Chain({ deviceClasses: [M5ChainSwitch], transport });
+for (const device of switchChain.devices) {
+	if (device.kind === "switch") {
+		await device.configure({
+			direction: SWITCH_DIRECTION.DOWN_TO_UP_INCREASES,
+			thresholds: { open: 3967, close: 80 },
+			reportMode: SWITCH_REPORT_MODE.ENABLED,
+		});
+		const sample: number | undefined = device.sample();
+		void sample;
+		// @ts-expect-error Switch thresholds require both open and close values.
+		await device.configure({ thresholds: { open: 3967 } });
 	}
 }
 const SampleDevice = withDeviceFeatures(HasLed, CanSample<number>());

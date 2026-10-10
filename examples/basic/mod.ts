@@ -1,6 +1,7 @@
 import { M5CHAIN_DEVICE_CLASSES, type M5ChainDevice } from "m5chainDevices";
 import { KEY_EVENT, type KeyEvent } from "m5chainEncoder";
 import { PIR_STATUS } from "m5chainPIR";
+import { SWITCH_STATUS } from "m5chainSwitch";
 import M5Chain from "m5chain";
 
 const LOG_PREFIX = "[examples/basic]";
@@ -73,6 +74,12 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 			device.onPresenceChanged = (status) => {
 				const detected = status === PIR_STATUS.PERSON_DETECTED;
 				log(`${deviceLabel(device)} person detected=${detected}`);
+			};
+			break;
+
+		case "switch":
+			device.onSwitchChanged = (status) => {
+				log(`${deviceLabel(device)} open=${status === SWITCH_STATUS.OPEN}`);
 			};
 			break;
 
