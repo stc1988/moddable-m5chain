@@ -44,7 +44,7 @@ export type M5ChainOptions<TClasses extends readonly M5ChainDeviceClass[]> = {
 );
 
 declare const device: {
-	I2C: {
+	i2c: {
 		default: {
 			data: number;
 			clock: number;
@@ -69,8 +69,8 @@ const MAX_PACKET_SIZE = 256;
 function loadConnectionConfig(): ConnectionConfig {
 	const modConfig = Modules.has("mod/config") ? Modules.importNow("mod/config") : undefined;
 	return resolveConnectionConfig(modConfig, config, {
-		transmit: device.I2C.default.data,
-		receive: device.I2C.default.clock,
+		transmit: device.i2c.default.data,
+		receive: device.i2c.default.clock,
 		port: 1,
 	});
 }

@@ -5,14 +5,16 @@
 	"scripts": {
 		"web:build": "npm --prefix web run build",
 		"web:dev": "npm --prefix web run dev",
-		"format": "biome format --write README.md docs examples manifests src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run fix",
-		"lint": "biome check README.md docs examples manifests src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run check",
-		"test": "node --no-warnings --experimental-strip-types --test tests/*.test.mjs && npm --prefix web test",
+		"format": "biome format --write README.md docs examples manifests scripts src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run fix",
+		"lint": "biome check README.md docs examples manifests scripts src tests web/index.html web/styles.css web/README.md biome.json manifest.json package.json package-lock.json tsconfig.json tsconfig.mod.json && npm --prefix web run check",
+		"test": "npm run test:xs && npm run test:web",
+		"test:xs": "node scripts/run-xs-tests.mjs",
+		"test:web": "npm --prefix web test",
 		"typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.mod.json"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.5",
-		"@moddable/typings": "^9.5.0",
+		"@moddable/typings": "^10.0.0",
 		"typescript": "^7.0.2"
 	}
 }

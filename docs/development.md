@@ -20,11 +20,16 @@ For library implementation, type, or manifest changes, run:
 ```sh
 npm run format
 npm run lint
+npm run test:xs
+npm run test:web
 npm test
 npm run typecheck
 mcconfig -dn -m -p esp32/m5atom_matrix -t build ./examples/manifest.json
 mcrun -dn -m -p esp32/m5atom_matrix -t build ./examples/basic/manifest.json
 ```
+
+`test:xs` builds the library test host for the Moddable simulator and drives the test262-style test suite through
+`xsdb`. `test:web` runs the web package's Node.js test suite. `npm test` runs both suites in that order.
 
 The default TypeScript configuration checks the implementation, examples, and TypeScript tests. The
 `tsconfig.mod.json` configuration checks the tests again with the core module specifiers mapped to the Mod-facing

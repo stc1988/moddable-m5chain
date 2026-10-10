@@ -43,8 +43,8 @@
 		"esp32/m5dualkey": {
 			"config": {
 				"m5chain": {
-					"transmit": 47,
-					"receive": 48
+					"transmit": 48,
+					"receive": 47
 				}
 			}
 		}
