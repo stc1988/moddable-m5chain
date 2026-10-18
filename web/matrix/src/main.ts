@@ -1,6 +1,8 @@
 import "./styles.css";
+import "../../shared/webmcpStatus.css";
+import { initializeWebMcp } from "../../shared/webmcpStatus";
 import { BLACK, type Color, colorFromHex, type DeviceType, generateAnimationCode, isOn } from "./matrix";
-import { createMatrixTools, type MatrixSettings, type ModelContext, registerMatrixTools } from "./webmcp";
+import { createMatrixTools, type MatrixSettings, type ModelContext } from "./webmcp";
 
 const byId = <T extends HTMLElement>(id: string) => {
 	const element = document.getElementById(id);
@@ -264,12 +266,10 @@ const webmcpTools = createMatrixTools({
 	preview: startPreview,
 	stop: () => stopPreview(),
 });
-void registerMatrixTools(
+void initializeWebMcp(
 	(document as Document & { modelContext?: ModelContext }).modelContext,
 	webmcpTools,
-	webmcpLifetime.signal,
-).catch((error: unknown) => {
-	webmcpLifetime.abort();
-	console.warn("WebMCP tools could not be registered", error);
-});
+	webmcpLifetime,
+	byId("webmcp-status"),
+);
 render();
