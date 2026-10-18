@@ -1,0 +1,42 @@
+.header-meta {
+	display: grid;
+	justify-items: end;
+	gap: 10px;
+}
+
+.webmcp-badge {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	max-width: 270px;
+	margin: 0;
+	padding: 7px 11px;
+	border: 1px solid #55dbe144;
+	border-radius: 12px;
+	color: var(--muted);
+	font-size: 11px;
+	line-height: 1.6;
+}
+
+.webmcp-badge > span:first-child {
+	color: var(--cyan);
+	font-weight: 650;
+}
+
+#webmcp-status[data-state="registered"] {
+	color: var(--cyan);
+}
+
+#webmcp-status[data-state="error"] {
+	color: var(--amber);
+}
+
+@media (max-width: 720px) {
+	.page-header {
+		flex-wrap: wrap;
+	}
+	.header-meta {
+		justify-items: start;
+	}
+}

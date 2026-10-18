@@ -1,7 +1,9 @@
 import "./styles.css";
+import "../../shared/webmcpStatus.css";
+import { initializeWebMcp } from "../../shared/webmcpStatus";
 import { parseMelodyCsv } from "./melodyCsv";
 import { melodyStepDurationMs, validateMelodyTiming } from "./melodyTiming";
-import { createBuzzerTools, type ModelContext, type PreviewSettings, registerBuzzerTools } from "./webmcp";
+import { createBuzzerTools, type ModelContext, type PreviewSettings } from "./webmcp";
 
 type PreviewMode = "tone" | "note" | "melody" | "continuous";
 
@@ -766,11 +768,9 @@ const webmcpTools = createBuzzerTools(
 	NOTES.map((note) => note.constant),
 );
 
-void registerBuzzerTools(
+void initializeWebMcp(
 	(document as Document & { modelContext?: ModelContext }).modelContext,
 	webmcpTools,
-	webmcpLifetime.signal,
-).catch((error: unknown) => {
-	webmcpLifetime.abort();
-	console.warn("WebMCP tools could not be registered", error);
-});
+	webmcpLifetime,
+	byId("webmcp-status"),
+);

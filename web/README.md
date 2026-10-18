@@ -13,6 +13,13 @@ The pages share one toolchain and dependency lockfile while keeping separate HTM
 `npm run web:build` produces the complete Pages artifact in `web/dist`. Run the web-only tests with
 `npm --prefix web test`; the repository-level `npm test` runs both library and web tests.
 
+## WebMCP status
+
+Matrix Studio and Buzzer Tone Studio always show a small `WebMCP対応` badge in the header. Its status checks for
+`document.modelContext.registerTool`, reports when all tools have registered, and shows initialization failures.
+Browsers without the API show `このブラウザでは利用できません`; the tools remain usable manually.
+`ツール登録済み` confirms registration only, not that an AI agent is connected or authorized to use the tools.
+
 ## Adding an application
 
 1. Create the application under `web/<application-name>` with its own `index.html` and source directory.
