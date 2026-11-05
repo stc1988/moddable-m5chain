@@ -1,17 +1,17 @@
 # M5Chain size report
 
-Generated: 2026-10-10T09:32:34.064Z
+Generated: 2026-11-05T13:54:25.019Z
 Target: `esp32/m5atom_matrix`
 Build: `debug`
-Moddable SDK: `10.0.0` (`5f215f776f93039755343dbe75a09aa2615045f4`)
-M5Chain: `5205018401a902d4c89d2ebd05433fdc8cfa7661`
+Moddable SDK: `10.1.0` (`2d54ac4308501a03f45d4fcfe33beee45ee44ac4`)
+M5Chain: `7f7e776e218e012f2227c8fb3f5ed4132fd584d2`
 
 ## Host
 
 | Build | Size | Increment |
 | --- | ---: | ---: |
-| Baseline | 836,304 B | — |
-| M5Chain core | 954,896 B | +118,592 B |
+| Baseline | 837,408 B | — |
+| M5Chain core | 956,048 B | +118,640 B |
 
 ## Mods
 

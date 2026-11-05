@@ -1,25 +1,25 @@
 {
 	"schemaVersion": 1,
-	"generatedAt": "2026-10-10T09:32:34.064Z",
+	"generatedAt": "2026-11-05T13:54:25.019Z",
 	"target": "esp32/m5atom_matrix",
 	"build": "debug",
 	"moddable": {
-		"version": "10.0.0",
-		"revision": "5f215f776f93039755343dbe75a09aa2615045f4",
-		"describe": "10.0.0",
+		"version": "10.1.0",
+		"revision": "2d54ac4308501a03f45d4fcfe33beee45ee44ac4",
+		"describe": "10.1.0",
 		"dirty": false
 	},
 	"m5chain": {
-		"version": "1.0.2",
-		"revision": "5205018401a902d4c89d2ebd05433fdc8cfa7661",
-		"describe": "v1.0.2-12-g5205018",
+		"version": "1.1.0",
+		"revision": "7f7e776e218e012f2227c8fb3f5ed4132fd584d2",
+		"describe": "v1.1.0-3-g7f7e776",
 		"dirty": false
 	},
 	"host": {
 		"artifact": "xs_esp32.bin",
-		"baselineBytes": 836304,
-		"withM5ChainBytes": 954896,
-		"incrementalBytes": 118592
+		"baselineBytes": 837408,
+		"withM5ChainBytes": 956048,
+		"incrementalBytes": 118640
 	},
 	"mods": {
 		"artifact": "xsa",
