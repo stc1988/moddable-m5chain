@@ -23,16 +23,16 @@ projects generate a simple `writeFrame()` call without a timer.
 
 When the experimental `document.modelContext` API is available, the application registers these tools:
 
-| Tool | Purpose |
-| --- | --- |
-| `get_matrix_state` | Read settings, frames, playback state, and generated code. |
-| `configure_matrix` | Change device, rotation, brightness, frame time, or loop behavior. |
-| `set_matrix_pixel` | Set or clear one pixel in a selected frame. |
-| `add_matrix_frame` | Append a blank frame or duplicate the current frame. |
-| `select_matrix_frame` | Select a frame for editing. |
-| `delete_matrix_frame` | Delete a frame while retaining at least one. |
-| `preview_matrix_animation` | Start browser-only playback. |
-| `stop_matrix_animation` | Stop browser playback. |
+| Tool                       | Purpose                                                            |
+| -------------------------- | ------------------------------------------------------------------ |
+| `get_matrix_state`         | Read settings, frames, playback state, and generated code.         |
+| `configure_matrix`         | Change device, rotation, brightness, frame time, or loop behavior. |
+| `set_matrix_pixel`         | Set or clear one pixel in a selected frame.                        |
+| `add_matrix_frame`         | Append a blank frame or duplicate the current frame.               |
+| `select_matrix_frame`      | Select a frame for editing.                                        |
+| `delete_matrix_frame`      | Delete a frame while retaining at least one.                       |
+| `preview_matrix_animation` | Start browser-only playback.                                       |
+| `stop_matrix_animation`    | Stop browser playback.                                             |
 
 All mutation inputs are validated before the visible state changes. Tool results are JSON strings containing either
 `{ "ok": true, "state": ... }` or `{ "ok": false, "error": "..." }`. WebMCP controls only this browser editor; it

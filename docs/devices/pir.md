@@ -18,14 +18,14 @@ import M5ChainPIR, {
 } from "m5chainPIR";
 ```
 
-| Export | Description |
-| --- | --- |
-| `M5ChainPIR` | Default class export. |
-| `PIR_STATUS` | Detection values: `NO_PERSON = 0`, `PERSON_DETECTED = 1`. |
-| `PIR_REPORT_MODE` | Automatic report settings: `DISABLED = 0`, `ENABLED = 1`. |
-| `PIRConfiguration` | Type accepted by `configure()`. |
-| `PIRConfigurationSnapshot` | Type returned by `readConfiguration()`. |
-| `PIRPresenceHandler` | Handler type used by `onPresenceChanged`. |
+| Export                     | Description                                               |
+| -------------------------- | --------------------------------------------------------- |
+| `M5ChainPIR`               | Default class export.                                     |
+| `PIR_STATUS`               | Detection values: `NO_PERSON = 0`, `PERSON_DETECTED = 1`. |
+| `PIR_REPORT_MODE`          | Automatic report settings: `DISABLED = 0`, `ENABLED = 1`. |
+| `PIRConfiguration`         | Type accepted by `configure()`.                           |
+| `PIRConfigurationSnapshot` | Type returned by `readConfiguration()`.                   |
+| `PIRPresenceHandler`       | Handler type used by `onPresenceChanged`.                 |
 
 ## Capabilities
 
@@ -61,19 +61,19 @@ The device reports each PIR state change when report mode is enabled. According 
 
 ## Device-specific Methods
 
-| Method | Description |
-| --- | --- |
-| `await device.configure(options)` | Applies PIR report-mode and hold-time configuration. |
-| `await device.readConfiguration()` | Reads the current PIR configuration. |
+| Method                             | Description                                                   |
+| ---------------------------------- | ------------------------------------------------------------- |
+| `await device.configure(options)`  | Applies PIR report-mode and hold-time configuration.          |
+| `await device.readConfiguration()` | Reads the current PIR configuration.                          |
 | `await device.getPresenceStatus()` | Reads `PIR_STATUS.NO_PERSON` or `PIR_STATUS.PERSON_DETECTED`. |
-| `await device.isPersonDetected()` | Returns `true` while the PIR reports a detected person. |
+| `await device.isPersonDetected()`  | Returns `true` while the PIR reports a detected person.       |
 
 ## Configuration
 
-| Option | Description |
-| --- | --- |
-| `reportMode` | Enables or disables automatic presence-change reports. |
-| `holdSeconds` | Keeps the detected state for `0` to `255` seconds. The device default is 5 seconds. |
+| Option        | Description                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| `reportMode`  | Enables or disables automatic presence-change reports.                                                  |
+| `holdSeconds` | Keeps the detected state for `0` to `255` seconds. The device default is 5 seconds.                     |
 | `saveToFlash` | Persists `holdSeconds` when `true`. It requires `holdSeconds` in the same call and defaults to `false`. |
 
 Saving to flash requires a page erase. Avoid setting `saveToFlash` on frequent configuration updates because repeated writes reduce device flash life.

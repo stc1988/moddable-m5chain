@@ -24,13 +24,13 @@ notes use the firmware's fixed 50% note waveform.
 
 The page registers five tools through the experimental `document.modelContext` imperative API:
 
-| Tool | Purpose |
-| --- | --- |
-| `get_buzzer_state` | Read current settings, melody, playback status, estimated duration, audio readiness, and generated code. |
-| `configure_buzzer` | Change mode, frequency, duty, duration, note, preview volume, tempo, or gate percentage. |
-| `import_buzzer_melody` | Replace the melody using `note,beats` CSV and select melody mode. |
-| `preview_buzzer` | Start browser preview with the current settings. |
-| `stop_buzzer_preview` | Stop playback, including continuous tones. |
+| Tool                   | Purpose                                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `get_buzzer_state`     | Read current settings, melody, playback status, estimated duration, audio readiness, and generated code. |
+| `configure_buzzer`     | Change mode, frequency, duty, duration, note, preview volume, tempo, or gate percentage.                 |
+| `import_buzzer_melody` | Replace the melody using `note,beats` CSV and select melody mode.                                        |
+| `preview_buzzer`       | Start browser preview with the current settings.                                                         |
+| `stop_buzzer_preview`  | Stop playback, including continuous tones.                                                               |
 
 Settings use the same names as the returned state: `mode` (`tone`, `note`, `melody`, `continuous`),
 `frequencyHz` (integer 100–10000), `dutyPercent` and `previewVolume` (integer 0–100),

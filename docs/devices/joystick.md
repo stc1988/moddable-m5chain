@@ -21,19 +21,19 @@ import M5ChainJoyStick, {
 
 `KEY_EVENT`, `KEY_MODE`, and `KEY_STATUS` values can also be used through their TypeScript types.
 
-| Export | Description |
-| --- | --- |
-| `M5ChainJoyStick` | Default class export. |
-| `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
-| `KEY_MODE` | Key mode constants: `PASSIVE`, `ACTIVE`. |
-| `KEY_STATUS` | Key status constants: `RELEASED`, `PRESSED`. |
-| `KeyEvent` | Type of values passed to `onKeyEvent`. |
-| `KeyMode` | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
-| `KeyStatus` | Type of key status values used internally by key state reads. |
-| `JoystickConfiguration` | Type accepted by `configure()`. |
-| `JoystickConfigurationSnapshot` | Type returned by `readConfiguration()`. |
-| `JoystickValue` | `{ x: number; y: number }`. |
-| `JoystickMappedRange` | `{ xMin, xMax, yMin, yMax }`. |
+| Export                          | Description                                                                                      |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `M5ChainJoyStick`               | Default class export.                                                                            |
+| `KEY_EVENT`                     | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`.                               |
+| `KEY_MODE`                      | Key mode constants: `PASSIVE`, `ACTIVE`.                                                         |
+| `KEY_STATUS`                    | Key status constants: `RELEASED`, `PRESSED`.                                                     |
+| `KeyEvent`                      | Type of values passed to `onKeyEvent`.                                                           |
+| `KeyMode`                       | Type of values accepted by `configure({ key: { mode } })` and returned by `readConfiguration()`. |
+| `KeyStatus`                     | Type of key status values used internally by key state reads.                                    |
+| `JoystickConfiguration`         | Type accepted by `configure()`.                                                                  |
+| `JoystickConfigurationSnapshot` | Type returned by `readConfiguration()`.                                                          |
+| `JoystickValue`                 | `{ x: number; y: number }`.                                                                      |
+| `JoystickMappedRange`           | `{ xMin, xMax, yMin, yMax }`.                                                                    |
 
 ## Capabilities
 
@@ -73,19 +73,19 @@ if (device.kind === "joystick") {
 
 ## Device-specific Methods
 
-| Method | Description |
-| --- | --- |
-| `await device.getJoystick16Adc()` | Reads raw 16-bit ADC values. Range: `0` to `65535`. |
-| `await device.getJoystick8Adc()` | Reads raw 8-bit ADC values. Range: `0` to `255`. |
-| `await device.configure(options)` | Applies joystick and key configuration. |
-| `await device.readConfiguration()` | Reads key and joystick configuration from the device. |
+| Method                                       | Description                                                  |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| `await device.getJoystick16Adc()`            | Reads raw 16-bit ADC values. Range: `0` to `65535`.          |
+| `await device.getJoystick8Adc()`             | Reads raw 8-bit ADC values. Range: `0` to `255`.             |
+| `await device.configure(options)`            | Applies joystick and key configuration.                      |
+| `await device.readConfiguration()`           | Reads key and joystick configuration from the device.        |
 | `await device.getJoystickMappedInt16Value()` | Reads signed mapped 16-bit values. Range: `-4095` to `4095`. |
-| `await device.getJoystickMappedInt8Value()` | Reads signed mapped 8-bit values. Range: `-128` to `127`. |
+| `await device.getJoystickMappedInt8Value()`  | Reads signed mapped 8-bit values. Range: `-128` to `127`.    |
 
 ## Configuration
 
-| Option | Description |
-| --- | --- |
+| Option        | Description                                                  |
+| ------------- | ------------------------------------------------------------ |
 | `mappedRange` | Sets mapped output ranges with `{ xMin, xMax, yMin, yMax }`. |
 
 ## Sample Value

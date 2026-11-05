@@ -47,16 +47,7 @@ Coordinates are integers from `0` through `7`. Batch methods accept between 1 an
 
 ```ts
 await mono.writeFrame(
-	new Uint8Array([
-		0b00111100,
-		0b01000010,
-		0b10100101,
-		0b10000001,
-		0b10100101,
-		0b10011001,
-		0b01000010,
-		0b00111100,
-	]),
+	new Uint8Array([0b00111100, 0b01000010, 0b10100101, 0b10000001, 0b10100101, 0b10011001, 0b01000010, 0b00111100]),
 );
 
 const rows = await mono.readFrame();
@@ -101,13 +92,13 @@ await mono.scrollText("M5STACK", {
 Scrolling text must contain 1 through 32 ASCII characters. `intervalMs` is milliseconds per pixel and accepts integers
 from `0` through `65535`. Defaults are left, loop, and 100 ms/pixel.
 
-| Method | Description |
-| --- | --- |
-| `await device.pauseScrolling()` | Pauses and retains the current display. |
-| `await device.resumeScrolling()` | Starts or resumes scrolling. |
-| `await device.stopScrolling()` | Stops scrolling and clears the scrolling characters. |
-| `await device.getScrollState()` | Returns `running`, `paused`, or `stopped`. |
-| `await device.readScrollText()` | Reads the configured text, direction, behavior, and interval. |
+| Method                           | Description                                                   |
+| -------------------------------- | ------------------------------------------------------------- |
+| `await device.pauseScrolling()`  | Pauses and retains the current display.                       |
+| `await device.resumeScrolling()` | Starts or resumes scrolling.                                  |
+| `await device.stopScrolling()`   | Stops scrolling and clears the scrolling characters.          |
+| `await device.getScrollState()`  | Returns `running`, `paused`, or `stopped`.                    |
+| `await device.readScrollText()`  | Reads the configured text, direction, behavior, and interval. |
 
 ## Rotation, Brightness, and Clear
 

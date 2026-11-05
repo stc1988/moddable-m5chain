@@ -18,13 +18,13 @@ M5Chain and is enumerated with device type `0x0006`. The unit provides remote ac
 
 The library exposes the unit as a regular device class:
 
-| Property | Value |
-| --- | --- |
-| Class | `M5ChainChainBus` |
-| Module | `m5chainChainBus` |
-| `DEVICE_TYPE` | `0x0006` |
-| `kind` | `"chainbus"` |
-| Shared feature | `HasLed` |
+| Property       | Value             |
+| -------------- | ----------------- |
+| Class          | `M5ChainChainBus` |
+| Module         | `m5chainChainBus` |
+| `DEVICE_TYPE`  | `0x0006`          |
+| `kind`         | `"chainbus"`      |
+| Shared feature | `HasLed`          |
 
 The existing `M5Chain` instance continues to own the UART, framing, CRC validation, request serialization,
 enumeration, connection monitoring, and error reporting. No raw UART or second transport is exposed for this device.
@@ -165,26 +165,26 @@ delivered to that instance.
 
 ## Protocol Mapping
 
-| Command | Protocol operation | Public API |
-| --- | --- | --- |
-| `0x10` | Initialize I2C | `i2c.configure()` |
-| `0x11` | Raw I2C read | `i2c.read()` |
-| `0x12` | Raw I2C write | `i2c.write()` |
-| `0x13` | I2C register read | `i2c.readRegister()` |
-| `0x14` | I2C register write | `i2c.writeRegister()` |
-| `0x15` | List connected I2C addresses | `i2c.scan()` |
-| `0x20` / `0x21` | Set/get RGB values | `HasLed` color methods |
-| `0x22` / `0x23` | Set/get RGB brightness | `HasLed` brightness methods |
-| `0x30` | Configure GPIO output | `gpioN.configure({ mode: "output" })` |
-| `0x31` | Set GPIO output level | `gpioN.write()` |
-| `0x32` | Get GPIO output level | `gpioN.readOutput()` |
-| `0x40` | Configure GPIO input | `gpioN.configure({ mode: "input" })` |
-| `0x41` | Read GPIO input level | `gpioN.read()` |
-| `0x50` | Configure GPIO interrupt | `gpioN.configure({ mode: "interrupt" })` |
-| `0x60` | Configure ADC | `gpioN.configure({ mode: "analog" })` |
-| `0x61` | Read ADC | `gpioN.readAnalog()` |
-| `0x70` | Read both GPIO working modes | `readConfiguration()` / `gpioN.readMode()` |
-| `0xE0` | Unsolicited GPIO edge event | `gpioN.onInterrupt` |
+| Command         | Protocol operation           | Public API                                 |
+| --------------- | ---------------------------- | ------------------------------------------ |
+| `0x10`          | Initialize I2C               | `i2c.configure()`                          |
+| `0x11`          | Raw I2C read                 | `i2c.read()`                               |
+| `0x12`          | Raw I2C write                | `i2c.write()`                              |
+| `0x13`          | I2C register read            | `i2c.readRegister()`                       |
+| `0x14`          | I2C register write           | `i2c.writeRegister()`                      |
+| `0x15`          | List connected I2C addresses | `i2c.scan()`                               |
+| `0x20` / `0x21` | Set/get RGB values           | `HasLed` color methods                     |
+| `0x22` / `0x23` | Set/get RGB brightness       | `HasLed` brightness methods                |
+| `0x30`          | Configure GPIO output        | `gpioN.configure({ mode: "output" })`      |
+| `0x31`          | Set GPIO output level        | `gpioN.write()`                            |
+| `0x32`          | Get GPIO output level        | `gpioN.readOutput()`                       |
+| `0x40`          | Configure GPIO input         | `gpioN.configure({ mode: "input" })`       |
+| `0x41`          | Read GPIO input level        | `gpioN.read()`                             |
+| `0x50`          | Configure GPIO interrupt     | `gpioN.configure({ mode: "interrupt" })`   |
+| `0x60`          | Configure ADC                | `gpioN.configure({ mode: "analog" })`      |
+| `0x61`          | Read ADC                     | `gpioN.readAnalog()`                       |
+| `0x70`          | Read both GPIO working modes | `readConfiguration()` / `gpioN.readMode()` |
+| `0xE0`          | Unsolicited GPIO edge event  | `gpioN.onInterrupt`                        |
 
 The common commands for UID, bootloader version, firmware version, device type, enumeration, heartbeat, and reset are
 already handled by the base device and `M5Chain`; they are not reimplemented by `M5ChainChainBus`.

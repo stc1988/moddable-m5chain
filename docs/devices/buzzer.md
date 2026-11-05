@@ -28,18 +28,18 @@ import M5ChainBuzzer, {
 
 The constants and types are exported from `m5chainBuzzer` so the M5Chain core does not depend on Buzzer code.
 
-| Export | Description |
-| --- | --- |
-| `M5ChainBuzzer` | Default class export. |
-| `BUZZER_MODE` | Protocol playback modes: `AUTO`, `MANUAL`, and `NOTE`. |
-| `BUZZER_NOTE` | `REST`, chromatic notes from `C3` through `B7`, and `C8`. |
-| `BuzzerMode` | Union of values in `BUZZER_MODE`. |
-| `BuzzerNote` | Union of values in `BUZZER_NOTE`. |
-| `ToneOptions` | Options accepted by `playTone()`. |
-| `ContinuousToneOptions` | Options accepted by `startTone()`. |
-| `NoteOptions` | Options accepted by `playNote()`. |
-| `MelodyStep` | A note or rest and its duration in beats. |
-| `MelodyOptions` | Tempo and optional note gate accepted by `playMelody()`. |
+| Export                  | Description                                               |
+| ----------------------- | --------------------------------------------------------- |
+| `M5ChainBuzzer`         | Default class export.                                     |
+| `BUZZER_MODE`           | Protocol playback modes: `AUTO`, `MANUAL`, and `NOTE`.    |
+| `BUZZER_NOTE`           | `REST`, chromatic notes from `C3` through `B7`, and `C8`. |
+| `BuzzerMode`            | Union of values in `BUZZER_MODE`.                         |
+| `BuzzerNote`            | Union of values in `BUZZER_NOTE`.                         |
+| `ToneOptions`           | Options accepted by `playTone()`.                         |
+| `ContinuousToneOptions` | Options accepted by `startTone()`.                        |
+| `NoteOptions`           | Options accepted by `playNote()`.                         |
+| `MelodyStep`            | A note or rest and its duration in beats.                 |
+| `MelodyOptions`         | Tempo and optional note gate accepted by `playMelody()`.  |
 
 ## Capabilities
 
@@ -64,11 +64,11 @@ await buzzer.playTone({
 
 `playTone()` selects auto playback mode and starts the requested tone. Its promise resolves when the device accepts the command, not when playback completes.
 
-| Option | Description |
-| --- | --- |
-| `frequencyHz` | Integer from `100` to `10000`. |
-| `durationMs` | Integer from `0` to `65535`. The protocol accepts `0` but does not define a special meaning for it. |
-| `dutyCycle` | Optional value from `0` to `1`. Defaults to `0.5`. |
+| Option        | Description                                                                                         |
+| ------------- | --------------------------------------------------------------------------------------------------- |
+| `frequencyHz` | Integer from `100` to `10000`.                                                                      |
+| `durationMs`  | Integer from `0` to `65535`. The protocol accepts `0` but does not define a special meaning for it. |
+| `dutyCycle`   | Optional value from `0` to `1`. Defaults to `0.5`.                                                  |
 
 ## Continuous Tone
 
@@ -116,29 +116,29 @@ await buzzer.playMelody(melody, {
 
 Call `await buzzer.stopMelody()` to cancel the remaining sequence and send `BUZZER_NOTE.REST` to the device. The active `playMelody()` promise then resolves normally.
 
-| Option | Description |
-| --- | --- |
-| `tempoBpm` | Finite number greater than `0`. One beat is `60000 / tempoBpm` milliseconds. |
+| Option      | Description                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------ |
+| `tempoBpm`  | Finite number greater than `0`. One beat is `60000 / tempoBpm` milliseconds.                           |
 | `gateRatio` | Optional sounding fraction of each non-rest step, greater than `0` and at most `1`. Defaults to `0.9`. |
 
 Each `MelodyStep` contains a valid `BUZZER_NOTE` value and a finite `beats` value greater than `0`. A rounded step duration must fit the protocol's `1` to `65535` ms range. Prefer exact expressions such as `2 / 3` when a repeating fraction is intended.
 
 ## Device-specific Methods
 
-| Method | Description |
-| --- | --- |
-| `await device.playTone(options)` | Starts a timed tone in auto playback mode. |
-| `await device.startTone(options)` | Starts a continuous tone in manual playback mode. |
-| `await device.stopTone()` | Stops manual continuous playback. |
-| `await device.playNote(options)` | Starts a timed note in note playback mode. |
-| `await device.playMelody(melody, options)` | Plays a host-scheduled sequence of notes and rests. |
-| `await device.stopMelody()` | Cancels a melody and silences its current note. |
-| `await device.setToneFrequency(frequencyHz)` | Changes the stored/manual tone frequency. |
-| `await device.getToneFrequency()` | Reads the tone frequency in hertz. |
-| `await device.setToneDutyCycle(dutyCycle)` | Changes the stored/manual duty cycle using a normalized `0` to `1` value. |
-| `await device.getToneDutyCycle()` | Reads the duty cycle as a normalized `0` to `1` value. |
-| `await device.getPlaybackMode()` | Reads the current mode as a `BuzzerMode`. |
-| `await device.isToneActive()` | Reads the buzzer state flag. It is primarily meaningful in manual mode. |
+| Method                                       | Description                                                               |
+| -------------------------------------------- | ------------------------------------------------------------------------- |
+| `await device.playTone(options)`             | Starts a timed tone in auto playback mode.                                |
+| `await device.startTone(options)`            | Starts a continuous tone in manual playback mode.                         |
+| `await device.stopTone()`                    | Stops manual continuous playback.                                         |
+| `await device.playNote(options)`             | Starts a timed note in note playback mode.                                |
+| `await device.playMelody(melody, options)`   | Plays a host-scheduled sequence of notes and rests.                       |
+| `await device.stopMelody()`                  | Cancels a melody and silences its current note.                           |
+| `await device.setToneFrequency(frequencyHz)` | Changes the stored/manual tone frequency.                                 |
+| `await device.getToneFrequency()`            | Reads the tone frequency in hertz.                                        |
+| `await device.setToneDutyCycle(dutyCycle)`   | Changes the stored/manual duty cycle using a normalized `0` to `1` value. |
+| `await device.getToneDutyCycle()`            | Reads the duty cycle as a normalized `0` to `1` value.                    |
+| `await device.getPlaybackMode()`             | Reads the current mode as a `BuzzerMode`.                                 |
+| `await device.isToneActive()`                | Reads the buzzer state flag. It is primarily meaningful in manual mode.   |
 
 Frequency and duty cycle are output state, not persistent device configuration, so they are not accepted by `configure()`.
 

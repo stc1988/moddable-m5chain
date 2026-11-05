@@ -18,14 +18,14 @@ import M5ChainMIC, {
 } from "m5chainMIC";
 ```
 
-| Export | Description |
-| --- | --- |
-| `M5ChainMIC` | Default class export. |
-| `MIC_REPORT_MODE` | Automatic report settings: `DISABLED = 0`, `ENABLED = 1`. |
-| `MIC_TRIGGER` | Threshold crossings: `LOW_THRESHOLD = 0x0300`, `HIGH_THRESHOLD = 0x0301`. |
-| `MICConfiguration` | Type accepted by `configure()`. |
-| `MICConfigurationSnapshot` | Type returned by `readConfiguration()`. |
-| `MICThresholdHandler` | Handler type used by `onThresholdCrossed`. |
+| Export                     | Description                                                               |
+| -------------------------- | ------------------------------------------------------------------------- |
+| `M5ChainMIC`               | Default class export.                                                     |
+| `MIC_REPORT_MODE`          | Automatic report settings: `DISABLED = 0`, `ENABLED = 1`.                 |
+| `MIC_TRIGGER`              | Threshold crossings: `LOW_THRESHOLD = 0x0300`, `HIGH_THRESHOLD = 0x0301`. |
+| `MICConfiguration`         | Type accepted by `configure()`.                                           |
+| `MICConfigurationSnapshot` | Type returned by `readConfiguration()`.                                   |
+| `MICThresholdHandler`      | Handler type used by `onThresholdCrossed`.                                |
 
 ## Capabilities
 
@@ -61,21 +61,21 @@ if (device.kind === "mic") {
 
 ## Device-specific Methods
 
-| Method | Description |
-| --- | --- |
-| `await device.getMic12Adc()` | Reads the 12-bit microphone signal (`0` to `4095`). |
-| `await device.getMic8Adc()` | Reads the mapped 8-bit microphone signal (`0` to `255`). |
-| `await device.configure(options)` | Applies threshold, report-mode, and trigger-interval configuration. |
-| `await device.readConfiguration()` | Reads the current threshold, report mode, and trigger interval. |
+| Method                             | Description                                                         |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `await device.getMic12Adc()`       | Reads the 12-bit microphone signal (`0` to `4095`).                 |
+| `await device.getMic8Adc()`        | Reads the mapped 8-bit microphone signal (`0` to `255`).            |
+| `await device.configure(options)`  | Applies threshold, report-mode, and trigger-interval configuration. |
+| `await device.readConfiguration()` | Reads the current threshold, report mode, and trigger interval.     |
 
 ## Configuration
 
-| Option | Description |
-| --- | --- |
-| `threshold` | Sets the 12-bit crossing threshold from `0` to `4095`. |
-| `reportMode` | Enables or disables automatic low/high threshold reports. |
-| `triggerIntervalMs` | Limits repeated trigger reports to an interval from `300` to `1000` milliseconds. |
-| `saveToFlash` | Persists `threshold` when `true`. It requires `threshold` in the same call and defaults to `false`. |
+| Option              | Description                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `threshold`         | Sets the 12-bit crossing threshold from `0` to `4095`.                                              |
+| `reportMode`        | Enables or disables automatic low/high threshold reports.                                           |
+| `triggerIntervalMs` | Limits repeated trigger reports to an interval from `300` to `1000` milliseconds.                   |
+| `saveToFlash`       | Persists `threshold` when `true`. It requires `threshold` in the same call and defaults to `false`. |
 
 Saving to flash requires a page erase. Avoid setting `saveToFlash` on frequent configuration updates because repeated writes reduce device flash life.
 

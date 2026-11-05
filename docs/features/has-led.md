@@ -8,8 +8,8 @@
 import type { LedColor } from "m5chain";
 ```
 
-| Export | Description |
-| --- | --- |
+| Export     | Description                                                     |
+| ---------- | --------------------------------------------------------------- |
 | `LedColor` | `{ r: number; g: number; b: number }`, exported from `m5chain`. |
 
 ## Used By
@@ -38,15 +38,15 @@ LED color and brightness are output state, not device configuration. They are in
 
 ## Methods
 
-| Method | Description |
-| --- | --- |
-| `await device.setLedColor(color)` | Sets LED 0 from a `{ r, g, b }` object. Each channel must be an integer from `0` to `255`. |
-| `await device.setLedColor(r, g, b)` | Sets LED 0 from three channel arguments. |
-| `await device.getLedColor()` | Reads LED 0. Returns `{ r, g, b }` with `0` to `255` values. |
-| `await device.setLedColors(index, num, colors)` | Sets `num` LEDs starting at `index`. `colors` is an array of `{ r, g, b }`. |
-| `await device.getLedColors(index, num)` | Reads `num` LED colors starting at `index`. Returns `LedColor[]`. |
+| Method                                                           | Description                                                                                          |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `await device.setLedColor(color)`                                | Sets LED 0 from a `{ r, g, b }` object. Each channel must be an integer from `0` to `255`.           |
+| `await device.setLedColor(r, g, b)`                              | Sets LED 0 from three channel arguments.                                                             |
+| `await device.getLedColor()`                                     | Reads LED 0. Returns `{ r, g, b }` with `0` to `255` values.                                         |
+| `await device.setLedColors(index, num, colors)`                  | Sets `num` LEDs starting at `index`. `colors` is an array of `{ r, g, b }`.                          |
+| `await device.getLedColors(index, num)`                          | Reads `num` LED colors starting at `index`. Returns `LedColor[]`.                                    |
 | `await device.setLedBrightness(brightness, saveToFlash = false)` | Sets brightness. `brightness` must be an integer from `0` to `255`; `saveToFlash` must be a boolean. |
-| `await device.getLedBrightness()` | Reads brightness as an integer from `0` to `255`. |
+| `await device.getLedBrightness()`                                | Reads brightness as an integer from `0` to `255`.                                                    |
 
 `setLedColors()` and `getLedColors()` reject requests that cannot fit in one transport packet. With the default
 transport buffer, the maximum is 81 colors per call.
