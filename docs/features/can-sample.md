@@ -8,8 +8,8 @@
 import type { SampleHandler } from "types";
 ```
 
-| Export | Description |
-| --- | --- |
+| Export             | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
 | `SampleHandler<T>` | `((sample: T) => void \| Promise<void>) \| null`, exported from `types`. |
 
 ## Used By
@@ -24,10 +24,10 @@ import type { SampleHandler } from "types";
 
 ## Methods
 
-| Method | Description |
-| --- | --- |
-| `device.onSample = (sample) => {}` | Registers a callback that receives each newly acquired sample. Set to `null` to clear it. |
-| `device.sample()` | Returns the latest sampled value, or `undefined` before the first sample. Object samples are returned as shallow copies. |
+| Method                             | Description                                                                                                              |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `device.onSample = (sample) => {}` | Registers a callback that receives each newly acquired sample. Set to `null` to clear it.                                |
+| `device.sample()`                  | Returns the latest sampled value, or `undefined` before the first sample. Object samples are returned as shallow copies. |
 
 `onSample` handlers may be synchronous or asynchronous. A rejected asynchronous handler is reported through
 `m5chain.onError` with `context.source === "sample"`.
@@ -36,15 +36,15 @@ import type { SampleHandler } from "types";
 
 Angle, JoyStick, ToF, Switch, PIR, and MIC dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
 
-| Device | `onSample` argument and `sample()` value |
-| --- | --- |
-| Encoder | Delta from previous encoder value (`number`) |
-| Angle | Normalized angle value (`0.00` to `1.00`) |
-| JoyStick | `{ x, y }` (`-128` to `127`) |
-| ToF | Measured distance in millimeters (`number`) |
-| Switch | 12-bit slider position (`0` to `4095`) |
-| PIR | Presence status (`PIRStatus`) |
-| MIC | 12-bit microphone ADC value (`0` to `4095`) |
+| Device   | `onSample` argument and `sample()` value     |
+| -------- | -------------------------------------------- |
+| Encoder  | Delta from previous encoder value (`number`) |
+| Angle    | Normalized angle value (`0.00` to `1.00`)    |
+| JoyStick | `{ x, y }` (`-128` to `127`)                 |
+| ToF      | Measured distance in millimeters (`number`)  |
+| Switch   | 12-bit slider position (`0` to `4095`)       |
+| PIR      | Presence status (`PIRStatus`)                |
+| MIC      | 12-bit microphone ADC value (`0` to `4095`)  |
 
 ## Poll Loop Behavior
 

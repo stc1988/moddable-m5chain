@@ -50,11 +50,7 @@ manifests in an inline Git manifest. This example includes Encoder and ToF:
 			"git": "https://github.com/stc1988/moddable-m5chain.git",
 			"branch": "main",
 			"manifest": {
-				"include": [
-					"./manifests/host.json",
-					"./manifests/devices/encoder.json",
-					"./manifests/devices/tof.json"
-				]
+				"include": ["./manifests/host.json", "./manifests/devices/encoder.json", "./manifests/devices/tof.json"]
 			}
 		}
 	]
@@ -94,11 +90,7 @@ ToF Mod:
 			"git": "https://github.com/stc1988/moddable-m5chain.git",
 			"branch": "main",
 			"manifest": {
-				"include": [
-					"./manifests/mod-base.json",
-					"./manifests/devices/encoder.json",
-					"./manifests/devices/tof.json"
-				]
+				"include": ["./manifests/mod-base.json", "./manifests/devices/encoder.json", "./manifests/devices/tof.json"]
 			}
 		}
 	],
@@ -154,10 +146,7 @@ use local relative paths to the same public manifests, for example:
 
 ```json
 {
-	"include": [
-		"path/to/moddable-m5chain/manifests/host.json",
-		"path/to/moddable-m5chain/manifests/devices/encoder.json"
-	]
+	"include": ["path/to/moddable-m5chain/manifests/host.json", "path/to/moddable-m5chain/manifests/devices/encoder.json"]
 }
 ```
 

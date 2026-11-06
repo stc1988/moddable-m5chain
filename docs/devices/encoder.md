@@ -17,15 +17,15 @@ import M5ChainEncoder, {
 
 These exports can also be used as TypeScript types.
 
-| Export | Description |
-| --- | --- |
-| `M5ChainEncoder` | Default class export. |
-| `KEY_EVENT` | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`. |
-| `KeyEvent` | Type of values passed to `onKeyEvent`. |
-| `EncoderABDirection` | Encoder A/B direction values: `CLOCKWISE_INCREASE = 0`, `CLOCKWISE_DECREASE = 1`. |
-| `SaveToFlash` | Persistence values: `DISABLE = 0`, `ENABLE = 1`. |
-| `EncoderConfiguration` | Type accepted by `configure()`. |
-| `EncoderConfigurationSnapshot` | Type returned by `readConfiguration()`. |
+| Export                         | Description                                                                       |
+| ------------------------------ | --------------------------------------------------------------------------------- |
+| `M5ChainEncoder`               | Default class export.                                                             |
+| `KEY_EVENT`                    | Key event constants: `SINGLE_CLICK`, `DOUBLE_CLICK`, `LONG_PRESS`.                |
+| `KeyEvent`                     | Type of values passed to `onKeyEvent`.                                            |
+| `EncoderABDirection`           | Encoder A/B direction values: `CLOCKWISE_INCREASE = 0`, `CLOCKWISE_DECREASE = 1`. |
+| `SaveToFlash`                  | Persistence values: `DISABLE = 0`, `ENABLE = 1`.                                  |
+| `EncoderConfiguration`         | Type accepted by `configure()`.                                                   |
+| `EncoderConfigurationSnapshot` | Type returned by `readConfiguration()`.                                           |
 
 ## Capabilities
 
@@ -66,21 +66,21 @@ if (device.kind === "encoder") {
 
 ## Device-specific Methods
 
-| Method | Description |
-| --- | --- |
-| `await device.configure(options)` | Applies encoder and key configuration. |
-| `await device.readConfiguration()` | Reads key and encoder configuration from the device. |
-| `await device.getEncoderValue()` | Reads the signed encoder value. Range: `-32768` to `32767`. |
-| `await device.getEncoderIncValue()` | Reads the signed increment value. Range: `-32768` to `32767`. |
-| `await device.resetEncoderValue()` | Resets the encoder value. |
-| `await device.resetEncoderIncValue()` | Resets the encoder increment value. |
+| Method                                | Description                                                   |
+| ------------------------------------- | ------------------------------------------------------------- |
+| `await device.configure(options)`     | Applies encoder and key configuration.                        |
+| `await device.readConfiguration()`    | Reads key and encoder configuration from the device.          |
+| `await device.getEncoderValue()`      | Reads the signed encoder value. Range: `-32768` to `32767`.   |
+| `await device.getEncoderIncValue()`   | Reads the signed increment value. Range: `-32768` to `32767`. |
+| `await device.resetEncoderValue()`    | Resets the encoder value.                                     |
+| `await device.resetEncoderIncValue()` | Resets the encoder increment value.                           |
 
 ## Configuration
 
-| Option | Description |
-| --- | --- |
+| Option        | Description                                                                                                                     |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `abDirection` | Sets encoder A/B direction. Use `EncoderABDirection.CLOCKWISE_INCREASE` (`0`) or `EncoderABDirection.CLOCKWISE_DECREASE` (`1`). |
-| `saveToFlash` | Persists `abDirection` when set to `SaveToFlash.ENABLE` (`1`). |
+| `saveToFlash` | Persists `abDirection` when set to `SaveToFlash.ENABLE` (`1`).                                                                  |
 
 ## Sample Value
 

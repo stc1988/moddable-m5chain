@@ -209,10 +209,10 @@ class M5ChainAngle extends withDeviceFeatures(HasLed, CanSample<number>()) {
 The sample type belongs to the composed feature and its runtime hooks. Callers invoke `readSample()` without a type
 argument, so its result and the value accepted by `dispatchOnSample()` cannot drift apart.
 
-| Hook | Description |
-| --- | --- |
-| `device.hasOnSample()` | Returns whether a sample callback is registered. |
-| `await device.readSample()` | Device implementation hook. Reads from the bus and returns a value to store as the latest sample, or `undefined` to skip dispatch. |
+| Hook                             | Description                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `device.hasOnSample()`           | Returns whether a sample callback is registered.                                                                                     |
+| `await device.readSample()`      | Device implementation hook. Reads from the bus and returns a value to store as the latest sample, or `undefined` to skip dispatch.   |
 | `device.dispatchOnSample(value)` | Stores `value` as the latest sample and passes it to the registered `onSample` handler. Object samples are passed as shallow copies. |
 
 ## LED implementation

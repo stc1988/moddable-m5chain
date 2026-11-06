@@ -15,8 +15,8 @@
 		"typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.mod.json"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.5.5",
-		"@moddable/typings": "^10.0.0",
+		"@biomejs/biome": "2.6.5",
+		"@moddable/typings": "^10.1.0",
 		"typescript": "^7.0.2"
 	}
 }

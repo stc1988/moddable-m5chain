@@ -111,13 +111,13 @@ from `0` through `65535`. Defaults are left, loop, 100 ms/pixel, and the built-i
 Use `color: "gradient"` to request the firmware gradient. RGB565 value zero is reserved for that effect, so a fixed
 black scrolling color is not representable by the protocol.
 
-| Method | Description |
-| --- | --- |
-| `await device.pauseScrolling()` | Pauses and retains the current display. |
-| `await device.resumeScrolling()` | Starts or resumes scrolling. |
-| `await device.stopScrolling()` | Stops scrolling and clears the scrolling characters. |
-| `await device.getScrollState()` | Returns `running`, `paused`, or `stopped`. |
-| `await device.readScrollText()` | Reads the configured text, direction, behavior, interval, and color. |
+| Method                           | Description                                                          |
+| -------------------------------- | -------------------------------------------------------------------- |
+| `await device.pauseScrolling()`  | Pauses and retains the current display.                              |
+| `await device.resumeScrolling()` | Starts or resumes scrolling.                                         |
+| `await device.stopScrolling()`   | Stops scrolling and clears the scrolling characters.                 |
+| `await device.getScrollState()`  | Returns `running`, `paused`, or `stopped`.                           |
+| `await device.readScrollText()`  | Reads the configured text, direction, behavior, interval, and color. |
 
 ## Rotation, Brightness, and Clear
 
