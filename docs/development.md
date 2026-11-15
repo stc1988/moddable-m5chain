@@ -50,6 +50,26 @@ Documentation-only and web-only changes do not require unrelated device builds. 
 builds relevant to the affected files, and report hardware behavior that remains unverified. For changes under
 `web/`, run `npm run web:build` in addition to formatting and linting.
 
+## GitHub Actions dependencies
+
+Workflows use explicit action release tags. Dependabot checks GitHub Actions dependencies weekly.
+
+To generate the workflow dependency lockfile, run the official GitHub CLI extension from the repository root:
+
+```sh
+gh extension install github/gh-actions-lock
+gh actions-lock
+gh actions-lock --verify
+```
+
+Commit the generated `.github/workflows/actions.lock` together with any workflow changes. Do not edit the lockfile
+by hand. After onboarding, rerun `gh actions-lock` whenever a workflow or an action dependency changes; Dependabot
+updates the corresponding lockfile entries when it updates an onboarded workflow's action versions.
+
+See [GitHub's workflow dependency lockfile documentation](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles)
+for availability and runtime behavior. Updating action tags alone does not enable dependency locking; the generated
+lockfile must also be committed.
+
 ## Size measurement
 
 Run `npm run size` to measure debug-build flash usage for the M5Chain Host and its device Mods. The command defaults
