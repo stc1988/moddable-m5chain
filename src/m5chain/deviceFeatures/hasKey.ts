@@ -227,4 +227,4 @@ const HasKey = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 	};
 
 export { KEY_EVENT, KEY_MODE, KEY_STATUS, type KeyEvent, type KeyHandler, type KeyMode, type KeyStatus };
-export default HasKey as DeviceMixin<HasKeyMethods, M5ChainDevice>;
+export default HasKey as DeviceMixin<HasKeyMethods, M5ChainDevice, { CMD: KeyCommandSet }>;

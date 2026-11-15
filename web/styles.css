@@ -57,6 +57,10 @@ p {
 	margin-top: 0;
 }
 
+footer p {
+	margin-bottom: 0;
+}
+
 h1 {
 	margin-bottom: 18px;
 	font-size: clamp(3.4rem, 10vw, 7rem);
@@ -227,10 +231,6 @@ footer {
 	letter-spacing: 0.1em;
 	text-transform: uppercase;
 	border-top: 1px solid rgba(187, 223, 206, 0.08);
-}
-
-footer p {
-	margin-bottom: 0;
 }
 
 @media (max-width: 620px) {

@@ -1,4 +1,5 @@
 import CanSample from "canSample";
+import HasKey from "hasKey";
 import HasLed from "hasLed";
 import { withDeviceFeatures } from "m5chainDevice";
 import type {
@@ -138,3 +139,18 @@ await sampled.setLedColor(1, 2, 3);
 sampled.dispatchOnSample("wrong");
 // @ts-expect-error No key feature was composed.
 sampled.isKeyPressed();
+
+type _BaseCommandIsLiteral = Expect<Equal<typeof SampleDevice.CMD.GET_UID, 0xf8>>;
+type _LedCommandIsNumber = Expect<Equal<typeof SampleDevice.CMD.RGB.SET_RGB_VALUE, number>>;
+// @ts-expect-error Composition must reject commands from absent features.
+SampleDevice.CMD.KEY;
+// @ts-expect-error Command values cannot accept strings.
+SampleDevice.CMD.RGB.SET_RGB_VALUE = "invalid";
+// @ts-expect-error Unknown commands must not silently become any.
+SampleDevice.CMD.RGB.UNKNOWN_COMMAND;
+
+const KeyAndLedDevice = withDeviceFeatures(HasKey, HasLed);
+type _KeyCommandIsNumber = Expect<Equal<typeof KeyAndLedDevice.CMD.KEY.GET_STATUS, number>>;
+type _CombinedLedCommandIsNumber = Expect<Equal<typeof KeyAndLedDevice.CMD.RGB.GET_RGB_VALUE, number>>;
+const BaseDevice = withDeviceFeatures();
+type _EmptyCompositionKeepsBaseCommands = Expect<Equal<typeof BaseDevice.CMD.GET_UID, 0xf8>>;
