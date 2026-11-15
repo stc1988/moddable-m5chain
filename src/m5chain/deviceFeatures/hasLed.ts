@@ -153,4 +153,4 @@ const HasLed = <TBase extends DeviceConstructor<M5ChainDevice>>(Base: TBase) =>
 		}
 	};
 
-export default HasLed as DeviceMixin<HasLedMethods, M5ChainDevice>;
+export default HasLed as DeviceMixin<HasLedMethods, M5ChainDevice, { CMD: RgbCommandSet }>;

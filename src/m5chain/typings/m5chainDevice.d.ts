@@ -38,18 +38,21 @@ declare function readPacketByte(packet: Uint8Array, offset: number, operation: s
 declare function readPacketUint16LE(packet: Uint8Array, offset: number, operation: string): number;
 declare function readPacketInt8(packet: Uint8Array, offset: number, operation: string): number;
 declare function readPacketInt16LE(packet: Uint8Array, offset: number, operation: string): number;
-type ComposedDeviceConstructor = DeviceConstructor<M5ChainDevice> & {
-	// biome-ignore lint/suspicious/noExplicitAny: Feature command tables are merged dynamically.
-	CMD: any;
-};
 type FeatureMethods<T> = T extends DeviceMixin<infer TAdded, M5ChainDevice> ? TAdded : never;
+type FeatureCommands<T> =
+	T extends DeviceMixin<object, M5ChainDevice, infer TStatics>
+		? TStatics extends { CMD: infer TCommands }
+			? TCommands
+			: object
+		: never;
 type IntersectFeatures<T> = (T extends unknown ? (value: T) => void : never) extends (value: infer TResult) => void
 	? TResult
 	: never;
 declare function withDeviceFeatures<const TFeatures extends readonly DeviceMixin<object, M5ChainDevice>[]>(
 	...features: TFeatures
-): DeviceConstructor<M5ChainDevice & IntersectFeatures<FeatureMethods<TFeatures[number]>>> &
-	Pick<ComposedDeviceConstructor, "CMD">;
+): DeviceConstructor<M5ChainDevice & IntersectFeatures<FeatureMethods<TFeatures[number]>>> & {
+	CMD: typeof M5ChainDevice.CMD & IntersectFeatures<FeatureCommands<TFeatures[number]>>;
+};
 
 export {
 	assertKnownConfigurationOptions,
