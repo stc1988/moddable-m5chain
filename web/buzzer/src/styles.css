@@ -245,6 +245,28 @@ h1 {
 	gap: 12px;
 }
 
+input[type="number"],
+select {
+	min-height: 38px;
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	background: var(--surface-raised);
+	color: var(--text);
+}
+
+input[type="number"] {
+	width: 104px;
+	padding: 7px 10px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	font-variant-numeric: tabular-nums;
+}
+
+select {
+	width: 100%;
+	padding: 8px 36px 8px 11px;
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 .compact-field {
 	display: flex;
 	align-items: center;
@@ -437,30 +459,8 @@ h1 {
 	font-size: 12px;
 }
 
-input[type="number"],
-select {
-	min-height: 38px;
-	border: 1px solid var(--border);
-	border-radius: 8px;
-	background: var(--surface-raised);
-	color: var(--text);
-}
-
-input[type="number"] {
-	width: 104px;
-	padding: 7px 10px;
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-	font-variant-numeric: tabular-nums;
-}
-
 .duration-field input {
 	width: 116px;
-}
-
-select {
-	width: 100%;
-	padding: 8px 36px 8px 11px;
-	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 .value-pill {
