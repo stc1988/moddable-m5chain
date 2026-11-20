@@ -21,6 +21,7 @@ import type { SampleHandler } from "types";
 - Switch
 - PIR
 - MIC
+- ENV
 
 ## Methods
 
@@ -34,17 +35,18 @@ import type { SampleHandler } from "types";
 
 ## Sample Values
 
-Angle, JoyStick, ToF, Switch, PIR, and MIC dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
+Angle, JoyStick, ToF, Switch, PIR, MIC, and ENV dispatch `onSample` with the latest sampled value on every poll. Encoder dispatches `onSample` only when the encoder value changes.
 
-| Device   | `onSample` argument and `sample()` value     |
-| -------- | -------------------------------------------- |
-| Encoder  | Delta from previous encoder value (`number`) |
-| Angle    | Normalized angle value (`0.00` to `1.00`)    |
-| JoyStick | `{ x, y }` (`-128` to `127`)                 |
-| ToF      | Measured distance in millimeters (`number`)  |
-| Switch   | 12-bit slider position (`0` to `4095`)       |
-| PIR      | Presence status (`PIRStatus`)                |
-| MIC      | 12-bit microphone ADC value (`0` to `4095`)  |
+| Device   | `onSample` argument and `sample()` value                                                 |
+| -------- | ---------------------------------------------------------------------------------------- |
+| Encoder  | Delta from previous encoder value (`number`)                                             |
+| Angle    | Normalized angle value (`0.00` to `1.00`)                                                |
+| JoyStick | `{ x, y }` (`-128` to `127`)                                                             |
+| ToF      | Measured distance in millimeters (`number`)                                              |
+| Switch   | 12-bit slider position (`0` to `4095`)                                                   |
+| PIR      | Presence status (`PIRStatus`)                                                            |
+| MIC      | 12-bit microphone ADC value (`0` to `4095`)                                              |
+| ENV      | `{ temperature, humidity, pressureTemperature, pressure, altitude }` (°C, %, °C, hPa, m) |
 
 ## Poll Loop Behavior
 

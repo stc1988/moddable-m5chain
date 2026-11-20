@@ -1,19 +1,19 @@
 {
 	"schemaVersion": 1,
-	"generatedAt": "2026-11-05T13:54:25.019Z",
+	"generatedAt": "2026-11-20T13:37:49.347Z",
 	"target": "esp32/m5atom_matrix",
 	"build": "debug",
 	"moddable": {
-		"version": "10.1.0",
-		"revision": "2d54ac4308501a03f45d4fcfe33beee45ee44ac4",
-		"describe": "10.1.0",
+		"version": "10.1.1",
+		"revision": "61c84af99c4f6b4ee191862fa1d07cb284caaf50",
+		"describe": "10.1.1",
 		"dirty": false
 	},
 	"m5chain": {
 		"version": "1.1.0",
-		"revision": "7f7e776e218e012f2227c8fb3f5ed4132fd584d2",
-		"describe": "v1.1.0-3-g7f7e776",
-		"dirty": false
+		"revision": "cbb441578d558e4fd110341c371308e7ae59cffd",
+		"describe": "v1.1.0-12-gcbb4415-dirty",
+		"dirty": true
 	},
 	"host": {
 		"artifact": "xs_esp32.bin",
@@ -44,6 +44,11 @@
 				"name": "encoder",
 				"archiveBytes": 15818,
 				"incrementalBytes": 14762
+			},
+			{
+				"name": "env",
+				"archiveBytes": 15614,
+				"incrementalBytes": 14558
 			},
 			{
 				"name": "joystick",
@@ -87,8 +92,8 @@
 			}
 		],
 		"allDevices": {
-			"archiveBytes": 102106,
-			"incrementalBytes": 101050
+			"archiveBytes": 110878,
+			"incrementalBytes": 109822
 		}
 	}
 }

@@ -23,6 +23,7 @@ import type { LedColor } from "m5chain";
 - PIR
 - MIC
 - Buzzer
+- ENV
 
 ## Common Device Methods
 

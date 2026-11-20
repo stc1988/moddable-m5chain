@@ -104,20 +104,21 @@ with a particular instance. See the [API and lifecycle reference](docs/api.md) f
 
 ## Supported devices
 
-| Device                                                                   | Type ID  | `HasLed` | `HasKey` | `CanSample` | Polled Sample (`onSample`)    | Device Event Callback | API Guide                                |
-| ------------------------------------------------------------------------ | -------- | -------- | -------- | ----------- | ----------------------------- | --------------------- | ---------------------------------------- |
-| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder)               | `0x0001` | Yes      | Yes      | Yes         | Delta value                   | `onKeyEvent`          | [Encoder API](docs/devices/encoder.md)   |
-| [Angle](https://docs.m5stack.com/en/chain/Chain_Angle)                   | `0x0002` | Yes      | No       | Yes         | Normalized `0.00`-`1.00`      | —                     | [Angle API](docs/devices/angle.md)       |
-| [Key](https://docs.m5stack.com/en/chain/Chain_Key)                       | `0x0003` | Yes      | Yes      | No          | —                             | `onKeyEvent`          | [Key API](docs/devices/key.md)           |
-| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick)             | `0x0004` | Yes      | Yes      | Yes         | `{ x, y }` in `-128` to `127` | `onKeyEvent`          | [JoyStick API](docs/devices/joystick.md) |
-| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF)                       | `0x0005` | Yes      | No       | Yes         | Distance in mm                | —                     | [ToF API](docs/devices/tof.md)           |
-| [ChainBus](https://docs.m5stack.com/ja/arduino/projects/chain/chain_bus) | `0x0006` | Yes      | No       | No          | —                             | `gpioN.onInterrupt`   | [ChainBus API](docs/devices/chainbus.md) |
-| [Switch](https://docs.m5stack.com/en/chain/Chain_Switch)                 | `0x0007` | Yes      | No       | Yes         | Slider position `0`-`4095`    | `onSwitchChanged`     | [Switch API](docs/devices/switch.md)     |
-| [PIR](https://docs.m5stack.com/en/chain/Chain_PIR)                       | `0x0009` | Yes      | No       | Yes         | Presence status               | `onPresenceChanged`   | [PIR API](docs/devices/pir.md)           |
-| [MIC](https://docs.m5stack.com/en/chain/Chain_MIC)                       | `0x000A` | Yes      | No       | Yes         | Microphone ADC `0`-`4095`     | `onThresholdCrossed`  | [MIC API](docs/devices/mic.md)           |
-| [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer)                 | `0x000B` | Yes      | No       | No          | —                             | —                     | [Buzzer API](docs/devices/buzzer.md)     |
-| [Mono](https://docs.m5stack.com/en/chain/Chain_Mono)                     | `0x000D` | No       | No       | No          | —                             | —                     | [Mono API](docs/devices/mono.md)         |
-| [RGB](https://docs.m5stack.com/en/chain/Chain_RGB)                       | `0x000E` | No       | No       | No          | —                             | —                     | [RGB API](docs/devices/rgb.md)           |
+| Device                                                                   | Type ID  | `HasLed` | `HasKey` | `CanSample` | Polled Sample (`onSample`)                | Device Event Callback | API Guide                                |
+| ------------------------------------------------------------------------ | -------- | -------- | -------- | ----------- | ----------------------------------------- | --------------------- | ---------------------------------------- |
+| [Encoder](https://docs.m5stack.com/en/chain/Chain_Encoder)               | `0x0001` | Yes      | Yes      | Yes         | Delta value                               | `onKeyEvent`          | [Encoder API](docs/devices/encoder.md)   |
+| [Angle](https://docs.m5stack.com/en/chain/Chain_Angle)                   | `0x0002` | Yes      | No       | Yes         | Normalized `0.00`-`1.00`                  | —                     | [Angle API](docs/devices/angle.md)       |
+| [Key](https://docs.m5stack.com/en/chain/Chain_Key)                       | `0x0003` | Yes      | Yes      | No          | —                                         | `onKeyEvent`          | [Key API](docs/devices/key.md)           |
+| [JoyStick](https://docs.m5stack.com/en/chain/Chain_Joystick)             | `0x0004` | Yes      | Yes      | Yes         | `{ x, y }` in `-128` to `127`             | `onKeyEvent`          | [JoyStick API](docs/devices/joystick.md) |
+| [ToF](https://docs.m5stack.com/en/chain/Chain_ToF)                       | `0x0005` | Yes      | No       | Yes         | Distance in mm                            | —                     | [ToF API](docs/devices/tof.md)           |
+| [ChainBus](https://docs.m5stack.com/ja/arduino/projects/chain/chain_bus) | `0x0006` | Yes      | No       | No          | —                                         | `gpioN.onInterrupt`   | [ChainBus API](docs/devices/chainbus.md) |
+| [Switch](https://docs.m5stack.com/en/chain/Chain_Switch)                 | `0x0007` | Yes      | No       | Yes         | Slider position `0`-`4095`                | `onSwitchChanged`     | [Switch API](docs/devices/switch.md)     |
+| [PIR](https://docs.m5stack.com/en/chain/Chain_PIR)                       | `0x0009` | Yes      | No       | Yes         | Presence status                           | `onPresenceChanged`   | [PIR API](docs/devices/pir.md)           |
+| [MIC](https://docs.m5stack.com/en/chain/Chain_MIC)                       | `0x000A` | Yes      | No       | Yes         | Microphone ADC `0`-`4095`                 | `onThresholdCrossed`  | [MIC API](docs/devices/mic.md)           |
+| [Buzzer](https://docs.m5stack.com/en/chain/Chain_Buzzer)                 | `0x000B` | Yes      | No       | No          | —                                         | —                     | [Buzzer API](docs/devices/buzzer.md)     |
+| [Mono](https://docs.m5stack.com/en/chain/Chain_Mono)                     | `0x000D` | No       | No       | No          | —                                         | —                     | [Mono API](docs/devices/mono.md)         |
+| [RGB](https://docs.m5stack.com/en/chain/Chain_RGB)                       | `0x000E` | No       | No       | No          | —                                         | —                     | [RGB API](docs/devices/rgb.md)           |
+| [ENV](https://docs.m5stack.com/en/chain/Chain_ENV)                       | `0x000F` | Yes      | No       | Yes         | Temperature, humidity, pressure, altitude | `onWarning`           | [ENV API](docs/devices/env.md)           |
 
 ## Examples and reference
 

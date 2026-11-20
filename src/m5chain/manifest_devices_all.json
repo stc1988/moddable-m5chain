@@ -4,6 +4,7 @@
 		"./manifest_device_buzzer.json",
 		"./manifest_device_chainbus.json",
 		"./manifest_device_encoder.json",
+		"./manifest_device_env.json",
 		"./manifest_device_joystick.json",
 		"./manifest_device_key.json",
 		"./manifest_device_mic.json",

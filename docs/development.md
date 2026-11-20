@@ -171,7 +171,7 @@ construction, and unregistered device types become `UnknownDevice`. LED, key, an
 `withDeviceFeatures(...)`; Mono and RGB share the matrix-display base class.
 
 Public sample-capable APIs use `onSample` and synchronous `sample()` terminology. UART sampling remains internal to
-the poll loop through `readSample()`. Angle, JoyStick, ToF, Switch, PIR, and MIC dispatch every successfully read
+the poll loop through `readSample()`. Angle, JoyStick, ToF, Switch, PIR, MIC, and ENV dispatch every successfully read
 value. Encoder dispatches only when its value changes and exposes the delta from the previous value. Internal
 scheduling may retain poll terminology such as `pollingInterval`.
 

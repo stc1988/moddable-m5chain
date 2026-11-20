@@ -154,3 +154,28 @@ type _KeyCommandIsNumber = Expect<Equal<typeof KeyAndLedDevice.CMD.KEY.GET_STATU
 type _CombinedLedCommandIsNumber = Expect<Equal<typeof KeyAndLedDevice.CMD.RGB.GET_RGB_VALUE, number>>;
 const BaseDevice = withDeviceFeatures();
 type _EmptyCompositionKeepsBaseCommands = Expect<Equal<typeof BaseDevice.CMD.GET_UID, 0xf8>>;
+
+import M5ChainENV, { ENV_RATE, type ENVSample, type ENVWarning } from "m5chainENV";
+
+const envChain = new M5Chain({ deviceClasses: [M5ChainENV], transport });
+for (const device of envChain.devices) {
+	if (device.kind === "env") {
+		await device.configure({ temperatureRate: ENV_RATE.HZ_4, seaLevelPressure: 1013.3 });
+		device.onSample = (sample) => {
+			const value: ENVSample = sample;
+			void value;
+		};
+		device.onWarning = (warning) => {
+			const value: ENVWarning = warning;
+			void value;
+		};
+		const sample: ENVSample | undefined = device.sample();
+		void sample;
+		// @ts-expect-error ENV has no key reporting.
+		device.onKeyEvent = null;
+		// @ts-expect-error ENV rates must be supported codes.
+		await device.configure({ temperatureRate: 16 });
+		// @ts-expect-error Thresholds require both limits.
+		await device.configure({ humidityThreshold: { low: 20 } });
+	}
+}
