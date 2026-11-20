@@ -58,7 +58,7 @@ manifests in an inline Git manifest. This example includes Encoder and ToF:
 ```
 
 Available public device manifests are `angle.json`, `buzzer.json`, `chainbus.json`, `encoder.json`, `joystick.json`, `key.json`,
-`mic.json`, `mono.json`, `pir.json`, `rgb.json`, `switch.json`, and `tof.json` under `manifests/devices/`. `manifests/devices/all.json` includes every device.
+`env.json`, `mic.json`, `mono.json`, `pir.json`, `rgb.json`, `switch.json`, and `tof.json` under `manifests/devices/`. `manifests/devices/all.json` includes every device.
 Device manifests automatically include their required LED, key, sample, or matrix features.
 
 ## Include the library in a shared Mod host

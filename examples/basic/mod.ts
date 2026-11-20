@@ -67,6 +67,14 @@ function attachDeviceHandlers(device: M5ChainDevice) {
 			};
 			break;
 
+		case "env":
+			device.onSample = (sample) => {
+				log(
+					`${deviceLabel(device)} temperature=${sample.temperature} °C humidity=${sample.humidity}% pressure=${sample.pressure} hPa altitude=${sample.altitude} m`,
+				);
+			};
+			break;
+
 		case "chainbus":
 			log(`${deviceLabel(device)} ready`);
 			break;
